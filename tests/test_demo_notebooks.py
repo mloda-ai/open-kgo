@@ -13,7 +13,9 @@ The notebooks build their sample graph offline via ``demo.data.ensure_data``
 (committed fixtures, no network), so the test needs no external resources.
 
 Marked ``notebooks`` (slow: ~5s/notebook) so the inner-loop can deselect with
-``pytest -m "not notebooks"``; the default ``tox`` run includes them.
+``pytest -m "not notebooks"``. The default ``tox`` run *excludes* them
+(``pytest -m "not notebooks"``); they run in the separate ``tox -e notebooks``
+env, which CI invokes as its own job and which installs the ``demo`` extra.
 """
 
 from __future__ import annotations
@@ -25,7 +27,7 @@ from pathlib import Path
 import pytest
 
 # marimo ships in the ``demo`` extra; skip cleanly in an env without it
-# (the gate installs ``demo`` so this runs in CI — see tox.ini).
+# (the ``notebooks`` tox env installs ``demo`` so this runs in CI — see tox.ini).
 pytest.importorskip("marimo")
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
