@@ -58,7 +58,7 @@ strict = true
 ignore_missing_imports = true
 namespace_packages = true
 explicit_package_bases = true
-exclude = ["demo/"]
+exclude = ["demo/", "build/"]
 
 [tool.bandit]
 exclude_dirs = [".tox", ".venv", "tests", "demo"]
