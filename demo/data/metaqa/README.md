@@ -20,8 +20,10 @@ MetaQA is licensed under
 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/legalcode); the license
 must travel with the data and any derivative you redistribute, with attribution
 to Zhang et al., 2018. The full license text is committed here as
-[`LICENSE.txt`](LICENSE.txt) (the data files in this folder are gitignored, but
-`LICENSE.txt` and this README are tracked).
+[`METAQA-CC-BY-3.0.txt`](METAQA-CC-BY-3.0.txt) (the data files in this folder are
+gitignored, but the license text and this README are tracked). The file is named
+to avoid being picked up as the repository's own license by automated scanners;
+open-kgo itself is Apache-2.0.
 
 ## License boundary
 

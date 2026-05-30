@@ -33,7 +33,7 @@ not copyrightable and the format is a convention, so the sample carries no
 license obligation. MetaQA itself is licensed under
 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/legalcode) and is not
 redistributed here. Its license text is kept in the repo at
-[`metaqa/LICENSE.txt`](metaqa/LICENSE.txt) for attribution.
+[`metaqa/METAQA-CC-BY-3.0.txt`](metaqa/METAQA-CC-BY-3.0.txt) for attribution.
 
 ## Running against the full MetaQA dataset
 
@@ -48,8 +48,8 @@ the experiments at full scale, swap in the real MetaQA benchmark:
 
 2. **Place** the files in the dedicated `metaqa/` folder next to this README:
    `demo/data/metaqa/kb.txt`, `demo/data/metaqa/qa_test.txt`, and the dataset's
-   `demo/data/metaqa/LICENSE.txt`. That folder is gitignored (`metaqa/*`, except
-   its own README), so the CC BY 3.0 data cannot be committed by accident. See
+   license as `demo/data/metaqa/METAQA-CC-BY-3.0.txt`. That folder is gitignored
+   (`metaqa/*`), so the CC BY 3.0 data cannot be committed by accident. See
    [`metaqa/README.md`](metaqa/README.md).
 
 3. **Build** the graph from the full KB:

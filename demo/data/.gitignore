@@ -9,4 +9,4 @@ metaqa_sample.gml
 # README and the dataset's license text are tracked. See metaqa/README.md.
 metaqa/*
 !metaqa/README.md
-!metaqa/LICENSE.txt
+!metaqa/METAQA-CC-BY-3.0.txt
