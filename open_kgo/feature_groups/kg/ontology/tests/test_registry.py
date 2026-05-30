@@ -33,7 +33,22 @@ class TestLoadFile:
     def test_missing_namespace_key_raises(self, tmp_path: Path) -> None:
         bad = tmp_path / "bad.yaml"
         bad.write_text("entities: {}\nrelationships: {}\n", encoding="utf-8")
-        with pytest.raises(KeyError):
+        with pytest.raises(ValueError, match="missing the required 'namespace' key"):
+            OntologyRegistry.load_file(str(bad))
+
+    def test_non_mapping_top_level_raises(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad_list.yaml"
+        bad.write_text("- just\n- a\n- list\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="must contain a YAML mapping"):
+            OntologyRegistry.load_file(str(bad))
+
+    def test_relationship_missing_domain_or_range_raises(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad_rel.yaml"
+        bad.write_text(
+            "namespace: movie\nentities: {}\nrelationships:\n  directed_by:\n    domain: Movie\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="must be a mapping declaring both 'domain' and 'range'"):
             OntologyRegistry.load_file(str(bad))
 
     def test_empty_entities_and_relationships_loads_cleanly(self, tmp_path: Path) -> None:

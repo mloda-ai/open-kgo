@@ -116,16 +116,32 @@ class OntologyRegistry:
         return ontology.namespace
 
     @classmethod
-    def _parse(cls, data: dict[str, Any]) -> NamespaceOntology:
-        """Parse a loaded YAML mapping into a ``NamespaceOntology``."""
-        namespace: str = data["namespace"]
+    def _parse(cls, data: Any) -> NamespaceOntology:
+        """Parse a loaded YAML mapping into a ``NamespaceOntology``.
+
+        Raises ``ValueError`` (the same error type ``load_file`` already
+        documents for duplicate namespaces) on a malformed file — a non-mapping
+        top level, a missing ``namespace``, or a relationship that omits its
+        ``domain`` / ``range`` — so a bad ontology surfaces a clear, typed
+        error rather than a raw ``KeyError`` / ``TypeError`` from indexing.
+        """
+        if not isinstance(data, dict):
+            raise ValueError(f"ontology file must contain a YAML mapping at the top level, got {type(data).__name__}.")
+        if "namespace" not in data:
+            raise ValueError("ontology file is missing the required 'namespace' key.")
+        namespace = str(data["namespace"])
 
         entity_valid_outgoing: dict[str, frozenset[str]] = {}
         for name, spec in (data.get("entities") or {}).items():
-            entity_valid_outgoing[str(name)] = frozenset(spec.get("valid_outgoing") or [])
+            valid_outgoing = spec.get("valid_outgoing") if isinstance(spec, dict) else None
+            entity_valid_outgoing[str(name)] = frozenset(valid_outgoing or [])
 
         relationships: dict[str, RelationshipRule] = {}
         for name, spec in (data.get("relationships") or {}).items():
+            if not isinstance(spec, dict) or "domain" not in spec or "range" not in spec:
+                raise ValueError(
+                    f"ontology relationship {name!r} must be a mapping declaring both 'domain' and 'range'."
+                )
             relationships[str(name)] = RelationshipRule(
                 domain=str(spec["domain"]),
                 range_type=str(spec["range"]),
