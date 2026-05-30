@@ -20,6 +20,7 @@ import rdflib
 
 from open_kgo.feature_groups.kg.errors import FixtureLoadError
 from open_kgo.feature_groups.kg.fixtures import (
+    copy_cached_row,
     load_json_fixture,
     load_kuzu_database,
     load_rdf_graph,
@@ -343,3 +344,27 @@ def test_rdflib_reader_empty_locator_returns_fresh_graph_each_call() -> None:
     first = RdfLibSparqlReader._connect_from_slot({"locator": None})
     second = RdfLibSparqlReader._connect_from_slot({"locator": None})
     assert first is not second
+
+
+def test_copy_cached_row_returns_independent_dict_copy() -> None:
+    """A dict row is shallow-copied so mutating the copy cannot poison the cached source."""
+    cached = {"id": "W001", "title": "Paper One"}
+    copy = copy_cached_row(cached)
+    assert copy == cached
+    assert copy is not cached
+    copy["title"] = "MUTATED"
+    assert cached["title"] == "Paper One"
+
+
+def test_copy_cached_row_is_shallow() -> None:
+    """Nested mutable values are shared (shallow copy): only the top level is duplicated."""
+    nested = {"deps": ["a", "b"]}
+    cached = {"component": nested}
+    copy = copy_cached_row(cached)
+    assert copy["component"] is nested
+
+
+def test_copy_cached_row_passes_non_dict_through_unchanged() -> None:
+    """Non-dict values have nothing to alias-protect and are returned as-is."""
+    for value in ("a string", 42, ["a", "list"], None):
+        assert copy_cached_row(value) is value

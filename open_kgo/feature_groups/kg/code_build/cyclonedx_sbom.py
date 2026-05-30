@@ -21,7 +21,7 @@ from open_kgo.feature_groups.kg.code_build.base import (
     CodeBuildFeatureGroup,
     CodeBuildReader,
 )
-from open_kgo.feature_groups.kg.fixtures import load_json_fixture
+from open_kgo.feature_groups.kg.fixtures import copy_cached_row, load_json_fixture
 
 
 class CycloneDxSbomReader(CodeBuildReader):
@@ -49,9 +49,9 @@ class CycloneDxSbomReader(CodeBuildReader):
         ctx = cls._prepare_load(data_access)
         sbom = cls._connect_from_slot(ctx.slot)
 
-        # Shallow-copy each component so callers cannot mutate the cached
-        # SBOM through a returned row (see ``_connect_from_slot``).
-        components: list[dict[str, Any]] = [{**c} for c in sbom.get("components", [])]
+        # copy_cached_row keeps the shared cached SBOM read-only when a
+        # component is returned to a caller (see ``_connect_from_slot``).
+        components: list[dict[str, Any]] = [copy_cached_row(c) for c in sbom.get("components", [])]
         return components[: ctx.result_limit]
 
 

@@ -12,7 +12,7 @@ from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 
-from open_kgo.feature_groups.kg.fixtures import load_json_fixture
+from open_kgo.feature_groups.kg.fixtures import copy_cached_row, load_json_fixture
 from open_kgo.feature_groups.kg.lineage.base import LineageFeatureGroup, LineageReader
 
 
@@ -63,9 +63,9 @@ class DbtManifestReader(LineageReader):
 
         rows: list[dict[str, Any]] = []
         if asset_urn in nodes_index and result_limit > 0:
-            # Shallow-copy the cached node so a caller mutating row["node"]
-            # cannot poison the manifest cache (see ``_connect_from_slot``).
-            rows.append({"urn": asset_urn, "node": {**nodes_index[asset_urn]}})
+            # copy_cached_row keeps the shared manifest cache read-only when a
+            # caller holds row["node"] (see ``_connect_from_slot``).
+            rows.append({"urn": asset_urn, "node": copy_cached_row(nodes_index[asset_urn])})
 
         if direction in ("UPSTREAM", "BOTH") and len(rows) < result_limit:
             rows.extend(_walk_with_node(parent_map, nodes_index, asset_urn, upstream_depth, result_limit - len(rows)))
@@ -100,11 +100,9 @@ def _walk_with_node(
                 if nbr in seen:
                     continue
                 seen.add(nbr)
-                # Shallow-copy the cached node entry; ``nodes_index`` is a
-                # ref into the shared manifest cache, and a downstream
-                # caller mutating row["node"] would otherwise poison it.
-                node_entry = nodes_index.get(nbr)
-                out.append({"urn": nbr, "node": {**node_entry} if isinstance(node_entry, dict) else node_entry})
+                # ``nodes_index`` is a ref into the shared manifest cache;
+                # copy_cached_row keeps it read-only at the row level.
+                out.append({"urn": nbr, "node": copy_cached_row(nodes_index.get(nbr))})
                 if len(out) >= remaining:
                     return out
                 next_frontier.append(nbr)

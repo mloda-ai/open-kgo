@@ -71,6 +71,21 @@ class _FixtureLoadProblem(Exception):
         self.reason = reason
 
 
+def copy_cached_row(value: Any) -> Any:
+    """Shallow-copy a row taken from a shared cached fixture before handing it out.
+
+    The JSON / RDF loaders memoise and SHARE their parsed objects across
+    calls (see module docstring), so a connector that appended a row dict
+    by reference would let a downstream consumer mutate the cache and
+    poison every subsequent load. Connectors route each emitted row through
+    here so the cache stays read-only at the row level. Non-dict values (a
+    cached scalar or list a malformed fixture produced) are passed through
+    unchanged — there is nothing to alias-protect and the connector return
+    contract already tolerates them.
+    """
+    return {**value} if isinstance(value, dict) else value
+
+
 def _rejected_scheme(locator: Any) -> str | None:
     """Return the rejected scheme (lowercase) if ``locator`` is remote, else ``None``.
 
