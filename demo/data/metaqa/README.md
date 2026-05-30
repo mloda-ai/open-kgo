@@ -15,12 +15,13 @@ Google Drive link in its README. Place the files here:
 
 - `kb.txt` -- the knowledge base
 - `qa_test.txt` -- the 1-hop test split (`1-hop/vanilla/qa_test.txt` upstream)
-- `LICENSE.txt` -- the CC BY 3.0 license text that ships with the dataset
 
-Keep `LICENSE.txt` next to the data. MetaQA is licensed under
+MetaQA is licensed under
 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/legalcode); the license
 must travel with the data and any derivative you redistribute, with attribution
-to Zhang et al., 2018.
+to Zhang et al., 2018. The full license text is committed in the repo at
+[`../METAQA-LICENSE.txt`](../METAQA-LICENSE.txt) (outside this gitignored folder
+so it is always present), so you do not need to keep a copy here.
 
 ## License boundary
 
