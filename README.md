@@ -11,6 +11,48 @@ Open Knowledge Graphs and Ontologies plugin for [mloda](https://github.com/mloda
 - **[mloda](https://github.com/mloda-ai/mloda)**: The core library for open data access. Declaratively define what data you need, not how to get it.
 - **[mloda-registry](https://github.com/mloda-ai/mloda-registry)**: The central hub for discovering and sharing mloda plugins.
 
+## Quickstart
+
+Install the connectors and run a SPARQL query against the Turtle sample shipped in this repo — no Docker, no network:
+
+```bash
+uv sync --extra kg-all
+```
+
+```python
+from pathlib import Path
+
+from mloda.user import DataAccessCollection, Feature, Options, mloda
+
+import open_kgo.feature_groups.kg.rdf.rdflib_sparql as rdf_mod
+from open_kgo.feature_groups.kg.python_dict_kg_framework import KgPythonDictFramework
+
+# Point at any RDF file. Here: the Turtle sample shipped in this repo.
+ttl = Path(rdf_mod.__file__).parent / "tests" / "fixtures" / "sample.ttl"
+
+feature = Feature(
+    "rdflib_sparql__knows",
+    options=Options(context={
+        "query_text": "PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+                      "SELECT ?s ?o WHERE { ?s foaf:knows ?o }",
+    }),
+)
+
+partitions = mloda.run_all(
+    [feature],
+    compute_frameworks={KgPythonDictFramework},
+    data_access_collection=DataAccessCollection(
+        credentials=[{"rdflib_sparql": {"locator": str(ttl), "result_limit": 100}}],
+    ),
+)
+
+for partition in partitions:
+    for row in partition:
+        print(row[feature.name])
+```
+
+Swap `rdflib_sparql` for any of the nine connector families — same `Feature` → `mloda.run_all` shape, different reader.
+
 ## KG connectors
 
 `open_kgo/feature_groups/kg/` ships a 9-family knowledge-graph connector taxonomy (`network_pg`, `rdf`, `embedded`, `rest_public`, `lineage`, `code_build`, `saas_authz`, `agent_memory`, `citation_rest`), with at least one concrete plugin per family running against in-memory libraries or local file fixtures. See `open_kgo/feature_groups/kg/README.md` for the family map.

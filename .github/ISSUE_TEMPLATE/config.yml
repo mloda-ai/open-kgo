@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: mloda documentation
+    url: https://mloda-ai.github.io/mloda/
+    about: Guides and reference for mloda and its plugins.
+  - name: mloda framework
+    url: https://github.com/mloda-ai/mloda
+    about: Questions about mloda itself, or to start a broader conversation.
