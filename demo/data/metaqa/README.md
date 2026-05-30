@@ -19,9 +19,9 @@ Google Drive link in its README. Place the files here:
 MetaQA is licensed under
 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/legalcode); the license
 must travel with the data and any derivative you redistribute, with attribution
-to Zhang et al., 2018. The full license text is committed in the repo at
-[`../METAQA-LICENSE.txt`](../METAQA-LICENSE.txt) (outside this gitignored folder
-so it is always present), so you do not need to keep a copy here.
+to Zhang et al., 2018. The full license text is committed here as
+[`LICENSE.txt`](LICENSE.txt) (the data files in this folder are gitignored, but
+`LICENSE.txt` and this README are tracked).
 
 ## License boundary
 

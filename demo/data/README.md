@@ -33,7 +33,7 @@ not copyrightable and the format is a convention, so the sample carries no
 license obligation. MetaQA itself is licensed under
 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/legalcode) and is not
 redistributed here. Its license text is kept in the repo at
-[`METAQA-LICENSE.txt`](METAQA-LICENSE.txt) for attribution.
+[`metaqa/LICENSE.txt`](metaqa/LICENSE.txt) for attribution.
 
 ## Running against the full MetaQA dataset
 
