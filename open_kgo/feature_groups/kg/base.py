@@ -198,7 +198,7 @@ class KgConnectorReaderBase(ReadDB):
     ``build_query``, ``load_data``.
 
     The class attribute ``CONNECTOR_ID`` keys the credential dict inside
-    ``DataAccessCollection.credential_dicts``. ``REQUIRED_KEYS`` declares
+    ``DataAccessCollection.credentials``. ``REQUIRED_KEYS`` declares
     which credential keys are mandatory: a tuple of OR-groups (all groups
     AND'ed, members within a group OR'ed). Empty tuple means "no required
     keys". E.g. ``(("locator",),)`` requires ``locator``;
@@ -622,7 +622,7 @@ class KgConnectorReaderBase(ReadDB):
         """Normalise the data_access mloda hands us into a HashableDict({CONNECTOR_ID: dict}).
 
         mloda's BaseInputData passes the matched data_access through. Concrete
-        plugins receive either the full credential_dicts (with our slot inside)
+        plugins receive either the full credentials dict (with our slot inside)
         or just our slot. This helper unifies both shapes so concrete code can
         always call ``cls._extract_slot(cls._wrap_credentials(data_access))``.
 

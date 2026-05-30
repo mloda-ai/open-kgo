@@ -1,7 +1,7 @@
 """Shared test helpers for KG connector contract suites.
 
 ``run_query`` exercises the same path the demo uses:
-``DataAccessCollection.credential_dicts`` + ``mloda.run_all`` +
+``DataAccessCollection.credentials`` + ``mloda.run_all`` +
 ``KgPythonDictFramework`` (the KG-aware ``PythonDictFramework`` adapter).
 This means contract tests verify the real reader matching, validation, and
 load chain, not a pre-bound shortcut. If ``CONNECTOR_ID`` matching,
@@ -33,7 +33,12 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     """Run a feature through ``mloda.run_all`` against a single KG connector.
 
     mloda walks ``KgConnectorReaderBase`` subclasses and selects the one whose
-    ``CONNECTOR_ID`` slot is present in ``credential_dicts``. The selected
+    ``CONNECTOR_ID`` slot is present in ``credentials``. The slot is wrapped in
+    a one-element list (``credentials=[{CONNECTOR_ID: slot}]``) so mloda 0.7.0
+    resolves it back to the ``{CONNECTOR_ID: slot}`` bundle the reader matcher
+    expects; passing the bare dict makes mloda treat ``CONNECTOR_ID`` as a
+    handle and unwrap to the inner slot, which fails ``is_valid_credentials``.
+    The selected
     reader's ``load`` returns native KG rows; ``KgPythonDictFramework``
     (pinned by ``KgConnectorFeatureGroupBase.compute_framework_rule``) wraps
     each row as ``{feature_name: row}`` during column slicing so this helper
@@ -44,7 +49,7 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     data through unchanged, so the comprehension below contributes no rows
     and the helper yields ``[]`` to the caller.
     """
-    dac = DataAccessCollection(credential_dicts={connector_id: slot_creds})
+    dac = DataAccessCollection(credentials=[{connector_id: slot_creds}])
     partitions = mloda.run_all(
         [feature],
         compute_frameworks={KgPythonDictFramework},
@@ -64,7 +69,7 @@ def make_valid_credentials(
     Pre-populates every ``PROPERTY_MAPPING`` key whose spec declares an
     explicit, non-``None`` ``default``; callers supply the rest via kwargs
     (e.g. ``locator=str(tmp_path)``). The result is drop-in compatible with
-    ``DataAccessCollection.credential_dicts`` and with the
+    ``DataAccessCollection.credentials`` and with the
     ``valid_credentials()`` adapter return value, so a concrete test can
     write ``return make_valid_credentials(KuzuCypherReader, locator=path)``
     instead of re-spelling the whole slot for each scenario.

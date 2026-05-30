@@ -76,12 +76,12 @@ def helpers():
 
         mloda matches the reader by calling `is_valid_credentials` on each
         `ReadDB` subclass and selecting the one whose `CONNECTOR_ID` slot is
-        present in `credential_dicts`. The KG FG base pins `compute_framework_rule`
+        present in `credentials`. The KG FG base pins `compute_framework_rule`
         to `KgPythonDictFramework`, the KG-aware adapter that wraps native rows
         as `{feature_name: row}` during column slicing; we flat-concat across
         partitions for the per-cell rendering.
         """
-        dac = _DataAccessCollection(credential_dicts={connector_id: slot_creds})
+        dac = _DataAccessCollection(credentials=[{connector_id: slot_creds}])
         partitions = _mloda.run_all(
             [feature],
             compute_frameworks={_KgPythonDictFramework},

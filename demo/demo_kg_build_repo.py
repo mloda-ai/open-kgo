@@ -208,14 +208,16 @@ def helpers():
 
     def run_sparql(ttl_path: _Path, query_text: str) -> list[dict]:
         dac = _DataAccessCollection(
-            credential_dicts={
-                "rdflib_sparql": {
-                    "locator": str(ttl_path),
-                    "result_format": "application/sparql-results+json",
-                    "reasoning_profile": "none",
-                    "result_limit": 1000,
+            credentials=[
+                {
+                    "rdflib_sparql": {
+                        "locator": str(ttl_path),
+                        "result_format": "application/sparql-results+json",
+                        "reasoning_profile": "none",
+                        "result_limit": 1000,
+                    }
                 }
-            }
+            ]
         )
         feat = _Feature(
             "repo_kg_query",

@@ -357,7 +357,7 @@ def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
         "networkx_embedded__neighbors",
         options=Options(context={"operation": "neighbors", "start_node": "Christopher Nolan"}),
     )
-    _dac = DataAccessCollection(credential_dicts={"networkx_embedded": _creds})
+    _dac = DataAccessCollection(credentials=[{"networkx_embedded": _creds}])
     _partitions = mloda.run_all(
         [_feat],
         compute_frameworks={KgPythonDictFramework},
