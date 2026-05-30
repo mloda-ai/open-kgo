@@ -45,6 +45,9 @@ include = ["open_kgo*"]
 [tool.pytest.ini_options]
 testpaths = ["open_kgo", "tests"]
 python_files = ["test_*.py"]
+markers = [
+    "notebooks: end-to-end execution of demo marimo notebooks (slow; needs the 'demo' extra). Deselect with -m 'not notebooks'.",
+]
 
 [tool.ruff]
 line-length = 120
