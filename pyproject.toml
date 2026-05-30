@@ -8,10 +8,32 @@ name = "open-kgo"
 # Initial release for semver needs also a manually pushed minimum tag (likely 0.2.0).
 version = "0.2.0"
 description = "Open Knowledge Graphs and Ontologies plugin for mloda."
+readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Tom Kaltofen", email = "tomkaltofen@mloda.ai" }]
 dependencies = ["mloda>=0.6.1", "mloda-testing>=0.3.1"]
 requires-python = ">=3.10"
+# License classifier intentionally omitted: `license` above is an SPDX
+# expression (PEP 639), and newer setuptools rejects a `License ::` trove
+# classifier alongside it.
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/mloda-ai/open-kgo"
+Repository = "https://github.com/mloda-ai/open-kgo"
+Issues = "https://github.com/mloda-ai/open-kgo/issues"
 
 [project.optional-dependencies]
 dev = [
