@@ -79,3 +79,35 @@ def test_validate_params_reports_only_unsatisfied_groups() -> None:
     with clean_kg_subclass_registry():
         unsatisfied = _exercise()
     assert unsatisfied == (("bravo", "charlie"),)
+
+
+def test_validate_params_accepts_falsey_but_present_values() -> None:
+    """A required param set to a falsey-but-non-None value (``0``, ``""``) satisfies its group.
+
+    Presence is tested with ``is not None``, not truthiness, so a
+    legitimately falsey value is not misread as absent (mirrors the
+    ``kg_contract`` REQUIRED_KEYS presence convention).
+    """
+
+    def _exercise() -> None:
+        reader = _build_multi_group_reader()
+        # alpha=0 satisfies ("alpha",); bravo="" satisfies ("bravo", "charlie").
+        # No MissingRequiredParamsError should be raised.
+        reader._validate_params({"alpha": 0, "bravo": ""})
+
+    with clean_kg_subclass_registry():
+        _exercise()
+
+
+def test_validate_params_treats_none_value_as_absent() -> None:
+    """An explicit ``None`` value does not satisfy a required group."""
+
+    def _exercise() -> tuple[tuple[str, ...], ...]:
+        reader = _build_multi_group_reader()
+        with pytest.raises(MissingRequiredParamsError) as excinfo:
+            reader._validate_params({"alpha": None, "bravo": "y"})
+        return excinfo.value.unsatisfied_groups
+
+    with clean_kg_subclass_registry():
+        unsatisfied = _exercise()
+    assert unsatisfied == (("alpha",),)

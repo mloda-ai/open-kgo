@@ -1021,8 +1021,12 @@ class ParamReader(KgConnectorReaderBase):
           (open-world because ``feature.options.context`` is shared with mloda
           core and other plugins). When ``SUPPORTED_VALUES`` narrows a
           strict-enum key, the narrowed set is authoritative for this concrete.
-        - Required params: at least one key per OR-group must be set+truthy.
-          Mirrors ``_validate_required_keys``: collect every unsatisfied
+        - Required params: at least one key per OR-group must be set to a
+          non-``None`` value. Presence is tested with ``is not None`` rather
+          than truthiness so a legitimately falsey param value (``0``, ``""``,
+          ``False``) is not misread as absent — consistent with the
+          ``kg_contract`` REQUIRED_KEYS presence convention. Collect every
+          unsatisfied
           group before raising ``MissingRequiredParamsError`` (an
           ``InvalidCredentialShape`` subclass) so callers can scope handlers
           to the leaf class while a generic ``InvalidCredentialShape``
@@ -1035,7 +1039,7 @@ class ParamReader(KgConnectorReaderBase):
                 raise InvalidCredentialShape(
                     f"{cls.CONNECTOR_ID}: REQUIRED_PARAMS contains an empty group; misconfigured."
                 )
-            if not any(params.get(k) for k in group):
+            if not any(params.get(k) is not None for k in group):
                 unsatisfied.append(group)
         if unsatisfied:
             raise MissingRequiredParamsError(cls.CONNECTOR_ID, tuple(unsatisfied))
