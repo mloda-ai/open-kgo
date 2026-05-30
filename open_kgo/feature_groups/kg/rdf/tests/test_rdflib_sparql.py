@@ -82,6 +82,21 @@ class TestRdfLibSparqlReader(RdfContractTestBase):
         rows = run_query("rdflib_sparql", self.valid_credentials()["rdflib_sparql"], feat)
         assert len(rows) == 3
 
+    def test_result_limit_truncates_emitted_rows(self) -> None:
+        """``result_limit`` caps the number of emitted rows, not the iteration index.
+
+        The fixture yields 3 ``foaf:knows`` rows; a limit of 2 must return
+        exactly 2. The limit counts appended rows, so a (hypothetical) skipped
+        non-row result would not consume the budget.
+        """
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
+
+        slot = dict(self.valid_credentials()["rdflib_sparql"])
+        slot["result_limit"] = 2
+        feat = self.feature_under_test()
+        rows = run_query("rdflib_sparql", slot, feat)
+        assert len(rows) == 2
+
     def test_http_locator_rejected(self) -> None:
         """connect() must refuse remote schemes (no network IO at fetch time)."""
         cls = self.connector_reader_class()

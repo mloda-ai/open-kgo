@@ -82,13 +82,18 @@ class RdfLibSparqlReader(RdfSparqlReader):
 
         query_text = cls.build_query(features)
         rows: list[dict[str, Any]] = []
-        for i, row in enumerate(graph.query(query_text)):
-            if i >= ctx.result_limit:
-                break
+        # Limit on the number of rows actually emitted, not the iteration
+        # index: a result that yields a row without ``asdict`` (e.g. a
+        # non-SELECT shape) is skipped via ``continue`` and must not count
+        # against ``result_limit``, or fewer than ``result_limit`` rows
+        # would be returned.
+        for row in graph.query(query_text):
             asdict = getattr(row, "asdict", None)
             if asdict is None:
                 continue
             rows.append({str(k): v for k, v in asdict().items()})
+            if len(rows) >= ctx.result_limit:
+                break
         return rows
 
 
