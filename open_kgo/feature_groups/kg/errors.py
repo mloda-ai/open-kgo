@@ -11,8 +11,8 @@ class MissingRequiredKeysError(InvalidCredentialShape):
     """Raised when a connector's REQUIRED_KEYS rule is unsatisfied.
 
     ``REQUIRED_KEYS`` is a tuple of OR-groups; every group must have at least
-    one truthy key in the credential dict. Carries the unsatisfied group(s)
-    for diagnostics.
+    one present (non-``None``) key in the credential dict. Carries the
+    unsatisfied group(s) for diagnostics.
     """
 
     def __init__(self, connector_id: str, unsatisfied_groups: tuple[tuple[str, ...], ...]) -> None:
@@ -26,8 +26,9 @@ class MissingRequiredParamsError(InvalidCredentialShape):
     """Raised when a ParamReader's REQUIRED_PARAMS rule is unsatisfied.
 
     Mirror of ``MissingRequiredKeysError`` for per-call params: ``REQUIRED_PARAMS``
-    is a tuple of OR-groups; every group must have at least one truthy key in
-    the params dict (assembled from ``feature.options.context``). Carries the
+    is a tuple of OR-groups; every group must have at least one present
+    (non-``None``) key in the params dict (assembled from
+    ``feature.options.context``). Carries the
     unsatisfied group(s) so the caller can pinpoint which per-call inputs are
     missing rather than getting a generic ``InvalidCredentialShape`` with a
     hand-rolled message.

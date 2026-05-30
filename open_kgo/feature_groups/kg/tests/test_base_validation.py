@@ -282,6 +282,25 @@ def test_connect_raises_typed_when_required_key_missing() -> None:
         _RequiredKeyReader.connect(creds)
 
 
+def test_required_keys_presence_convention_accepts_falsey_value() -> None:
+    """A present-but-falsey required credential (``""``, ``0``, ``False``) satisfies the rule.
+
+    ``_validate_required_keys`` tests presence with ``is not None`` rather than
+    truthiness, matching ``_validate_required_params`` and the ``kg_contract``
+    presence convention. A required key that is absent or ``None`` is still
+    rejected.
+    """
+    for falsey in ("", 0, False):
+        # present-but-falsey: satisfied, no raise
+        _RequiredKeyReader._validate_required_keys({"locator": falsey})
+
+    # absent and explicit-None are both still unsatisfied
+    with pytest.raises(MissingRequiredKeysError):
+        _RequiredKeyReader._validate_required_keys({})
+    with pytest.raises(MissingRequiredKeysError):
+        _RequiredKeyReader._validate_required_keys({"locator": None})
+
+
 def test_connect_raises_on_unknown_credential_key() -> None:
     """``connect()`` also rejects closed-world unknown keys (full shape parity).
 

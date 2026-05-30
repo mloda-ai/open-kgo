@@ -558,14 +558,21 @@ class KgConnectorReaderBase(ReadDB):
 
     @classmethod
     def _validate_required_keys(cls, creds: dict[str, Any]) -> None:
-        """Enforce ``REQUIRED_KEYS``: each OR-group must have a truthy member."""
+        """Enforce ``REQUIRED_KEYS``: each OR-group must have a present member.
+
+        Presence is tested with ``is not None`` rather than truthiness so a
+        legitimately falsey credential value (``0``, ``""``, ``False``) is not
+        misread as absent — matching the ``REQUIRED_PARAMS`` presence
+        convention (``_validate_required_params``) and the ``kg_contract``
+        presence rule (``key in ... and value is not None``).
+        """
         unsatisfied: list[tuple[str, ...]] = []
         for group in cls.REQUIRED_KEYS:
             if not group:
                 raise InvalidCredentialShape(
                     f"{cls.CONNECTOR_ID}: REQUIRED_KEYS contains an empty group; misconfigured."
                 )
-            if not any(creds.get(k) for k in group):
+            if not any(creds.get(k) is not None for k in group):
                 unsatisfied.append(group)
         if unsatisfied:
             raise MissingRequiredKeysError(cls.CONNECTOR_ID, tuple(unsatisfied))
@@ -575,10 +582,11 @@ class KgConnectorReaderBase(ReadDB):
         """Enforce ``CONDITIONAL_REQUIRED_KEYS``: rules triggered by sibling values.
 
         Each rule is ``(prop, value, OR-groups)``. If ``creds.get(prop)`` equals
-        ``value``, every OR-group must have at least one truthy member in
-        ``creds``. Aggregates all unsatisfied groups across all triggered rules
-        into a single ``MissingRequiredKeysError`` so the caller sees the full
-        picture in one error message.
+        ``value``, every OR-group must have at least one present (non-``None``)
+        member in ``creds`` (same presence convention as
+        ``_validate_required_keys``). Aggregates all unsatisfied groups across
+        all triggered rules into a single ``MissingRequiredKeysError`` so the
+        caller sees the full picture in one error message.
         """
         unsatisfied: list[tuple[str, ...]] = []
         for prop, trigger_value, groups in cls.CONDITIONAL_REQUIRED_KEYS:
@@ -590,7 +598,7 @@ class KgConnectorReaderBase(ReadDB):
                         f"{cls.CONNECTOR_ID}: CONDITIONAL_REQUIRED_KEYS for "
                         f"{prop}={trigger_value!r} contains an empty group; misconfigured."
                     )
-                if not any(creds.get(k) for k in group):
+                if not any(creds.get(k) is not None for k in group):
                     unsatisfied.append(group)
         if unsatisfied:
             raise MissingRequiredKeysError(cls.CONNECTOR_ID, tuple(unsatisfied))
