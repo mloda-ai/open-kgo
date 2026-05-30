@@ -1,13 +1,5 @@
 # AGENTS.md
 
-## First-time setup
-
-If a `placeholder/` directory still exists in this repo, the template has not been initialized yet. Before doing any other work:
-
-1. Walk the user through `### Setup Your Plugin` in [README.md](README.md): rename `placeholder/` to their package name, update `pyproject.toml` (`name`, `authors`, `tool.setuptools.packages.find.include`, `tool.pytest.ini_options.testpaths`), update `.releaserc.yaml` (`message`, `repositoryUrl`), and replace `from placeholder.` imports in the 6 files listed in the README.
-2. Verify with `uv venv && source .venv/bin/activate && uv sync --all-extras && tox`.
-3. **Delete this `## First-time setup` section from both `CLAUDE.md` and `AGENTS.md`** — it only applies to fresh-template repos and would be misleading once the placeholder is gone.
-
 Must read [README.md](README.md) first.
 
 This project uses the mloda framework. Assume any given task is related to mloda.
@@ -67,8 +59,6 @@ The mloda-registry provides Claude Code skills that assist with plugin developme
 
 When helping with FeatureGroups, ComputeFrameworks, or Extenders, leverage these skills for pattern guidance and best practices.
 
-Consider generating project-specific skills for your own plugin repository to provide tailored AI assistance for your implementation patterns and conventions.
-
 ## Project Practices
 
 `tox` is the gate. It runs `pytest`, then `ruff format --check`, `ruff check`, `mypy --strict --ignore-missing-imports`, and `bandit`. All of these must pass before a PR is mergeable. A separate `tox -e security` environment runs `pip-audit` for CVE scanning.
@@ -76,7 +66,7 @@ Consider generating project-specific skills for your own plugin repository to pr
 - **Python**: supported range is `>=3.10`. The default tox env is `python310`.
 - **Type hints**: use modern forms (`list[str]`, `dict[str, int]`, `X | None`).
 - **Formatting**: ruff format with line length 120.
-- **Tests**: every new feature or bug fix must come with tests; follow the patterns in the existing `tests/` and `placeholder/.../tests/` trees.
+- **Tests**: every new feature or bug fix must come with tests; follow the patterns in the existing `open_kgo/.../tests/` trees.
 - **Supply chain**: `[tool.uv] exclude-newer = "7 days"` in `pyproject.toml` defers new dependency releases by 7 days; `exclude-newer-package` pins mloda, mloda-testing, and mloda-registry to a longer window. Do not edit these without a reason.
 - **Commits**: use [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `style:`, `ci:`, `build:`, `perf:`). semantic-release computes the next version: `feat:` triggers a minor bump, all other types trigger a patch bump (see `.releaserc.yaml`).
 

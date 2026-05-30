@@ -1,0 +1,9 @@
+{
+  "tenant_a": [
+    ["document", "doc1", "viewer", "user:alice"],
+    ["document", "doc1", "viewer", "user:bob"],
+    ["document", "doc2", "owner", "user:alice"],
+    ["group", "engineering", "member", "user:alice"],
+    ["document", "doc3", "viewer", "group:engineering#member"]
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "nodes": {
+    "model.shop.fct_orders": {"resource_type": "model", "name": "fct_orders"},
+    "model.shop.stg_orders": {"resource_type": "model", "name": "stg_orders"},
+    "source.shop.raw.orders": {"resource_type": "source", "name": "orders"}
+  },
+  "parent_map": {
+    "model.shop.fct_orders": ["model.shop.stg_orders"],
+    "model.shop.stg_orders": ["source.shop.raw.orders"],
+    "source.shop.raw.orders": []
+  },
+  "child_map": {
+    "source.shop.raw.orders": ["model.shop.stg_orders"],
+    "model.shop.stg_orders": ["model.shop.fct_orders"],
+    "model.shop.fct_orders": []
+  }
+}

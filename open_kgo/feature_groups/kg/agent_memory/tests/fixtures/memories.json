@@ -1,0 +1,31 @@
+{
+  "user_42": {
+    "nodes": [
+      {
+        "id": "m1",
+        "label": "Likes coffee",
+        "valid_at": "2026-01-01T00:00:00Z",
+        "invalid_at": null
+      },
+      {
+        "id": "m2",
+        "label": "Prefers strong coffee",
+        "valid_at": "2026-03-01T00:00:00Z",
+        "invalid_at": null
+      },
+      {
+        "id": "m3",
+        "label": "Used to like tea",
+        "valid_at": "2024-01-01T00:00:00Z",
+        "invalid_at": "2026-01-01T00:00:00Z"
+      }
+    ],
+    "edges": [
+      {
+        "src": "m1",
+        "tgt": "m2",
+        "relation": "refines"
+      }
+    ]
+  }
+}

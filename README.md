@@ -1,122 +1,92 @@
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/mloda-ai/mloda-plugin-template/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![mloda](https://img.shields.io/badge/built%20with-mloda-blue.svg)](https://github.com/mloda-ai/mloda)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
-[![Tests](https://github.com/mloda-ai/mloda-plugin-template/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/mloda-ai/mloda-plugin-template/actions/workflows/test.yml?query=branch%3Amain)
 
-# mloda-plugin-template
+# open-kgo
 
-> **A GitHub template for creating standalone mloda plugins.** Part of the [mloda](https://github.com/mloda-ai/mloda) ecosystem for open data access. Visit [mloda.ai](https://mloda.ai) for an overview and business context, the [GitHub repository](https://github.com/mloda-ai/mloda) for technical context, or the [documentation](https://mloda-ai.github.io/mloda/) for detailed guides.
-
-Create your own FeatureGroups, ComputeFrameworks, and Extenders as standalone packages. This repository serves two audiences:
-
-- **Plugin authors**: click *Use this template* on GitHub to scaffold a new plugin repository, then follow the [Use this template](#use-this-template) section below.
-- **Template contributors**: improving the scaffold itself? See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Contribute to this template](#contribute-to-this-template) section.
+Open Knowledge Graphs and Ontologies plugin for [mloda](https://github.com/mloda-ai/mloda). Visit [mloda.ai](https://mloda.ai) for an overview and business context, the [GitHub repository](https://github.com/mloda-ai/mloda) for technical context, or the [documentation](https://mloda-ai.github.io/mloda/) for detailed guides.
 
 ## Related Repositories
 
-- **[mloda](https://github.com/mloda-ai/mloda)**: The core library for open data access. Declaratively define what data you need, not how to get it. mloda handles feature resolution, dependency management, and compute framework abstraction automatically.
+- **[mloda](https://github.com/mloda-ai/mloda)**: The core library for open data access. Declaratively define what data you need, not how to get it.
+- **[mloda-registry](https://github.com/mloda-ai/mloda-registry)**: The central hub for discovering and sharing mloda plugins.
 
-- **[mloda-registry](https://github.com/mloda-ai/mloda-registry)**: The central hub for discovering and sharing mloda plugins. Browse community-contributed FeatureGroups, find integration guides, and publish your own plugins for others to use.
+## KG connectors
 
-## Use this template
+`open_kgo/feature_groups/kg/` ships a 9-family knowledge-graph connector taxonomy (`network_pg`, `rdf`, `embedded`, `rest_public`, `lineage`, `code_build`, `saas_authz`, `agent_memory`, `citation_rest`), with at least one concrete plugin per family running against in-memory libraries or local file fixtures. See `open_kgo/feature_groups/kg/README.md` for the family map.
 
-Click *Use this template* on GitHub to scaffold a new plugin repository. See [docs/getting-started.md](docs/getting-started.md) for the GitHub template-creation walkthrough; once your repository is in place, follow the steps below to customize the scaffold for your organization.
+Install all KG extras with: `uv sync --extra kg-all`.
 
-### Structure
+> **No-Docker testing policy.** Every connector test runs against rdflib, networkx, kuzu (embedded), or file fixtures. No Docker, no external services, no network calls.
 
-```
-placeholder/
-├── feature_groups/
-│   └── my_plugin/
-│       ├── __init__.py           # Package exports
-│       ├── my_feature_group.py   # Example FeatureGroup implementation
-│       └── tests/
-│           └── test_my_feature_group.py
-├── compute_frameworks/
-│   └── my_framework/
-│       ├── __init__.py
-│       └── my_compute_framework.py
-└── extenders/
-    └── my_extender/
-        ├── __init__.py
-        └── my_extender.py
-```
+## Demos
 
-### Key files
+Three marimo notebooks plus two evaluation harnesses live under `demo/`:
 
-- `placeholder/` - Root namespace (rename to your organization's name)
-- `pyproject.toml` - Package config (edit directly, not auto-generated)
-- `.github/workflows/test.yml` - CI workflow running pytest
+- `demo/demo_kg_connectors.py`: surface tour of all 9 families against the shipped fixtures.
+- `demo/demo_kg_build_repo.py`: builds an RDF graph from this repo (filesystem `repo:contains` + Python `repo:imports`), serializes to Turtle, and runs five SPARQL queries through `RdfLibSparqlReader` via `mloda.run_all`.
+- `demo/demo_kg_ontology.py`: walks the ontology layer end to end.
+- `demo/eval_arch1_vs_arch2.py` and `demo/eval_qa_accuracy.py`: evaluation harnesses comparing plain traversal vs. ontology-guided traversal.
 
-### Setup Your Plugin
-
-#### 1. Rename the directory
+Install the demo extras and open any notebook:
 
 ```bash
-mv placeholder acme
+uv sync --extra demo
+marimo edit demo/demo_kg_connectors.py
 ```
 
-#### 2. Update pyproject.toml
+Every demo runs offline against a small committed sample graph: no download,
+no network, no external services.
 
-Edit the following fields in `pyproject.toml`:
+## Data and acknowledgments
 
-- `name`: change `"placeholder-my-plugin"` to `"acme-my-plugin"`
-- `authors`: update name and email
-- `description`: update to describe your plugin
-- `tool.setuptools.packages.find.include`: change `["placeholder*"]` to `["acme*"]`
-- `tool.pytest.ini_options.testpaths`: change `["placeholder", "tests"]` to `["acme", "tests"]`
+The ontology demo and the two evaluation harnesses run against a small
+hand-authored sample of public movie facts (`demo/data/sample_kb.txt`) written
+in the triple format of the MetaQA dataset (Zhang, Yuyu et al., "Variational
+Reasoning for Question Answering with Knowledge Graph", AAAI 2018,
+https://github.com/yuyuz/MetaQA). The sample is committed in this repo and is
+not derived from the MetaQA dataset files. The notebooks call
+`demo.data.ensure_data()` at startup, which builds the sample subgraph offline.
+To run against the full MetaQA benchmark (licensed under
+[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/legalcode), not
+redistributed here), see [`demo/data/README.md`](demo/data/README.md).
 
-#### 3. Update .releaserc.yaml
+## Development Setup with uv
 
-Edit the following fields in `.releaserc.yaml`:
+**Install uv** (if not already installed):
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-- `message`: change `mloda-plugin-template` to your package name (e.g., `"chore(release acme-my-plugin): ${nextRelease.version}"`)
-- `repositoryUrl`: change to your repository URL
+**Create virtual environment and install dependencies:**
+```bash
+uv venv
+source .venv/bin/activate
+uv sync --all-extras
+```
 
-#### 4. Update Python imports
+**Run all checks with tox:**
+```bash
+uv tool install tox --with tox-uv
+tox
+```
 
-Update imports in these files (change `from placeholder.` to `from acme.`):
-
-- `acme/feature_groups/my_plugin/__init__.py`
-- `acme/feature_groups/my_plugin/tests/test_my_feature_group.py`
-- `acme/compute_frameworks/my_plugin/__init__.py`
-- `acme/compute_frameworks/my_plugin/tests/test_my_compute_framework.py`
-- `acme/extenders/my_plugin/__init__.py`
-- `acme/extenders/my_plugin/tests/test_my_extender.py`
-
-#### 5. Verify setup
+### Run individual checks
 
 ```bash
-uv venv && source .venv/bin/activate && uv sync --all-extras && tox
+pytest
+ruff format --check --line-length 120 .
+ruff check .
+mypy --strict --ignore-missing-imports .
+bandit -c pyproject.toml -r -q .
 ```
 
-#### 6. Remove the template-only contributor guide
+## Related Documentation
 
-`CONTRIBUTING.md` describes how to contribute to the template repo itself; it does not apply to your plugin. Remove it after `tox` passes:
+Guides for plugin development can be found in mloda-registry:
 
-```bash
-rm CONTRIBUTING.md
-```
+- https://github.com/mloda-ai/mloda-registry/tree/main/docs/guides/
 
-The remaining baseline files apply to your plugin out of the box and can be edited to match your conventions:
+Claude Code users can leverage the skills in mloda-registry for assisted plugin development:
 
-- `AGENTS.md` and `CLAUDE.md` — toolchain and project practices for the same `tox`/ruff/mypy/bandit pipeline you inherit. Tune the bullets if you change the toolchain.
-- `CODE_OF_CONDUCT.md` — short, plain-English baseline. Update the contact (`conduct@mloda.ai` → your address) if you want enforcement to come to you.
-- `.github/ISSUE_TEMPLATE/issue.yml` — unified issue form. Update the placeholder file paths to point at your renamed package.
-
-You may also want to replace this `README.md` with one that describes your plugin.
-
-### Where to next
-
-- **[mloda-registry/docs/guides/](https://github.com/mloda-ai/mloda-registry/tree/main/docs/guides/)** — full plugin development walkthrough (FeatureGroups, ComputeFrameworks, Extenders, packaging, publishing).
-- **[mloda](https://github.com/mloda-ai/mloda)** — core framework reference.
-- **[Claude Code skills](https://github.com/mloda-ai/mloda-registry/tree/main/.claude/skills/)** — pattern guidance and best practices for AI-assisted plugin development.
-- **[docs/github-workflows.md](docs/github-workflows.md)** — CI/CD setup and required secrets for the included workflows.
-
-## Contribute to this template
-
-This section is for people improving the scaffold itself (CI workflows, dev tooling, docs, examples). See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor guide. Quick pointers:
-
-- [Code of Conduct](CODE_OF_CONDUCT.md)
-- [AGENTS.md](AGENTS.md) — agent guidance, project practices, issue creation
-- [Issue template](.github/ISSUE_TEMPLATE/issue.yml)
+- https://github.com/mloda-ai/mloda-registry/tree/main/.claude/skills/

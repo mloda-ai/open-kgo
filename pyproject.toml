@@ -3,13 +3,13 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "placeholder-my-plugin"
+name = "open-kgo"
 # Always start at least at 0.2.0 to make semver work.
 # Initial release for semver needs also a manually pushed minimum tag (likely 0.2.0).
-version = "0.3.4"
-description = "TEMPLATE PLACEHOLDER - Do not install directly. This package reserves the name for mloda-plugin-template. See https://github.com/mloda-ai/mloda-plugin-template"
+version = "0.2.0"
+description = "Open Knowledge Graphs and Ontologies plugin for mloda."
 license = "Apache-2.0"
-authors = [{ name = "Your Name placeholder", email = "placeholder@placeholder.com" }]
+authors = [{ name = "Tom Kaltofen", email = "tomkaltofen@mloda.ai" }]
 dependencies = ["mloda>=0.6.1", "mloda-testing>=0.3.1"]
 requires-python = ">=3.10"
 
@@ -23,26 +23,42 @@ dev = [
     "mypy",
     "bandit",
 ]
+kg-rdf = ["rdflib>=7.0"]
+kg-embedded = ["networkx>=3.2"]
+kg-network-pg = ["kuzu>=0.4"]
+kg-memory = ["networkx>=3.2"]
+kg-ontology = ["pyyaml>=6.0"]
+kg-rest = []
+kg-lineage = []
+kg-codebuild = []
+kg-saas = []
+kg-citation = []
+kg-all = [
+    "open-kgo[kg-rdf,kg-embedded,kg-network-pg,kg-memory,kg-rest,kg-lineage,kg-codebuild,kg-saas,kg-citation,kg-ontology]",
+]
+demo = ["marimo", "open-kgo[kg-all]"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["placeholder*"]
+include = ["open_kgo*"]
 
 [tool.pytest.ini_options]
-testpaths = ["placeholder", "tests"]
+testpaths = ["open_kgo", "tests"]
 python_files = ["test_*.py"]
 
 [tool.ruff]
 line-length = 120
+exclude = ["demo/*.py"]
 
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
 namespace_packages = true
 explicit_package_bases = true
+exclude = ["demo/"]
 
 [tool.bandit]
-exclude_dirs = [".tox", ".venv", "tests"]
+exclude_dirs = [".tox", ".venv", "tests", "demo"]
 
 [tool.uv]
 exclude-newer = "7 days"

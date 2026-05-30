@@ -1,0 +1,17 @@
+{
+  "R-HSA-1640170": {
+    "stableId": "R-HSA-1640170",
+    "name": "Cell Cycle",
+    "ancestors": ["R-HSA-1640171"]
+  },
+  "R-HSA-1640171": {
+    "stableId": "R-HSA-1640171",
+    "name": "Cellular Processes (mid)",
+    "ancestors": ["R-HSA-1640172"]
+  },
+  "R-HSA-1640172": {
+    "stableId": "R-HSA-1640172",
+    "name": "Cellular Processes (top)",
+    "ancestors": []
+  }
+}

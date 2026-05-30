@@ -73,6 +73,6 @@ plugins:
     - assets:
         - pyproject.toml
         - uv.lock
-      message: "chore(release mloda-plugin-template): ${nextRelease.version}"
+      message: "chore(release open-kgo): ${nextRelease.version}"
 
-repositoryUrl: "https://github.com/mloda-ai/mloda-plugin-template"
+repositoryUrl: "https://github.com/mloda-ai/open-kgo"

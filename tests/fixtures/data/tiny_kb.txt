@@ -1,0 +1,9 @@
+Movie1|directed_by|Director1
+Movie1|starred_actors|Actor1
+Movie1|has_genre|Comedy
+Movie2|directed_by|Director2
+Movie2|starred_actors|Actor1
+Movie2|has_genre|Drama
+Movie3|directed_by|Director3
+Movie3|starred_actors|Actor2
+Movie3|has_genre|Horror

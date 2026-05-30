@@ -1,0 +1,11 @@
+# Built graph artifact, regenerated offline from sample_kb.txt by build_sample.py.
+# When built from the full MetaQA dataset it is a CC BY 3.0 derivative, so it is
+# never committed regardless of source.
+metaqa_sample.gml
+
+# Third-party datasets live under their own folder and are NEVER committed.
+# The full MetaQA dataset is CC BY 3.0 and we do not redistribute it; this rule
+# makes it structurally impossible to commit it by accident. Only the explanatory
+# README is tracked. See metaqa/README.md.
+metaqa/*
+!metaqa/README.md

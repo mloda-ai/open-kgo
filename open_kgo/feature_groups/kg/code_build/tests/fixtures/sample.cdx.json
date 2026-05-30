@@ -1,0 +1,13 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "version": 1,
+  "components": [
+    {"type": "library", "name": "requests", "version": "2.31.0", "bom-ref": "pkg:pypi/requests@2.31.0"},
+    {"type": "library", "name": "urllib3", "version": "2.0.7", "bom-ref": "pkg:pypi/urllib3@2.0.7"},
+    {"type": "library", "name": "certifi", "version": "2023.7.22", "bom-ref": "pkg:pypi/certifi@2023.7.22"}
+  ],
+  "dependencies": [
+    {"ref": "pkg:pypi/requests@2.31.0", "dependsOn": ["pkg:pypi/urllib3@2.0.7", "pkg:pypi/certifi@2023.7.22"]}
+  ]
+}

@@ -1,0 +1,20 @@
+who directed [The Matrix]	Lana Wachowski|Lilly Wachowski
+who wrote [The Matrix]	Lana Wachowski|Lilly Wachowski
+who starred in [The Matrix]	Keanu Reeves|Laurence Fishburne|Carrie-Anne Moss
+what genre is [Pulp Fiction]	Crime|Drama
+who directed [Pulp Fiction]	Quentin Tarantino
+what language is [Spirited Away] in	Japanese
+who starred in [The Godfather]	Marlon Brando|Al Pacino|James Caan
+what year was [Jurassic Park] released	1993
+who directed [Jurassic Park]	Steven Spielberg
+who wrote [Parasite]	Bong Joon-ho|Han Jin-won
+what year was [Parasite] released	2019
+who directed [Amelie]	Jean-Pierre Jeunet
+what language is [Amelie] in	French
+what genre is [Mad Max: Fury Road]	Action|Adventure
+what words describe [Mad Max: Fury Road]	post-apocalyptic|chase
+which films did [Steven Spielberg] direct	Jurassic Park
+what movies star [Tom Hardy]	Mad Max: Fury Road
+who directed [The Dark Knight]	Christopher Nolan
+who starred in [Inception]	Leonardo DiCaprio|Joseph Gordon-Levitt|Elliot Page
+which films did [Christopher Nolan] direct	The Dark Knight|Inception

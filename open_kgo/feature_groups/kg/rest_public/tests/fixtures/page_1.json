@@ -1,0 +1,7 @@
+{
+  "results": [
+    {"id": "W001", "title": "Paper One"},
+    {"id": "W002", "title": "Paper Two"}
+  ],
+  "meta": {"next_cursor": "cursor_to_page_2"}
+}

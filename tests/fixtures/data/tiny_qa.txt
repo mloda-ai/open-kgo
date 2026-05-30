@@ -1,0 +1,2 @@
+what genre is [Movie1]	Comedy
+who directed [Movie2]	Director2

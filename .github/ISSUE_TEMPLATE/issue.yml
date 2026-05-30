@@ -30,7 +30,7 @@ body:
     attributes:
       label: Code pointers (optional)
       description: Files and line numbers where the work happens or where the bug originates. Helps newcomers find their starting point quickly.
-      placeholder: e.g. placeholder/feature_groups/my_plugin/my_feature_group.py:42
+      placeholder: e.g. open_kgo/feature_groups/kg/rdf/rdflib_sparql.py:42
   - type: textarea
     id: dod
     attributes:

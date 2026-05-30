@@ -1,0 +1,47 @@
+namespace: movie
+
+entities:
+  Movie:
+    valid_outgoing:
+      - directed_by
+      - written_by
+      - starred_actors
+      - has_genre
+      - release_year
+      - has_imdb_rating
+      - has_imdb_votes
+      - in_language
+      - has_tags
+  Person:
+    valid_outgoing: []
+  Genre:
+    valid_outgoing: []
+
+relationships:
+  directed_by:
+    domain: Movie
+    range: Person
+  written_by:
+    domain: Movie
+    range: Person
+  starred_actors:
+    domain: Movie
+    range: Person
+  has_genre:
+    domain: Movie
+    range: Genre
+  release_year:
+    domain: Movie
+    range: Year
+  has_imdb_rating:
+    domain: Movie
+    range: Rating
+  has_imdb_votes:
+    domain: Movie
+    range: Votes
+  in_language:
+    domain: Movie
+    range: Language
+  has_tags:
+    domain: Movie
+    range: Tag

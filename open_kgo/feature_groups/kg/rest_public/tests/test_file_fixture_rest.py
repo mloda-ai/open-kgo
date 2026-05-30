@@ -1,0 +1,77 @@
+"""Concrete tests for FileFixtureRestReader."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, Callable
+
+from mloda.user import Feature, Options
+
+import pytest
+
+from mloda.provider import HashableDict
+
+from open_kgo.feature_groups.kg.errors import InvalidCredentialShape
+from open_kgo.feature_groups.kg.rest_public.file_fixture_rest import (
+    FileFixtureRestReader,
+)
+from open_kgo.feature_groups.kg.rest_public.tests.kg_rest_public_contract import (
+    RestPublicContractTestBase,
+)
+
+
+_FIXTURE_DIR = Path(__file__).parent / "fixtures"
+
+
+class TestFileFixtureRestReader(RestPublicContractTestBase):
+    @classmethod
+    def connector_reader_class(cls) -> type[FileFixtureRestReader]:
+        return FileFixtureRestReader
+
+    @classmethod
+    def valid_credentials(cls) -> dict[str, Any]:
+        return {
+            "file_fixture_rest": {
+                "locator": str(_FIXTURE_DIR),
+                "pagination_style": "cursor",
+                "rate_limit_pace": 100,
+                "result_limit": 100,
+            }
+        }
+
+    @classmethod
+    def invalid_credentials(cls) -> dict[str, Any]:
+        return {"file_fixture_rest": {"locator": str(_FIXTURE_DIR), "pagination_style": "evil"}}
+
+    @classmethod
+    def feature_under_test(cls) -> Feature:
+        return Feature("file_fixture_rest__list_works", options=Options(context={}))
+
+    @classmethod
+    def expected_row_shape(cls) -> Callable[[Any], bool]:
+        return lambda result: isinstance(result, list) and len(result) >= 1 and "id" in result[0]
+
+    def test_pagination_yields_three_total_rows(self) -> None:
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
+
+        feat = self.feature_under_test()
+        rows = run_query("file_fixture_rest", self.valid_credentials()["file_fixture_rest"], feat)
+        assert len(rows) == 3
+        assert {r["id"] for r in rows} == {"W001", "W002", "W003"}
+
+    @pytest.mark.parametrize("style", ["page", "offset", "odata-nextLink", "cursorMark", "start_rows", "none"])
+    def test_unsupported_pagination_styles_rejected_at_validate_time(self, style: str) -> None:
+        slot = dict(self.valid_credentials()["file_fixture_rest"])
+        slot["pagination_style"] = style
+        creds = HashableDict({"file_fixture_rest": slot})
+        assert FileFixtureRestReader.is_valid_credentials(creds) is False
+        with pytest.raises(InvalidCredentialShape):
+            FileFixtureRestReader._validate_shape(slot)
+
+    def test_stripped_keys_rejected_by_closed_world(self) -> None:
+        slot = dict(self.valid_credentials()["file_fixture_rest"])
+        slot["page_size"] = 2
+        creds = HashableDict({"file_fixture_rest": slot})
+        assert FileFixtureRestReader.is_valid_credentials(creds) is False
+        with pytest.raises(InvalidCredentialShape):
+            FileFixtureRestReader._validate_shape(slot)

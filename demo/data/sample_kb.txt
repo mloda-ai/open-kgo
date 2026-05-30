@@ -1,0 +1,116 @@
+The Matrix|directed_by|Lana Wachowski
+The Matrix|directed_by|Lilly Wachowski
+The Matrix|written_by|Lana Wachowski
+The Matrix|written_by|Lilly Wachowski
+The Matrix|starred_actors|Keanu Reeves
+The Matrix|starred_actors|Laurence Fishburne
+The Matrix|starred_actors|Carrie-Anne Moss
+The Matrix|has_genre|Science Fiction
+The Matrix|has_genre|Action
+The Matrix|release_year|1999
+The Matrix|in_language|English
+The Matrix|has_tags|dystopia
+The Matrix|has_tags|virtual reality
+Pulp Fiction|directed_by|Quentin Tarantino
+Pulp Fiction|written_by|Quentin Tarantino
+Pulp Fiction|starred_actors|John Travolta
+Pulp Fiction|starred_actors|Samuel L. Jackson
+Pulp Fiction|starred_actors|Uma Thurman
+Pulp Fiction|has_genre|Crime
+Pulp Fiction|has_genre|Drama
+Pulp Fiction|release_year|1994
+Pulp Fiction|in_language|English
+Pulp Fiction|has_tags|nonlinear
+Pulp Fiction|has_tags|dark comedy
+Spirited Away|directed_by|Hayao Miyazaki
+Spirited Away|written_by|Hayao Miyazaki
+Spirited Away|starred_actors|Rumi Hiiragi
+Spirited Away|starred_actors|Miyu Irino
+Spirited Away|has_genre|Animation
+Spirited Away|has_genre|Fantasy
+Spirited Away|release_year|2001
+Spirited Away|in_language|Japanese
+Spirited Away|has_tags|coming of age
+Spirited Away|has_tags|spirits
+Parasite|directed_by|Bong Joon-ho
+Parasite|written_by|Bong Joon-ho
+Parasite|written_by|Han Jin-won
+Parasite|starred_actors|Song Kang-ho
+Parasite|starred_actors|Lee Sun-kyun
+Parasite|starred_actors|Cho Yeo-jeong
+Parasite|has_genre|Thriller
+Parasite|has_genre|Drama
+Parasite|release_year|2019
+Parasite|in_language|Korean
+Parasite|has_tags|class conflict
+Parasite|has_tags|dark comedy
+The Godfather|directed_by|Francis Ford Coppola
+The Godfather|written_by|Mario Puzo
+The Godfather|written_by|Francis Ford Coppola
+The Godfather|starred_actors|Marlon Brando
+The Godfather|starred_actors|Al Pacino
+The Godfather|starred_actors|James Caan
+The Godfather|has_genre|Crime
+The Godfather|has_genre|Drama
+The Godfather|release_year|1972
+The Godfather|in_language|English
+The Godfather|has_tags|mafia
+The Godfather|has_tags|family
+Jurassic Park|directed_by|Steven Spielberg
+Jurassic Park|written_by|Michael Crichton
+Jurassic Park|written_by|David Koepp
+Jurassic Park|starred_actors|Sam Neill
+Jurassic Park|starred_actors|Laura Dern
+Jurassic Park|starred_actors|Jeff Goldblum
+Jurassic Park|has_genre|Adventure
+Jurassic Park|has_genre|Science Fiction
+Jurassic Park|release_year|1993
+Jurassic Park|in_language|English
+Jurassic Park|has_tags|dinosaurs
+Jurassic Park|has_tags|theme park
+Amelie|directed_by|Jean-Pierre Jeunet
+Amelie|written_by|Jean-Pierre Jeunet
+Amelie|written_by|Guillaume Laurant
+Amelie|starred_actors|Audrey Tautou
+Amelie|starred_actors|Mathieu Kassovitz
+Amelie|has_genre|Romance
+Amelie|has_genre|Comedy
+Amelie|release_year|2001
+Amelie|in_language|French
+Amelie|has_tags|whimsical
+Amelie|has_tags|Paris
+Mad Max: Fury Road|directed_by|George Miller
+Mad Max: Fury Road|written_by|George Miller
+Mad Max: Fury Road|written_by|Brendan McCarthy
+Mad Max: Fury Road|starred_actors|Tom Hardy
+Mad Max: Fury Road|starred_actors|Charlize Theron
+Mad Max: Fury Road|starred_actors|Nicholas Hoult
+Mad Max: Fury Road|has_genre|Action
+Mad Max: Fury Road|has_genre|Adventure
+Mad Max: Fury Road|release_year|2015
+Mad Max: Fury Road|in_language|English
+Mad Max: Fury Road|has_tags|post-apocalyptic
+Mad Max: Fury Road|has_tags|chase
+The Dark Knight|directed_by|Christopher Nolan
+The Dark Knight|written_by|Christopher Nolan
+The Dark Knight|written_by|Jonathan Nolan
+The Dark Knight|starred_actors|Christian Bale
+The Dark Knight|starred_actors|Heath Ledger
+The Dark Knight|starred_actors|Aaron Eckhart
+The Dark Knight|has_genre|Action
+The Dark Knight|has_genre|Crime
+The Dark Knight|release_year|2008
+The Dark Knight|in_language|English
+The Dark Knight|has_tags|superhero
+The Dark Knight|has_tags|heist
+Inception|directed_by|Christopher Nolan
+Inception|written_by|Christopher Nolan
+Inception|starred_actors|Leonardo DiCaprio
+Inception|starred_actors|Joseph Gordon-Levitt
+Inception|starred_actors|Elliot Page
+Inception|has_genre|Science Fiction
+Inception|has_genre|Action
+Inception|release_year|2010
+Inception|in_language|English
+Inception|has_tags|dreams
+Inception|has_tags|heist
