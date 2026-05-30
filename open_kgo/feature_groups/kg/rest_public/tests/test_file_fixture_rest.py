@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Any, Callable
 
@@ -75,3 +76,33 @@ class TestFileFixtureRestReader(RestPublicContractTestBase):
         assert FileFixtureRestReader.is_valid_credentials(creds) is False
         with pytest.raises(InvalidCredentialShape):
             FileFixtureRestReader._validate_shape(slot)
+
+    def test_pages_walked_in_numeric_not_lexical_order(self, tmp_path: Path) -> None:
+        """11 pages must walk page_1..page_11, not the lexical page_1, page_10, page_11, page_2.
+
+        Only the last page (page_11) carries a null ``next_cursor``; every
+        earlier page chains forward. A lexical sort would visit page_11
+        (null cursor) third and break early, dropping page_2..page_10. A
+        numeric sort reads all 11 rows in order.
+        """
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
+
+        total = 11
+        for n in range(1, total + 1):
+            next_cursor = None if n == total else f"cursor_to_page_{n + 1}"
+            (tmp_path / f"page_{n}.json").write_text(
+                json.dumps(
+                    {
+                        "results": [{"id": f"W{n:03d}", "title": f"Paper {n}"}],
+                        "meta": {"next_cursor": next_cursor},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+        slot = dict(self.valid_credentials()["file_fixture_rest"])
+        slot["locator"] = str(tmp_path)
+        feat = self.feature_under_test()
+        rows = run_query("file_fixture_rest", slot, feat)
+
+        assert [r["id"] for r in rows] == [f"W{n:03d}" for n in range(1, total + 1)]

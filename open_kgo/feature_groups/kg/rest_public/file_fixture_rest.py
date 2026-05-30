@@ -23,6 +23,7 @@ Surface narrowing:
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any, ClassVar, Mapping
 
@@ -33,6 +34,12 @@ from open_kgo.feature_groups.kg.rest_public.base import (
     RestPublicFeatureGroup,
     RestPublicReader,
 )
+
+
+def _page_index(page_file: Path) -> int:
+    """Return the integer ``<N>`` from a ``page_<N>.json`` filename for numeric sort."""
+    match = re.search(r"\d+", page_file.stem)
+    return int(match.group()) if match else 0
 
 
 class FileFixtureRestReader(RestPublicReader):
@@ -72,7 +79,12 @@ class FileFixtureRestReader(RestPublicReader):
         path = cls._connect_from_slot(ctx.slot)
 
         pages_dir = path if path.is_dir() else path.parent
-        page_files = sorted(pages_dir.glob("page_*.json"))
+        # Sort numerically on the ``<N>`` in ``page_<N>.json``: a lexical
+        # ``sorted()`` orders ``page_10`` before ``page_2``, which both
+        # walks pages out of order (wrong rows under ``result_limit``) and
+        # can trip the ``next_cursor`` break on the wrong page, truncating
+        # the walk. Files without a digit sort first (key 0).
+        page_files = sorted(pages_dir.glob("page_*.json"), key=_page_index)
         rows: list[dict[str, Any]] = []
         for page_file in page_files:
             # Per-page parse routed through the mtime-keyed cache: a real
