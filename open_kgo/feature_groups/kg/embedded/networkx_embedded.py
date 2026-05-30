@@ -23,6 +23,7 @@ from open_kgo.feature_groups.kg.embedded.base import (
     EmbeddedGraphFeatureGroup,
     EmbeddedGraphReader,
 )
+from open_kgo.feature_groups.kg.fixtures import _rejected_scheme
 
 
 _LOADERS: dict[str, Any] = {
@@ -56,6 +57,15 @@ class NetworkxEmbeddedReader(EmbeddedGraphReader):
         locator = slot.get("locator")
         if not locator:
             return nx.Graph()
+        # Reject remote locators (http://, ftp://, ...) for parity with the
+        # other file-backed readers; the networkx loaders only open local
+        # paths, so this keeps the file-only contract uniform across families.
+        bad = _rejected_scheme(locator)
+        if bad is not None:
+            raise ValueError(
+                f"{cls.CONNECTOR_ID}: locator scheme {bad!r} is not permitted; "
+                f"only local file paths or file:// URLs are allowed."
+            )
         fmt = slot.get("graph_file_format", "gml")
         loader = _LOADERS.get(fmt)
         if loader is None:
