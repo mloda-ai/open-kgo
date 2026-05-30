@@ -10,17 +10,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # 3.14 is allowed to fail (continue-on-error): kuzu has no cp314 wheel yet,
-    # so the kg-all install may not resolve. fail-fast: false keeps 3.10-3.13
-    # reporting even if 3.14 breaks. Flip experimental off once kuzu ships 3.14.
-    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
-      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        include:
-          - python-version: "3.14"
-            experimental: true
 
     steps:
       - uses: actions/checkout@v4
@@ -44,16 +36,10 @@ jobs:
     # Demo marimo notebooks are slow to execute end-to-end, so they run as a
     # separate tox env (not part of the default `tox` above) to keep the main
     # matrix fast. Run across every supported Python version like `test`.
-    # 3.14 is allowed to fail (see the `test` job note: kuzu has no cp314 wheel).
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental || false }}
     strategy:
-      fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        include:
-          - python-version: "3.14"
-            experimental: true
 
     steps:
       - uses: actions/checkout@v4
