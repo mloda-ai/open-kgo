@@ -29,7 +29,8 @@ from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 
-from open_kgo.feature_groups.kg.fixtures import load_json_fixture
+from open_kgo.feature_groups.kg.base import narrow_property_mapping
+from open_kgo.feature_groups.kg.fixtures import copy_cached_row, load_json_fixture
 from open_kgo.feature_groups.kg.rest_public.base import (
     RestPublicFeatureGroup,
     RestPublicReader,
@@ -46,9 +47,7 @@ class FileFixtureRestReader(RestPublicReader):
     CONNECTOR_ID: ClassVar[str] = "file_fixture_rest"
     REQUIRED_KEYS: ClassVar[tuple[tuple[str, ...], ...]] = (("locator",),)
 
-    PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-        k: v for k, v in RestPublicReader.PROPERTY_MAPPING.items() if k != "page_size"
-    }
+    PROPERTY_MAPPING: ClassVar[dict[str, Any]] = narrow_property_mapping(RestPublicReader.PROPERTY_MAPPING, "page_size")
     PARAMS_MAPPING: ClassVar[dict[str, Any]] = {}
 
     SUPPORTED_VALUES: ClassVar[Mapping[str, frozenset[Any]]] = {
@@ -93,11 +92,9 @@ class FileFixtureRestReader(RestPublicReader):
             # itself is cheap and stays uncached.
             body = load_json_fixture(cls.CONNECTOR_ID, page_file)
             for row in body.get("results", []):
-                # Shallow-copy each row: ``body`` is the cached page dict,
-                # so handing the row out directly would let a downstream
-                # consumer mutate the cache (uniform with the citation /
-                # dbt / SBOM readers; matches the base-class contract).
-                rows.append({**row} if isinstance(row, dict) else row)
+                # ``body`` is the cached page dict; copy_cached_row keeps the
+                # cache read-only when the row is handed to a downstream consumer.
+                rows.append(copy_cached_row(row))
                 if len(rows) >= ctx.result_limit:
                     return rows
             if not body.get("meta", {}).get("next_cursor"):

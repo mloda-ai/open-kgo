@@ -89,6 +89,21 @@ def compose_property_mapping(*sources: dict[str, Any], context: str = "") -> dic
     return merged
 
 
+def narrow_property_mapping(source: dict[str, Any], *exclude: str) -> dict[str, Any]:
+    """Return ``source`` minus the ``exclude`` keys — the narrowing companion to ``compose_property_mapping``.
+
+    Concrete plugins drop family-level keys they do not honor (advertising
+    a key the reader ignores would be a surface lie that the closed-world
+    credential check then rejects). Several concretes spelled this as an
+    inline ``{k: v for k, v in Parent.PROPERTY_MAPPING.items() if k not in {...}}``
+    comprehension; centralising it names the intent and keeps the narrowing
+    rule in one place. Keys in ``exclude`` that are absent from ``source``
+    are silently ignored (narrowing is idempotent).
+    """
+    excluded = set(exclude)
+    return {k: v for k, v in source.items() if k not in excluded}
+
+
 # Issue #32 item 2: the universal property mapping previously declared
 # ``auth_method`` + the three ``auth_*_env`` companion keys, and a paired
 # ``_UNIVERSAL_CONDITIONAL_REQUIRED_KEYS`` tuple tied them together. No

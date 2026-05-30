@@ -28,7 +28,12 @@ from open_kgo.feature_groups.kg.agent_memory.base import (
     _MEMORY_SCOPE_SPECS,
 )
 from open_kgo.feature_groups.kg.agent_memory.networkx_memory import NetworkxMemoryReader
-from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, ParamReader, compose_property_mapping
+from open_kgo.feature_groups.kg.base import (
+    KgConnectorReaderBase,
+    ParamReader,
+    compose_property_mapping,
+    narrow_property_mapping,
+)
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
     NonDictSpecError,
@@ -293,6 +298,43 @@ def test_compose_property_mapping_non_dict_spec_error_omits_prefix_without_conte
     msg = str(info.value)
     assert msg.startswith("spec for key 'extra'")
     assert ": spec for key" not in msg
+
+
+# -- narrow_property_mapping --------------------------------------------------
+#
+# The narrowing companion to ``compose_property_mapping``: concrete plugins
+# drop family-level keys they do not honor. Centralised so the intent is named
+# rather than spelled as an inline ``{k: v ... if k not in {...}}`` comprehension
+# at each concrete.
+
+
+def test_narrow_property_mapping_drops_excluded_keys() -> None:
+    """Excluded keys are removed; every other key and its spec is preserved by identity."""
+    source = {"a": {"explanation": "1"}, "b": {"explanation": "2"}, "c": {"explanation": "3"}}
+    narrowed = narrow_property_mapping(source, "b")
+    assert set(narrowed) == {"a", "c"}
+    assert narrowed["a"] is source["a"]
+    assert narrowed["c"] is source["c"]
+
+
+def test_narrow_property_mapping_excludes_multiple_keys() -> None:
+    """Multiple exclude args are all dropped in one call."""
+    source: dict[str, dict[str, Any]] = {"a": {}, "b": {}, "c": {}, "d": {}}
+    assert set(narrow_property_mapping(source, "b", "d")) == {"a", "c"}
+
+
+def test_narrow_property_mapping_ignores_absent_excludes() -> None:
+    """Excluding a key not present in the source is a no-op (idempotent narrowing)."""
+    source: dict[str, dict[str, Any]] = {"a": {}, "b": {}}
+    assert narrow_property_mapping(source, "missing") == source
+
+
+def test_narrow_property_mapping_returns_fresh_dict() -> None:
+    """The result is a new dict; mutating it does not touch the source."""
+    source: dict[str, dict[str, Any]] = {"a": {}, "b": {}}
+    narrowed = narrow_property_mapping(source)
+    narrowed["c"] = {}
+    assert "c" not in source
 
 
 # -- Class-definition-time spec-shape guard -----------------------------------

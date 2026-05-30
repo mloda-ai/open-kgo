@@ -19,20 +19,21 @@ from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 
+from open_kgo.feature_groups.kg.base import narrow_property_mapping
 from open_kgo.feature_groups.kg.citation_rest.base import (
     CitationRestFeatureGroup,
     CitationRestReader,
 )
-from open_kgo.feature_groups.kg.fixtures import load_json_fixture
+from open_kgo.feature_groups.kg.fixtures import copy_cached_row, load_json_fixture
 
 
 class FileFixtureCitationReader(CitationRestReader):
     CONNECTOR_ID: ClassVar[str] = "file_fixture_citation"
     REQUIRED_KEYS: ClassVar[tuple[tuple[str, ...], ...]] = (("locator",),)
 
-    PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-        k: v for k, v in CitationRestReader.PROPERTY_MAPPING.items() if k not in {"pagination_style", "page_size"}
-    }
+    PROPERTY_MAPPING: ClassVar[dict[str, Any]] = narrow_property_mapping(
+        CitationRestReader.PROPERTY_MAPPING, "pagination_style", "page_size"
+    )
     PARAMS_MAPPING: ClassVar[dict[str, Any]] = {
         k: v for k, v in CitationRestReader.PARAMS_MAPPING.items() if k in {"stable_id", "hierarchy_depth"}
     }
@@ -72,12 +73,9 @@ class FileFixtureCitationReader(CitationRestReader):
                 if node_id in visited or node_id not in catalog:
                     continue
                 visited.add(node_id)
-                # Shallow-copy the cached entry: ``catalog`` is shared
-                # across calls (see ``_connect_from_slot`` docstring), so
-                # handing the dict out directly would let any downstream
-                # consumer poison subsequent loads. The shell copy is
-                # cheap and keeps the cache read-only at the row level.
-                rows.append({**catalog[node_id]})
+                # ``catalog`` is shared across calls (see ``_connect_from_slot``);
+                # copy_cached_row keeps the cache read-only at the row level.
+                rows.append(copy_cached_row(catalog[node_id]))
                 if hop < depth:
                     for ancestor_id in catalog[node_id].get("ancestors", []):
                         if ancestor_id not in visited:

@@ -58,6 +58,7 @@ from typing import Any, ClassVar, Mapping
 from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 
+from open_kgo.feature_groups.kg.base import narrow_property_mapping
 from open_kgo.feature_groups.kg.errors import FixtureLoadError, UnknownTenantError
 from open_kgo.feature_groups.kg.fixtures import load_json_fixture
 from open_kgo.feature_groups.kg.saas_authz.base import (
@@ -127,7 +128,7 @@ class InProcessTupleStoreReader(SaasAuthzReader):
     # because the family base sets ``strict_validation=False`` for
     # ``tenant``; see module docstring.
     PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-        **{k: v for k, v in SaasAuthzReader.PROPERTY_MAPPING.items() if k != "locator"},
+        **narrow_property_mapping(SaasAuthzReader.PROPERTY_MAPPING, "locator"),
         "tenant": {
             **SaasAuthzReader.PROPERTY_MAPPING["tenant"],
             "explanation": "Sole tenant served by the in-process tuple store fixture.",
