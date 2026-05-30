@@ -49,10 +49,11 @@ class CycloneDxSbomReader(CodeBuildReader):
         ctx = cls._prepare_load(data_access)
         sbom = cls._connect_from_slot(ctx.slot)
 
-        # copy_cached_row keeps the shared cached SBOM read-only when a
+        # Slice to result_limit *before* copying so we only copy the rows we
+        # emit; copy_cached_row keeps the shared cached SBOM read-only when a
         # component is returned to a caller (see ``_connect_from_slot``).
-        components: list[dict[str, Any]] = [copy_cached_row(c) for c in sbom.get("components", [])]
-        return components[: ctx.result_limit]
+        components = sbom.get("components", [])[: ctx.result_limit]
+        return [copy_cached_row(c) for c in components]
 
 
 class CycloneDxSbomFeatureGroup(CodeBuildFeatureGroup):
