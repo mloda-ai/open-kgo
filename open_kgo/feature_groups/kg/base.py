@@ -120,15 +120,6 @@ def narrow_property_mapping(source: dict[str, Any], *exclude: str) -> dict[str, 
 # networked concrete has something to call without re-implementing the
 # env-var-resolution contract.
 
-# The same reasoning retired ``request_timeout_ms``. It was a universal
-# property with a 30_000ms default, but no shipped concrete opens a network
-# socket, so no ``_connect_from_slot`` / ``load_data`` ever read it — the
-# framework validated and defaulted a timeout surface that bounded nothing
-# (``embedded/base.py`` even documented it as semantically optional). Keeping
-# it while dropping ``auth_method`` for the identical "decorative surface"
-# reason was inconsistent. Re-introduce it per-concrete (or per-family) when a
-# networked concrete actually enforces a per-request timeout.
-
 
 _UNIVERSAL_PROPERTY_MAPPING: dict[str, Any] = {
     "locator": {
