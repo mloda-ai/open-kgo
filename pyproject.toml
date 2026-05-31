@@ -64,6 +64,12 @@ demo = ["marimo", "open-kgo[kg-all]"]
 where = ["."]
 include = ["open_kgo*"]
 
+# Ship the PEP 561 marker so the `Typing :: Typed` classifier is honoured:
+# without it, mypy/pyright in downstream projects ignore this package's inline
+# types even though every module is fully annotated.
+[tool.setuptools.package-data]
+open_kgo = ["py.typed"]
+
 [tool.pytest.ini_options]
 testpaths = ["open_kgo", "tests"]
 python_files = ["test_*.py"]

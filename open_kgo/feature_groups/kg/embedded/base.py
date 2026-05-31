@@ -32,8 +32,7 @@ class EmbeddedGraphReader(ParamReader):
 
     Concrete plugins (NetworkxEmbeddedReader, IGraphReader, ...) load a graph
     object from a filesystem path or accept ``locator=None`` for empty graph.
-    Auth is always ``none``; network properties (``request_timeout_ms``) are
-    semantically optional.
+    The backend is in-process, so there is no network surface to configure.
 
     Per-call inputs (``operation``, ``start_node``) live on
     ``PARAMS_MAPPING`` rather than being read raw from

@@ -75,8 +75,8 @@ def test_connector_ids_disjoint_from_property_names() -> None:
     Issue #18 C3: ``_wrap_credentials`` uses ``cls.CONNECTOR_ID in data_access``
     as the "is this already wrapped?" heuristic (``base.py``). If a plugin's
     ``CONNECTOR_ID`` coincides with *any* declared slot key — including its
-    own family's keys and the universal ``locator``, ``request_timeout_ms``,
-    ``result_limit`` that every reader inherits from
+    own family's keys and the universal ``locator``, ``result_limit`` that
+    every reader inherits from
     ``_UNIVERSAL_PROPERTY_MAPPING`` — a bare slot dict would misclassify as a
     wrapper and get handed to the reader without the outer normalisation
     step. The realistic failure mode is therefore not a cross-family

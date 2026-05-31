@@ -203,9 +203,9 @@ def test_make_valid_credentials_returns_wrapped_form_with_connector_id() -> None
 def test_make_valid_credentials_prefills_spec_defaults() -> None:
     """Spec defaults are pre-populated; the caller only supplies the rest.
 
-    ``result_limit`` and ``request_timeout_ms`` carry explicit non-``None``
-    defaults on the universal base; the helper must lift those into the slot
-    so the caller doesn't re-spell family-level scaffolding.
+    ``result_limit`` carries an explicit non-``None`` default on the universal
+    base; the helper must lift it into the slot so the caller doesn't re-spell
+    family-level scaffolding.
     """
     creds = make_valid_credentials(
         FileFixtureCitationReader,
@@ -213,7 +213,6 @@ def test_make_valid_credentials_prefills_spec_defaults() -> None:
     )
     slot = creds[FileFixtureCitationReader.CONNECTOR_ID]
     assert slot["result_limit"] == 1000
-    assert slot["request_timeout_ms"] == 30_000
 
 
 def test_make_valid_credentials_override_wins_over_default() -> None:
