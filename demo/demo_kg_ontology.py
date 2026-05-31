@@ -387,6 +387,120 @@ def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
 
 
 @app.cell
+def section_backend_swap(mo):
+    mo.md("---\n## Backend swap — NetworkX → Kuzu")
+    return
+
+
+@app.cell
+def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
+    import gc as _gc
+    import shutil as _shutil
+    import tempfile as _tempfile
+
+    import importlib as _importlib
+
+    import kuzu as _kuzu
+
+    _importlib.import_module("open_kgo.feature_groups.kg.network_pg.kuzu_cypher")
+    from mloda.user import DataAccessCollection as _DAC
+    from mloda.user import Feature as _Feature
+    from mloda.user import Options as _Options
+    from mloda.user import mloda as _mloda
+
+    from open_kgo.feature_groups.kg.python_dict_kg_framework import KgPythonDictFramework as _KgFW
+
+    # Build a tiny Kuzu movie graph in a temp directory.
+    _tmp = _tempfile.mkdtemp(prefix="kg_demo_swap_")
+    _db_dir = _tmp + "/movies.kuzu"
+    _build_db = _kuzu.Database(_db_dir)
+    _build_conn = _kuzu.Connection(_build_db)
+    _build_conn.execute("CREATE NODE TABLE Movie(name STRING, PRIMARY KEY(name))")
+    _build_conn.execute("CREATE NODE TABLE Person(name STRING, PRIMARY KEY(name))")
+    _build_conn.execute("CREATE REL TABLE directed_by(FROM Movie TO Person)")
+    _build_conn.execute("CREATE (:Movie {name: 'The Dark Knight'})")
+    _build_conn.execute("CREATE (:Person {name: 'Christopher Nolan'})")
+    _build_conn.execute(
+        "MATCH (m:Movie {name: 'The Dark Knight'}), (p:Person {name: 'Christopher Nolan'}) "
+        "CREATE (m)-[:directed_by]->(p)"
+    )
+    # Release write handles before mloda opens the same DB directory.
+    del _build_conn
+    del _build_db
+    _gc.collect()
+
+    # Run through the Kuzu mloda connector — only the locator changes vs NetworkX.
+    _kuzu_creds = {
+        "locator": _db_dir,
+        "ontology": str(ONTOLOGY_YAML),
+    }
+    _feat = _Feature(
+        "kuzu_cypher__directed_by",
+        options=_Options(context={
+            "query_text": "MATCH (m:Movie)-[:directed_by]->(p:Person) RETURN m.name AS movie, p.name AS director",
+        }),
+    )
+    _dac = _DAC(credentials=[{"kuzu_cypher": _kuzu_creds}])
+    _partitions = _mloda.run_all(
+        [_feat],
+        compute_frameworks={_KgFW},
+        data_access_collection=_dac,
+    )
+    _kuzu_rows = [row[_feat.name] for part in _partitions for row in part if _feat.name in row]
+
+    # Same ontology YAML, same validation rules — only the credential locator changed.
+    _valid_edges = [
+        (
+            r["movie"],
+            "directed_by",
+            r["director"],
+            OntologyRegistry.is_valid_edge("movie", "Movie", "directed_by"),
+        )
+        for r in _kuzu_rows
+    ]
+    _invalid_attempt = OntologyRegistry.is_valid_edge("movie", "Person", "directed_by")
+
+    _shutil.rmtree(_tmp, ignore_errors=True)
+
+    _check_rows = "\n".join(
+        f"| `{src}` | `{rel}` | `{tgt}` | {'valid' if ok else 'invalid'} |"
+        for src, rel, tgt, ok in _valid_edges
+    )
+
+    mo.md(f"""
+    The **same ontology YAML** and the **same validation rules** apply unchanged when the
+    storage backend changes. Only the connector credentials change — the `locator` and the
+    connector id (`networkx_embedded` → `kuzu_cypher`).
+
+    ```python
+    # NetworkX, file-backed, in-process
+    networkx_creds = {{
+        "locator":           "metaqa_sample.gml",
+        "graph_file_format": "gml",
+        "ontology":          "metaqa_ontology.yaml",  # travels with the swap
+    }}
+
+    # Kuzu, embedded Cypher engine — one credential change
+    kuzu_creds = {{
+        "locator":  "/path/to/movies.kuzu",           # locator changes
+        "ontology": "metaqa_ontology.yaml",           # same YAML, same rules
+    }}
+    ```
+
+    **Data fetched from Kuzu via `mloda.run_all`:**
+
+    | Source | Relation | Target | Ontology check |
+    |---|---|---|---|
+    {_check_rows}
+
+    **Same rule, wrong source type:** `is_valid_edge("movie", "Person", "directed_by")` → `{_invalid_attempt}`
+
+    The ontology YAML is the single source of truth. The backend is swappable.
+    """)
+    return
+
+
+@app.cell
 def section_standalone(mo):
     mo.md("---\n## Standalone API (no mloda required)")
     return

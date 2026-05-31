@@ -16,6 +16,7 @@ from pathlib import Path
 DATA_DIR = Path(__file__).parent
 KB_FILE = DATA_DIR / "sample_kb.txt"
 QA_FILE = DATA_DIR / "sample_qa.txt"
+QA_2HOP_FILE = DATA_DIR / "sample_qa_2hop.txt"
 SAMPLE_FILE = DATA_DIR / "metaqa_sample.gml"
 
 

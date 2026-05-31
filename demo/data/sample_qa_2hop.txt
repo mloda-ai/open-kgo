@@ -1,0 +1,11 @@
+What movies share the same director with [The Dark Knight]	Inception
+Who starred in [Action] movies	Aaron Eckhart|Carrie-Anne Moss|Charlize Theron|Christian Bale|Elliot Page|Heath Ledger|Joseph Gordon-Levitt|Keanu Reeves|Laurence Fishburne|Leonardo DiCaprio|Nicholas Hoult|Tom Hardy
+Who directed [Crime] movies	Christopher Nolan|Francis Ford Coppola|Quentin Tarantino
+Who starred in movies released in [2001]	Audrey Tautou|Mathieu Kassovitz|Miyu Irino|Rumi Hiiragi
+Who directed movies released in [1999]	Lana Wachowski|Lilly Wachowski
+What language are [Science Fiction] movies in	English
+Who directed movies tagged [heist]	Christopher Nolan
+Who are the co-stars of [Keanu Reeves]	Carrie-Anne Moss|Laurence Fishburne
+What genres do movies from [2019] have	Drama|Thriller
+Who starred in movies tagged [dark comedy]	Cho Yeo-jeong|John Travolta|Lee Sun-kyun|Samuel L. Jackson|Song Kang-ho|Uma Thurman
+What release years do [Drama] movies have	1972|1994|2019
