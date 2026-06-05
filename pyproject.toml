@@ -11,7 +11,7 @@ description = "Open Knowledge Graphs and Ontologies plugin for mloda."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Tom Kaltofen", email = "tomkaltofen@mloda.ai" }]
-dependencies = ["mloda>=0.6.1", "mloda-testing>=0.3.1"]
+dependencies = ["mloda>=0.8.0", "mloda-testing>=0.3.1"]
 requires-python = ">=3.10"
 # License classifier intentionally omitted: `license` above is an SPDX
 # expression (PEP 639), and newer setuptools rejects a `License ::` trove
