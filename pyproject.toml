@@ -4,11 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-kgo"
-# Bootstrap floor for semantic-release: it computes the next version by bumping
-# the latest git tag, so the repo needs a matching `0.2.0` tag pushed once by
-# hand before the first automated release (no tag => semantic-release has no
-# baseline to bump from). The high mloda floor (>=0.8.0) is unrelated: this
-# package's own version line stays low until releases start cutting it.
+# semantic-release bumps the latest git tag; needs a `0.2.0` tag pushed once by
+# hand to bootstrap. The mloda floor (>=0.8.0) is unrelated.
 version = "0.2.0"
 description = "Open Knowledge Graphs and Ontologies plugin for mloda."
 readme = "README.md"
@@ -16,9 +13,8 @@ license = "Apache-2.0"
 authors = [{ name = "Tom Kaltofen", email = "tomkaltofen@mloda.ai" }]
 dependencies = ["mloda>=0.8.0", "mloda-testing>=0.3.1"]
 requires-python = ">=3.10"
-# License classifier intentionally omitted: `license` above is an SPDX
-# expression (PEP 639), and newer setuptools rejects a `License ::` trove
-# classifier alongside it.
+# No `License ::` trove classifier: `license` above is an SPDX expression
+# (PEP 639) and setuptools rejects both together.
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -53,10 +49,8 @@ kg-embedded = ["networkx>=3.2"]
 kg-network-pg = ["kuzu>=0.4"]
 kg-memory = ["networkx>=3.2"]
 kg-ontology = ["pyyaml>=6.0"]
-# These five families are pure-stdlib (no third-party runtime deps), so their
-# extras are intentionally empty. They exist so every family installs with the
-# same `open-kgo[kg-<family>]` syntax and so `kg-all` can list them uniformly;
-# do not delete them as "unused".
+# Pure-stdlib families: extras intentionally empty so every family installs via
+# `open-kgo[kg-<family>]` and `kg-all` lists them uniformly. Do not delete.
 kg-rest = []
 kg-lineage = []
 kg-codebuild = []
@@ -71,9 +65,8 @@ demo = ["marimo", "open-kgo[kg-all]"]
 where = ["."]
 include = ["open_kgo*"]
 
-# Ship the PEP 561 marker so the `Typing :: Typed` classifier is honoured:
-# without it, mypy/pyright in downstream projects ignore this package's inline
-# types even though every module is fully annotated.
+# PEP 561 marker so the `Typing :: Typed` classifier is honoured (downstream
+# type-checkers otherwise ignore this package's inline types).
 [tool.setuptools.package-data]
 open_kgo = ["py.typed"]
 
@@ -86,11 +79,8 @@ markers = [
 
 [tool.ruff]
 line-length = 120
-# demo/ is linted (unused imports, undefined names, formatting): it ships in the
-# repo and runs in CI via the notebook tests, so style/correctness drift there is
-# a real bug, not cosmetic. mypy and bandit still skip demo/ (see their excludes):
-# marimo's cell-function style is awkward to type-check, and the demo scripts are
-# not part of the importable package surface bandit guards.
+# demo/ is linted (it ships and runs in CI notebook tests). mypy/bandit still
+# skip it: marimo's cell style resists typing and demos aren't importable.
 
 [tool.mypy]
 strict = true
@@ -103,18 +93,9 @@ exclude = ["demo/", "build/"]
 exclude_dirs = [".tox", ".venv", "tests", "demo"]
 
 [tool.uv]
-# Supply-chain cooldown: ignore any third-party release younger than 7 days so a
-# freshly compromised upload cannot land here automatically.
+# Supply-chain cooldown: ignore third-party releases younger than 7 days.
 exclude-newer = "7 days"
-# mloda, mloda-testing, and mloda-registry are first-party packages maintained by
-# this project's own org, so the cooldown that guards against compromised
-# *third-party* releases does not apply: we want their latest releases
-# immediately (e.g. to pick up a coordinated mloda bump without a 7-day lag). A
-# rolling "0 days" span expresses exactly that and, unlike a hard-coded calendar
-# date, never ages out into a silent behaviour flip. Owner: tk.
-#
-# Accepted tradeoff: this removes the cooldown for these three deps entirely, so a
-# compromised upload to the mloda org's PyPI account would land here immediately
-# with no quarantine window. We take that risk for first-party packages we
-# control; do NOT add third-party packages to this override.
+# First-party mloda packages are exempt (rolling "0 days"): we want their latest
+# releases immediately, accepting no quarantine window. Do NOT add third-party
+# packages here. Owner: tk.
 exclude-newer-package = { mloda = "0 days", "mloda-testing" = "0 days", "mloda-registry" = "0 days" }
