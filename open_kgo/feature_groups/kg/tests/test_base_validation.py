@@ -2,11 +2,11 @@
 
 These tests target behaviours that the per-family contract suite does not
 exercise on its own: empty-string env-var values on the opt-in
-``_resolve_env`` helper (issue #5 item 5) and malformed credential slots
-(non-dict values, issue #5 item 6). The earlier auth_method ↔ env-name
-conditional-required-keys checks (#5 item 7) were dropped when the
-decorative auth surface was removed from the universal base — see issue
-#32 item 2 — so this module no longer exercises them.
+``_resolve_env`` helper and malformed credential slots
+(non-dict values). The earlier ``auth_method``/env-name
+conditional-required-keys checks were dropped when the
+decorative auth surface was removed from the universal base, so this module
+no longer exercises them.
 """
 
 from __future__ import annotations
@@ -78,7 +78,7 @@ def test_resolve_env_raises_when_env_unset(monkeypatch: pytest.MonkeyPatch) -> N
 def test_resolve_env_raises_when_env_is_blank(blank_value: str, monkeypatch: pytest.MonkeyPatch) -> None:
     """An env var set to an empty or whitespace-only value is treated as missing.
 
-    Issue #18 C4 extends the original empty-string case to whitespace-only
+    The contract extends the original empty-string case to whitespace-only
     values (``"   "``, ``"\\t"``, ``"\\n"``). Downstream auth chokes on
     whitespace tokens with opaque errors, so ``_resolve_env`` raises
     ``MissingEnvVarError`` for any value that does not contain a non-blank
@@ -182,7 +182,7 @@ def test_matcher_safe_iteration_with_one_malformed_and_one_valid_slot() -> None:
 
 
 def test_is_valid_credentials_swallows_runtime_error_from_misbehaving_mapping() -> None:
-    """Issue #18 item A4: ``is_valid_credentials`` must catch non-``InvalidCredentialShape``
+    """``is_valid_credentials`` must catch non-``InvalidCredentialShape``
     exceptions raised while probing the credentials object.
 
     The matcher (``ReadDB.match_read_db_data_access``) only catches
@@ -257,11 +257,11 @@ def test_validate_shape_raises_on_unknown_key() -> None:
         _FakeReader._validate_shape({"definitely_not_a_kg_key": "x"})
 
 
-# --- Issue #18 item A5: connect() validation parity with is_valid_credentials ----
+# --- connect() validation parity with is_valid_credentials -------------------
 
 
 class _RequiredKeyReader(KgConnectorReaderBase):
-    """Synthetic reader with a non-empty ``REQUIRED_KEYS`` for A5 connect() tests."""
+    """Synthetic reader with a non-empty ``REQUIRED_KEYS`` for connect() parity tests."""
 
     CONNECTOR_ID: ClassVar[str] = "fake_required_key_reader"
     REQUIRED_KEYS: ClassVar[tuple[tuple[str, ...], ...]] = (("locator",),)

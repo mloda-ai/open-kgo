@@ -46,7 +46,7 @@ class RdfLibSparqlReader(RdfSparqlReader):
         """Return an rdflib.Graph populated from slot['locator']; parsed once and shared.
 
         A real Turtle file is 1-100MB; rdflib's parse pass is the
-        expensive step (issue #32 item 3). Routes through the shared
+        expensive step. Routes through the shared
         ``load_rdf_graph`` cache (mtime-keyed) so a 100-feature
         ``mloda.run_all`` pays one parse instead of one hundred. The
         returned graph is shared across calls and MUST be treated as

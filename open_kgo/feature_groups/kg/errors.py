@@ -95,9 +95,9 @@ class MissingEnvVarError(RuntimeError):
     ``KgConnectorReaderBase._resolve_env``. If the env var is unset
     (``os.environ.get`` returns ``None``) or set to a whitespace-only value,
     ``_resolve_env`` raises this error so the failure is loud rather than
-    degrading into a silent downstream auth error. The universal base does
-    not currently declare any auth surface (issue #32 item 2); this error
-    type exists as opt-in infrastructure for future networked concretes.
+    degrading into a silent downstream auth error. The universal base does not
+    currently declare any auth surface; this error type exists as opt-in
+    infrastructure for future networked concretes.
     """
 
     def __init__(self, env_var_name: str, credential_key: str) -> None:

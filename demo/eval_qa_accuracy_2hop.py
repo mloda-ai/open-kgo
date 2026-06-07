@@ -31,6 +31,19 @@ def title(mo):
 
     Metric: **hit rate** — question answered correctly if the returned set contains
     at least one gold answer.
+
+    **What this eval shows (and does not).** The shipped sample is *type-clean*: every
+    edge already respects the ontology's domain/range, so Arch 2's per-hop validation
+    never has a wrong-typed hop to block. The takeaway is therefore "ontology guidance
+    **preserves** accuracy while adding per-hop type validation," not "ontology guidance
+    **raises** accuracy" — this sample cannot demonstrate the latter, because there is no
+    type-violating hop for Arch 2 to reject that Arch 1 would have followed. To see Arch 2
+    block a wrong hop, the sample would need adversarial type-dirty edges.
+
+    The hit rates below also depend on the heuristic question parser `infer_2hop_chain`,
+    which maps each question to a relation chain by keyword matching against the known
+    sample phrasings. A question it cannot classify is skipped, not scored, so the numbers
+    reflect parser coverage and traversal correctness together, not traversal quality alone.
     """)
     return
 
@@ -213,11 +226,23 @@ def _():
     # ---------------------------------------------------------------------------
 
     def infer_2hop_chain(question: str, entity_type: str) -> tuple[str, str, str, str] | None:
+        """Map a question to a ``(rel1, dir1, rel2, dir2)`` chain, or ``None`` if unrecognised.
+
+        Heuristic, NOT a parser of general questions: it keyword-matches against the
+        specific phrasings used in the committed sample QA set. Questions it cannot
+        classify return ``None`` and are skipped (not scored), so the reported hit
+        rates measure parser coverage and traversal correctness together. A real
+        deployment would replace this with a learned or grammar-based question parser;
+        it lives here only to drive the offline accuracy comparison reproducibly.
+        """
         q = question.lower()
 
         # Movie-start: fwd(rel1) -> Entity <- rev(rel1) <- Other Movies
         if entity_type == "Movie":
-            if any(k in q for k in ["same director", "also directed", "director of", "directed by the same", "share a director"]):
+            if any(
+                k in q
+                for k in ["same director", "also directed", "director of", "directed by the same", "share a director"]
+            ):
                 return ("directed_by", "forward", "directed_by", "reverse")
             if any(
                 k in q
@@ -454,7 +479,10 @@ def run_eval(
     > Hit rate = % of questions where at least one gold answer is in the returned set.
     > Reverse hops use the same traversal in both architectures (no source-type constraint applies).
     > Forward hops in Arch 2 are validated: domain entity type + range type checked per hop.
-    > On this type-clean sample, both architectures should agree and hit 100%.
+    > On this type-clean sample the two architectures are expected to **agree**: every hop is
+    > already well-typed, so Arch 2's validation has nothing to block and accuracy is preserved,
+    > not improved. A measured Arch 2 win would require adversarial type-dirty edges (absent here).
+    > These hit rates also reflect `infer_2hop_chain` parser coverage, not traversal quality alone.
     """)
     return
 

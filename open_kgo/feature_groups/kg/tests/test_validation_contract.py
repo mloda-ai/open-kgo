@@ -1,4 +1,4 @@
-"""Validation-contract tests for issue #5 items 1-4.
+"""Validation-contract tests for the universal KG reader surface.
 
 These exercise behaviors that are universal across all KG readers and do not
 need a per-family adapter, so they live next to the cross-group smoke test
@@ -7,6 +7,7 @@ rather than under each family.
 
 from __future__ import annotations
 
+import gc
 import warnings
 from typing import Any
 
@@ -32,6 +33,7 @@ from open_kgo.feature_groups.kg.errors import (
 )
 from open_kgo.feature_groups.kg.lineage.dbt_manifest import DbtManifestReader
 from open_kgo.feature_groups.kg.tests._discovery import (
+    clean_kg_subclass_registry,
     import_all_kg_readers,
     iter_strict_specs,
     walk_subclasses,
@@ -60,7 +62,7 @@ def test_is_valid_credentials_returns_false_on_strict_enum_violation() -> None:
     ``{UPSTREAM, DOWNSTREAM, BOTH}`` via ``SUPPORTED_VALUES``, so ``"SIDEWAYS"``
     is reliably outside the effective allowed set. The earlier seed for this
     test was ``auth_method="evil"``; the auth surface was removed from the
-    universal base (issue #32 item 2), so the seed value moved to a strict
+    universal base, so the seed value moved to a strict
     enum that the concrete still honors.
     """
     bad = HashableDict({"dbt_manifest": {"locator": "/tmp/x.json", "lineage_direction": "SIDEWAYS"}})
@@ -172,6 +174,57 @@ def test_collect_kg_known_keys_unions_property_and_params() -> None:
         "retrieval_mode",
     ):
         assert expected in known, f"{expected!r} should be a reserved KG key"
+
+
+def _define_probe_reader_and_collect() -> tuple[set[str], str]:
+    """Define a throwaway reader declaring a unique key, then collect the union.
+
+    The class is defined inside this factory so its only strong reference is the
+    local binding, which is released when the factory returns; the
+    ``clean_kg_subclass_registry`` guard around the caller then confirms it does
+    not leak into the process-global subclass tree.
+    """
+    probe_key = "kg_probe_reserved_key_zzz"
+
+    class _ProbeReader(KgConnectorReaderBase):
+        PROPERTY_MAPPING = {
+            **KgConnectorReaderBase.PROPERTY_MAPPING,
+            probe_key: {DefaultOptionKeys.context: True},
+        }
+
+    return _collect_kg_known_keys(), probe_key
+
+
+def test_collect_kg_known_keys_is_cached_and_invalidated_on_new_subclass() -> None:
+    """The reserved-key union is memoized and rebuilt only when the subclass tree grows.
+
+    Pins the perf contract: repeated ``build_params`` calls must not re-walk the
+    subclass tree, yet a family/concrete defined after the first call must still
+    be reflected (its class definition invalidates the cache via
+    ``__init_subclass__``).
+    """
+    import open_kgo.feature_groups.kg.base as base_mod
+
+    try:
+        # Two back-to-back calls with no intervening subclass return the *same*
+        # object: proof the union is memoized, not rebuilt on every call.
+        first = _collect_kg_known_keys()
+        assert _collect_kg_known_keys() is first
+
+        with clean_kg_subclass_registry():
+            refreshed, probe_key = _define_probe_reader_and_collect()
+            # Defining the probe reader reset the cache, so the next collect
+            # rebuilt the union and now includes the freshly declared key.
+            assert probe_key in refreshed
+            assert refreshed is not first
+            assert probe_key not in first
+    finally:
+        # The probe reader is reclaimed by GC after the block, but cache
+        # invalidation only fires on subclass *addition*, so the union still
+        # holds the (now-dead) probe key. Reset to None so later tests rebuild a
+        # clean union rather than inheriting this test's transient state.
+        gc.collect()
+        base_mod._KG_KNOWN_KEYS_CACHE = None
 
 
 def test_build_params_warns_on_keys_reserved_by_other_family() -> None:

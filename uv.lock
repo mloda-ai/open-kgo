@@ -12,9 +12,9 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-mloda-testing = "2027-01-01T00:00:00Z"
-mloda = "2027-01-01T00:00:00Z"
-mloda-registry = "2027-01-01T00:00:00Z"
+mloda-testing = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mloda = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+mloda-registry = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [[package]]
 name = "anyio"

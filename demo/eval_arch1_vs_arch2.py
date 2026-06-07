@@ -106,6 +106,11 @@ def _():
 
     def arch2_traverse(g, start, relation, namespace="movie"):
         """Architecture 2: check entity type before traversal; validate range on arrival."""
+        # Local import (mirrors arch2_hop in eval_qa_accuracy_2hop.py): keeps the
+        # registry reference resolvable within this cell's function scope rather
+        # than relying on marimo's cross-cell global injection.
+        from open_kgo.feature_groups.kg.ontology.registry import OntologyRegistry
+
         entity_type = g.nodes[start].get("type", "Unknown")
         if not OntologyRegistry.is_valid_edge(namespace, entity_type, relation):
             raise ValueError(
@@ -175,7 +180,7 @@ def exp1(arch1_traverse, arch2_traverse, graph, mo, random):
     | Arch 1 != Arch 2 (result mismatch) | {disagree} |
     | Arch 2 raised unexpectedly | {arch2_errors} |
 
-    **Result:** {agree}/500 agreement ({100*agree//500}%)
+    **Result:** {agree}/500 agreement ({100 * agree // 500}%)
 
     Arch 2 does not break existing correct traversals. The ontology layer is fully additive
     on clean data.
@@ -232,7 +237,7 @@ def exp2(arch1_traverse, arch2_traverse, graph, mo):
     | Arch 2 | Raised `ValueError` — **explicit error** | {arch2_blocked} |
     | Arch 2 | Silently passed (missed violation) | {arch2_missed} |
 
-    **Arch 2 detection rate: {100*arch2_blocked//total}%**
+    **Arch 2 detection rate: {100 * arch2_blocked // total}%**
 
     The difference: Arch 1 gives you empty results with no indication of why.
     A developer debugging a broken 3-hop query gets no signal from Arch 1.
@@ -387,7 +392,7 @@ def exp4(arch1_traverse, arch2_traverse, graph, mo):
 
     | Architecture | Hop 2 behaviour |
     |---|---|
-    | Arch 1 | Returned `{hop2_arch1 or '[]'}` — silent empty, no indication the chain is invalid |
+    | Arch 1 | Returned `{hop2_arch1 or "[]"}` — silent empty, no indication the chain is invalid |
     | Arch 2 | Raised at hop 2: `{hop2_arch2_error}` |
 
     **Arch 1 problem:** a developer building a 3-hop query sees empty results and has to
@@ -426,7 +431,7 @@ def summary(
     | Experiment | Arch 1 | Arch 2 |
     |---|---|---|
     | **1. Valid path equivalence** (500 queries) | {agree}/500 correct | {agree}/500 correct — identical |
-    | **2. Invalid source type** ({total_invalid} cases) | {arch1_silent_empty} silent empty, {arch1_returned_data} wrong data | {arch2_blocked}/{total_invalid} blocked ({100*arch2_blocked//total_invalid}%) |
+    | **2. Invalid source type** ({total_invalid} cases) | {arch1_silent_empty} silent empty, {arch1_returned_data} wrong data | {arch2_blocked}/{total_invalid} blocked ({100 * arch2_blocked // total_invalid}%) |
     | **3a. Intentional bad edge** (metaqa_tiny) | Followed bad edge, returned wrong answer | Raised at source type check |
     | **3b. Name-collision edges** ({n_collisions} cases) | Returned Movie nodes as genres ({arch1_followed} cases) | Raised range violation ({arch2_caught}/{n_collisions}) |
     | **4. Mid-chain type error** | Silent `[]` at broken hop | Raised at exact broken hop |

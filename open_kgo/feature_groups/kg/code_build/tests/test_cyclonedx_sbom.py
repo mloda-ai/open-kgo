@@ -44,7 +44,7 @@ class TestCycloneDxSbomReader(CodeBuildContractTestBase):
     @classmethod
     def invalid_credentials(cls) -> dict[str, Any]:
         # The concrete declares no strict-validation enums after the universal
-        # auth surface was removed (issue #32 item 2). Trigger the closed-world
+        # auth surface was removed. Trigger the closed-world
         # unknown-key rejection instead.
         return {"cyclonedx_sbom": {"manifest_path": str(_FIXTURE), "definitely_not_a_kg_key": "x"}}
 

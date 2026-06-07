@@ -1,4 +1,4 @@
-"""Resource-lifecycle / shared-cache contract tests (issue #32 item 3).
+"""Resource-lifecycle / shared-cache contract tests.
 
 Pins the behavior of ``kg.fixtures.load_json_fixture``,
 ``kg.fixtures.load_rdf_graph``, and ``kg.fixtures.load_kuzu_database`` and
@@ -258,7 +258,7 @@ def test_file_fixture_rest_reader_caches_each_page(tmp_path: Path) -> None:
     """A second ``load_data`` call against the same pages directory does not re-parse.
 
     Pins the per-page caching: the original implementation re-globbed
-    and re-parsed every page on every call (issue #32 item 3). The
+    and re-parsed every page on every call. The
     glob itself stays uncached (cheap); the per-page parse is what
     the mtime-keyed cache amortises.
 

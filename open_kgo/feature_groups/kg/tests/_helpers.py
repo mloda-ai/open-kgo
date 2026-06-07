@@ -12,8 +12,8 @@ passing.
 Zero-result paths (citation ``stable_id=NOT_THERE``, an empty fixture dir,
 an ``agent_memory`` query with no matches) are returned as ``[]`` by
 ``run_query`` itself: ``KgPythonDictFramework`` now relaxes the parent
-``PythonDictFramework``'s "empty is fatal" guard for KG semantics (issue
-#30). The earlier ``run_query_allowing_empty`` workaround, which bypassed
+``PythonDictFramework``'s "empty is fatal" guard for KG semantics. The
+earlier ``run_query_allowing_empty`` workaround, which bypassed
 ``mloda.run_all`` to surface ``[]`` to callers, is therefore retired; all
 contract tests go through ``run_query``.
 """
@@ -45,7 +45,7 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     can unwrap by feature name and return the underlying row values flattened
     across partitions.
 
-    Zero-result queries return ``[]`` (issue #30): the adapter passes empty
+    Zero-result queries return ``[]``: the adapter passes empty
     data through unchanged, so the comprehension below contributes no rows
     and the helper yields ``[]`` to the caller.
     """

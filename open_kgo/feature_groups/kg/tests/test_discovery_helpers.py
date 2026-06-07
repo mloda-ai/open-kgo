@@ -1,4 +1,4 @@
-"""Unit tests for ``_discovery`` helpers added by issue #18 items B2 and B3.
+"""Unit tests for ``_discovery`` helpers.
 
 ``walk_subclasses`` / ``family_subpackages`` / ``family_of`` /
 ``import_all_kg_readers`` are exercised implicitly by every sibling test that

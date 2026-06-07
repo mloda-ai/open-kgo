@@ -10,7 +10,7 @@ PROTOTYPE NOTE: this fake exercises the property *shape*. It does NOT provide
 real consistency-token semantics, model-id versioning, or namespaced check
 evaluation. For real semantics, use the OpenFGA / SpiceDB Python clients.
 
-Pinned fixture (issue #5 item 16):
+Pinned fixture:
 
 The connector is pinned to a single canonical fixture (``_FIXTURE_PATH``); the
 family-level ``locator`` slot is dropped from ``PROPERTY_MAPPING`` and
@@ -23,8 +23,8 @@ concrete cannot honor is a surface lie, so we drop it.
 
 Tenant validation has two layers:
 
-1. Closed-world enum at ``is_valid_credentials`` / ``connect()`` shape gate
-   (issue #18 item A5). ``PROPERTY_MAPPING`` is overridden to flip
+1. Closed-world enum at ``is_valid_credentials`` / ``connect()`` shape gate.
+   ``PROPERTY_MAPPING`` is overridden to flip
    ``tenant`` to ``strict_validation=True`` with
    ``allowed_values={"tenant_a"}``, so an unknown tenant is rejected at the
    matcher surface and at ``connect()`` before any fixture I/O.
@@ -118,9 +118,9 @@ class InProcessTupleStoreReader(SaasAuthzReader):
     # slot would be a surface lie (mirrors ``FileFixtureRestReader``'s drop
     # of ``page_size``). Override the family-level open ``tenant`` spec with
     # a strict-validation enum scoped to the tenants this in-process store
-    # actually serves (issue #5 item 16). The closed-world enum check in
+    # actually serves. The closed-world enum check in
     # ``_validate_mapping`` then rejects unknown tenants at
-    # ``is_valid_credentials`` time and at ``connect()`` (issue #18 item A5)
+    # ``is_valid_credentials`` time and at ``connect()``
     # before any fixture I/O. ``_connect_from_slot`` retains its
     # ``UnknownTenantError`` defense-in-depth check so a direct call
     # bypassing the shape gate (or a future fixture/enum drift) still

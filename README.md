@@ -59,6 +59,11 @@ Swap `rdflib_sparql` for any of the nine connector families â€” same `Feature` â
 
 Install all KG extras with: `uv sync --extra kg-all`.
 
+> **One feature per call.** KG readers dispatch a single feature per load: every
+> reader rejects a multi-feature `FeatureSet` rather than silently labelling all
+> rows with one feature name. Request features individually (one `Feature` per
+> `mloda.run_all` slot) rather than batching `N` of them into a single reader call.
+
 > **No-Docker testing policy.** Every connector test runs against rdflib, networkx, kuzu (embedded), or file fixtures. No Docker, no external services, no network calls.
 
 ## Demos

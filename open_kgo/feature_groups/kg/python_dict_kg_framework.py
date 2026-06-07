@@ -51,7 +51,7 @@ class KgPythonDictFramework(PythonDictFramework):
     need a different adapter; surfacing that explicitly is preferable to
     silent loss.
 
-    Empty results are returned as ``[]`` instead of raising (issue #30). The
+    Empty results are returned as ``[]`` instead of raising. The
     parent ``PythonDictFramework`` treats ``[]`` as fatal because for tabular
     data an empty selection is usually a schema-discovery failure (no rows
     means no column types to infer, no naming convention to expand). KG

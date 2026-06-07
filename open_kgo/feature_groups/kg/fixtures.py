@@ -4,7 +4,7 @@ File-backed concretes (rdflib, dbt manifest, CycloneDX SBOM, citation, REST
 page-directory, NetworkX memory, in-process tuple store) would otherwise pay
 a full disk read + parse on every ``load_data`` call. A data provider running
 N features through a single ``mloda.run_all`` therefore pays N parses against
-the same source artifact (issue #32 item 3). This module centralises the
+the same source artifact. This module centralises the
 parse-once / share-many pipeline so every file-backed concrete routes
 through one cache and the connector-lifecycle contract stays consistent.
 
@@ -225,8 +225,8 @@ def load_kuzu_database(connector_id: str, locator: Any) -> Any:
     Cache key is the absolute path WITHOUT mtime: Kuzu mutates its own
     database directory as it runs queries, so mtime keying would
     invalidate after every internal write and re-open the FDs we're
-    trying to keep alive (issue #32 item 3 / issue #18 D-section native
-    FD leak). External mutations to the dir therefore will NOT refresh
+    trying to keep alive (the native FD leak this cache exists to
+    prevent). External mutations to the dir therefore will NOT refresh
     the cache; callers that need to swap the underlying database between
     test cases must call ``_open_kuzu_database_cached.cache_clear()``.
 

@@ -88,7 +88,7 @@ class FileFixtureRestReader(RestPublicReader):
         for page_file in page_files:
             # Per-page parse routed through the mtime-keyed cache: a real
             # OpenAlex page is 100KB-1MB and the per-call dispatch reads
-            # the same pages on every load (issue #32 item 3). The glob
+            # the same pages on every load. The glob
             # itself is cheap and stays uncached.
             body = load_json_fixture(cls.CONNECTOR_ID, page_file)
             for row in body.get("results", []):

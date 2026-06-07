@@ -42,7 +42,7 @@ class TestRdfLibSparqlReader(RdfContractTestBase):
         # ``reasoning_profile`` is still narrowed to ``{"none"}`` on this
         # concrete; any other family-allowed value (e.g. ``"rdfs"``) is
         # outside the narrowed set and rejects. Replaces the earlier
-        # ``auth_method="evil"`` seed (issue #32 item 2).
+        # ``auth_method="evil"`` seed.
         return {"rdflib_sparql": {"locator": str(_FIXTURE_TTL), "reasoning_profile": "rdfs"}}
 
     @classmethod

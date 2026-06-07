@@ -36,7 +36,11 @@ jobs:
 
       - name: Run tox
         run: tox
-        timeout-minutes: 2
+        # Generous enough to absorb a cold-cache run (uv install + a full
+        # `mypy --strict` pass across the 3.10-3.14 matrix can approach a
+        # couple of minutes on a cache miss); still tight enough to catch a
+        # genuine hang rather than a slow-but-healthy build.
+        timeout-minutes: 10
 
   notebooks:
     # Demo marimo notebooks are slow to execute end-to-end, so they run as a

@@ -1,25 +1,25 @@
-"""Unit tests for ``_helpers.py`` (issue #18 items B4 / B5 and follow-ups).
+"""Unit tests for ``_helpers.py``.
 
 Covers the test-library helpers exposed by ``_helpers``:
 
-- ``bogus_value_for_strict_spec`` (B4): type-coherent bogus value for any
+- ``bogus_value_for_strict_spec``: type-coherent bogus value for any
   strict-validation spec, replacing the hand-rolled
   ``__obviously_not_a_valid_enum_value__`` retry idiom. The future-proofing
   claim ("generalises to non-string-valued strict specs") is only honest if
   a test actually exercises int/bool/exotic specs, that's what
   ``test_bogus_value_for_strict_spec_*`` does.
-- ``make_valid_credentials`` (B5): pre-populate the spec's ``default`` keys
+- ``make_valid_credentials``: pre-populate the spec's ``default`` keys
   and let callers override the rest. The class-mutable-state pattern
   (``cls._tmp``) is intentionally out of scope here; lifting it requires a
   contract-base signature change.
-- ``run_query`` zero-result paths (issue #30): the prior B6
+- ``run_query`` zero-result paths: the prior
   ``run_query_allowing_empty`` workaround is retired now that the framework
   adapter passes ``[]`` through unchanged. The end-to-end assertions live
   in ``test_run_query_returns_empty_list_for_unknown_stable_id`` and
   ``test_run_query_returns_native_rows_when_present`` below; they exercise
   the full ``mloda.run_all`` path instead of the direct-load shortcut.
 
-Fixture coupling: the B5 and ``run_query`` tests use
+Fixture coupling: the ``make_valid_credentials`` and ``run_query`` tests use
 ``FileFixtureCitationReader`` and its bundled
 ``citation_rest/tests/fixtures/reactome.json`` because it is the only
 no-network, no-tempdir-setup concrete in the package (every other concrete
@@ -53,7 +53,7 @@ from open_kgo.feature_groups.kg.tests._helpers import (
 _CITATION_FIXTURE = Path(__file__).parent.parent / "citation_rest" / "tests" / "fixtures" / "reactome.json"
 
 
-# --- B4: bogus_value_for_strict_spec --------------------------------------------
+# --- bogus_value_for_strict_spec ---------------------------------------------
 
 
 def test_bogus_value_for_strict_spec_string_allowed_values_returns_string_outside_set() -> None:
@@ -184,7 +184,7 @@ def test_bogus_value_for_strict_spec_empty_allowed_returns_sentinel() -> None:
     assert bogus not in frozenset()
 
 
-# --- B5: make_valid_credentials -----------------------------------------------
+# --- make_valid_credentials --------------------------------------------------
 
 
 def test_make_valid_credentials_returns_wrapped_form_with_connector_id() -> None:
@@ -259,7 +259,7 @@ def test_make_valid_credentials_validate_true_rejects_closed_world_violation() -
     """Closed-world unknown-key violations surface at construction (default validate=True).
 
     The earlier seed was ``auth_method="evil"`` against the universal
-    strict-enum gate; the auth surface was removed (issue #32 item 2), and
+    strict-enum gate; the auth surface was removed, and
     ``FileFixtureCitationReader`` no longer narrows any strict enum at this
     layer. The closed-world check still triggers on any key not declared in
     ``PROPERTY_MAPPING``, which exercises the same ``validate=True`` hook.
@@ -272,13 +272,13 @@ def test_make_valid_credentials_validate_true_rejects_closed_world_violation() -
         )
 
 
-# --- run_query zero-result paths (issue #30) ---------------------------------
+# --- run_query zero-result paths ---------------------------------------------
 
 
 def test_run_query_returns_empty_list_for_unknown_stable_id() -> None:
     """An unknown ``stable_id`` is a legitimate zero-result path; we get ``[]``, not a raise.
 
-    Pre-#30, ``run_query`` flowed through
+    Before the empty-result relaxation, ``run_query`` flowed through
     ``KgPythonDictFramework.select_data_by_column_names`` which rejected
     ``[]`` with the parent ``PythonDictFramework``'s "Data cannot be empty"
     guard. The adapter now passes empty data through unchanged so the

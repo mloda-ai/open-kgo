@@ -175,7 +175,7 @@ def test_init_subclass_chain_runs_both_invariants_for_param_reader() -> None:
 
 # -- MEMORY_SCOPE_KEYS single source of truth ---------------------------------
 #
-# Issue #5 item 18: ``MEMORY_SCOPE_KEYS`` and the AgentMemoryReader property
+# ``MEMORY_SCOPE_KEYS`` and the AgentMemoryReader property
 # mapping used to be independently maintained copies of the same list, with a
 # third copy in ``NetworkxMemoryReader.REQUIRED_KEYS``. The third copy is now
 # moot — that concrete reader narrows to ``(("locator",), ("memory_scope_user_id",))``
@@ -432,7 +432,7 @@ def test_init_subclass_chain_propagates_invariant_failure_through_param_reader()
                 SUPPORTED_VALUES = {"lineage_direction": frozenset({"sideways"})}
 
 
-# -- _STRIPPED_PARAMS chain inheritance (issue #18 item A6) -------------------
+# -- _STRIPPED_PARAMS chain inheritance ---------------------------------------
 #
 # ``_compute_stripped_params`` must compare ``cls.PARAMS_MAPPING`` against the
 # **top-most** ParamReader-subclass ancestor (with a non-empty PARAMS_MAPPING),
@@ -494,7 +494,7 @@ def _build_three_level_chain(
 def test_stripped_params_inherits_from_top_most_family_ancestor() -> None:
     """3-level chain: ``Bottom._STRIPPED_PARAMS`` must include both α and β.
 
-    Reproduces the issue #18 A6 scenario:
+    Reproduces the multi-level strip-inheritance scenario:
     - ``Top`` declares ``{α, β}``.
     - ``Mid`` extends ``Top`` and strips β (``PARAMS_MAPPING = {α}``).
     - ``Bottom`` extends ``Mid`` and strips α (``PARAMS_MAPPING = {}``).

@@ -606,9 +606,7 @@ def citation_rest_demo(fixture_for, mo, run_query):
     }
     _feat = _Feature(
         "file_fixture_citation__pathway",
-        options=_Options(
-            context={"stable_id": "R-HSA-1640170", "hierarchy_depth": 1}
-        ),
+        options=_Options(context={"stable_id": "R-HSA-1640170", "hierarchy_depth": 1}),
     )
     _rows = run_query("file_fixture_citation", _creds, _feat)
 

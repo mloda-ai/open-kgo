@@ -33,7 +33,7 @@ class DbtManifestReader(LineageReader):
         """Return the parsed manifest dict; mtime-cached so a 100-feature run pays one parse.
 
         A real dbt manifest is 10-100MB; reparsing on every ``load_data``
-        call (issue #32 item 3) is the largest single hit in the
+        call is the largest single hit in the
         file-backed family. The returned dict is shared across calls and
         MUST be treated as read-only; ``load_data`` shallow-copies the
         nested node entry into each row so callers cannot mutate the

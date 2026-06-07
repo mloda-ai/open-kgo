@@ -70,8 +70,8 @@ class KgConnectorContractBase(ABC):
         outside the concrete's ``SUPPORTED_VALUES`` for a family-narrowed
         key), introduce an unknown closed-world key, or omit a required
         property. The earlier canonical seed was ``auth_method="evil"``;
-        the auth surface was removed from the universal base (issue #32
-        item 2), so concretes whose only family-level strict enum was
+        the auth surface was removed from the universal base, so concretes
+        whose only family-level strict enum was
         ``auth_method`` now reach this contract via a closed-world
         unknown-key violation instead.
         """
@@ -169,7 +169,7 @@ class KgConnectorContractBase(ABC):
         Walks every ``strict_validation=True`` key on ``PARAMS_MAPPING`` and
         asserts that ``_validate_params`` rejects a value outside its effective
         allowed set. The single hand-rolled dbt case in
-        ``test_validation_contract.py`` (item 3) is the seed; this generalises
+        ``test_validation_contract.py`` is the seed; this generalises
         the assertion so every ParamReader concrete inherits coverage for free.
 
         Skips explicitly for ``QueryReader`` concretes (no ``PARAMS_MAPPING``).
@@ -195,7 +195,8 @@ class KgConnectorContractBase(ABC):
         for key, spec, layer_name in iter_strict_specs(cls):
             if layer_name != "PARAMS_MAPPING":
                 continue
-            # Same B4 simplification as the credential-layer sibling: the
+            # Same ``bogus_value_for_strict_spec`` simplification as the
+            # credential-layer sibling: the
             # bogus value is outside the family-allowed set, and
             # ``SUPPORTED_VALUES`` is a subset of that set (enforced at
             # class definition by ``_validate_supported_values_invariant``),
@@ -565,14 +566,14 @@ class KgConnectorContractBase(ABC):
         True AND ``connect()`` does not raise. This forces the design
         question that the original single-alternative test side-stepped:
         if the validator accepts an alternative the runtime can't honor
-        (agent_memory's pre-#5 motivating scenario), one of the two checks
+        (agent_memory's original motivating scenario), one of the two checks
         will diverge.
 
         The forward direction (validator True → connect ok) is what this
         test pins. The reverse direction (connect raises → validator
         False) is structurally outside the suite's reach today because
-        ``connect()`` does not run ``_validate_shape`` itself (#18 A5
-        tracks the parity fix); when A5 lands this docstring should drop
+        ``connect()`` does not run ``_validate_shape`` itself; if that
+        validation parity is ever added, this docstring should drop
         to a bi-conditional.
 
         ``valid_credentials()`` MUST supply every alternative in every
@@ -646,7 +647,7 @@ class KgConnectorContractBase(ABC):
         """Universal: ``load`` rejects FeatureSets carrying more than one feature.
 
         Concrete ``load_data`` implementations all consume a single feature via
-        ``next(iter(features.features))``. Issue #5 item 9: passing a
+        ``next(iter(features.features))``. Passing a
         heterogeneous FeatureSet would silently use whichever feature the
         iterator yielded first; the base ``load`` now raises ``ValueError``
         instead.
@@ -767,14 +768,14 @@ class KgConnectorContractBase(ABC):
         native rows as ``{feature_name: row}`` during column slicing). A
         regression in any of these surfaces here.
 
-        Issue #18 C1: pre-check that ``is_valid_credentials`` accepts
+        Pre-check that ``is_valid_credentials`` accepts
         ``valid_credentials()`` so an adapter whose canonical slot is itself
         contract-non-conformant fails here with a clear diagnostic rather
         than opaquely deep inside ``mloda.run_all``. Overlaps
         ``test_credentials_match_connector_id`` intentionally — both should
         fail loudly when the adapter is broken.
 
-        Issue #18 C2: enforce a universal ``len(result) >= 1`` floor.
+        Enforce a universal ``len(result) >= 1`` floor.
         ``expected_row_shape()`` is concrete-supplied and could in principle
         be ``lambda r: isinstance(r, list)`` — silently accepting zero rows.
         The canonical feature in every adapter is required to return at

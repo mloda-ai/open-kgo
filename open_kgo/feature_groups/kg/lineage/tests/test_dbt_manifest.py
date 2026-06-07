@@ -34,7 +34,7 @@ class TestDbtManifestReader(LineageContractTestBase):
     def invalid_credentials(cls) -> dict[str, Any]:
         # Bad ``lineage_direction`` value triggers the SUPPORTED_VALUES
         # narrowing on this concrete; the earlier ``auth_method="evil"``
-        # seed went away with the universal auth surface (issue #32 item 2).
+        # seed went away with the universal auth surface.
         return {"dbt_manifest": {"locator": str(_FIXTURE), "lineage_direction": "SIDEWAYS"}}
 
     @classmethod

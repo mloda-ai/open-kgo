@@ -108,6 +108,11 @@ def _():
 
     def arch2_traverse(g, start, relation, namespace="movie"):
         """Architecture 2: ontology-validated hop."""
+        # Local import (mirrors arch2_hop in eval_qa_accuracy_2hop.py): keeps the
+        # registry reference resolvable within this cell's function scope rather
+        # than relying on marimo's cross-cell global injection.
+        from open_kgo.feature_groups.kg.ontology.registry import OntologyRegistry
+
         entity_type = g.nodes[start].get("type", "Unknown")
         if not OntologyRegistry.is_valid_edge(namespace, entity_type, relation):
             raise ValueError(f"Ontology violation: '{relation}' from '{entity_type}'")
@@ -149,15 +154,52 @@ def _():
 
         if entity_type == "Movie":
             # Forward: given Movie, follow relation outward
-            if any(k in q for k in ["director", "directed by", "who directed", "who is the director", "directed on", "which person directed"]):
+            if any(
+                k in q
+                for k in [
+                    "director",
+                    "directed by",
+                    "who directed",
+                    "who is the director",
+                    "directed on",
+                    "which person directed",
+                ]
+            ):
                 return ("directed_by", "forward")
-            if any(k in q for k in ["who starred", "who acted", "who acts", "who are the actors", "starred which", "starred who", "who stars in"]):
+            if any(
+                k in q
+                for k in [
+                    "who starred",
+                    "who acted",
+                    "who acts",
+                    "who are the actors",
+                    "starred which",
+                    "starred who",
+                    "who stars in",
+                ]
+            ):
                 return ("starred_actors", "forward")
-            if any(k in q for k in ["who wrote", "writer", "written by", "who is the author", "screenplay", "script", "who is the creator", "who in the world wrote", "which person wrote"]):
+            if any(
+                k in q
+                for k in [
+                    "who wrote",
+                    "writer",
+                    "written by",
+                    "who is the author",
+                    "screenplay",
+                    "script",
+                    "who is the creator",
+                    "who in the world wrote",
+                    "which person wrote",
+                ]
+            ):
                 return ("written_by", "forward")
             if any(k in q for k in ["year", "release", "when was", "date"]):
                 return ("release_year", "forward")
-            if any(k in q for k in ["genre", "kind of", "type of", "sort of", "what kind", "what type", "what sort", "film genre"]):
+            if any(
+                k in q
+                for k in ["genre", "kind of", "type of", "sort of", "what kind", "what type", "what sort", "film genre"]
+            ):
                 return ("has_genre", "forward")
             if any(k in q for k in ["language"]):
                 return ("in_language", "forward")
@@ -289,16 +331,16 @@ def run_eval(
     for _rel in _all_rels:
         _h1, _n1 = _a1[_rel]
         _h2, _n2 = _a2[_rel]
-        _pct1 = f"{100*_h1//_n1}%" if _n1 else "—"
-        _pct2 = f"{100*_h2//_n2}%" if _n2 else "—"
-        _diff = ("**DIFF**" if _h1 != _h2 else "")
+        _pct1 = f"{100 * _h1 // _n1}%" if _n1 else "—"
+        _pct2 = f"{100 * _h2 // _n2}%" if _n2 else "—"
+        _diff = "**DIFF**" if _h1 != _h2 else ""
         _rows_md += f"| `{_rel}` | {_n1} | {_h1} ({_pct1}) | {_h2} ({_pct2}) | {_diff} |\n"
         _total_a1_hits += _h1
         _total_a2_hits += _h2
         _total_qs += _n1
 
-    _overall1 = f"{100*_total_a1_hits//_total_qs}%" if _total_qs else "—"
-    _overall2 = f"{100*_total_a2_hits//_total_qs}%" if _total_qs else "—"
+    _overall1 = f"{100 * _total_a1_hits // _total_qs}%" if _total_qs else "—"
+    _overall2 = f"{100 * _total_a2_hits // _total_qs}%" if _total_qs else "—"
 
     mo.md(f"""
     ## Results

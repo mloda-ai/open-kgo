@@ -42,7 +42,7 @@ class TestFileFixtureCitationReader(CitationRestContractTestBase):
     @classmethod
     def invalid_credentials(cls) -> dict[str, Any]:
         # No strict-validation enum on this concrete after the universal
-        # auth surface was removed (issue #32 item 2); the closed-world
+        # auth surface was removed; the closed-world
         # unknown-key rejection still exercises the contract.
         return {"file_fixture_citation": {"locator": str(_FIXTURE), "definitely_not_a_kg_key": "x"}}
 

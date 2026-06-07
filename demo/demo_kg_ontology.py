@@ -237,11 +237,7 @@ def hop3_valid(mo, traverse, graph):
     _hop1 = traverse(graph, "The Dark Knight", "directed_by", namespace="movie")
     # Hop 2: reverse-lookup all movies by the same director
     _sibling_movies = sorted(
-        {
-            src
-            for src, tgt, d in graph.edges(data=True)
-            if d.get("relation") == "directed_by" and tgt in _hop1
-        }
+        {src for src, tgt, d in graph.edges(data=True) if d.get("relation") == "directed_by" and tgt in _hop1}
     )
     # Hop 3: each sibling movie → has_genre (ontology-validated)
     _genres: list[str] = []
@@ -284,7 +280,7 @@ def invalid_source_type(OntologyRegistry, mo, traverse, graph):
     mo.md(f"""
     **Invalid source type:** `Genre → directed_by → ?`
 
-    `Genre` has no valid outgoing edges: `{sorted(_valid_hops) or '[]'}`
+    `Genre` has no valid outgoing edges: `{sorted(_valid_hops) or "[]"}`
 
     Attempt: `traverse("{_genre}", "directed_by", namespace="movie")`
 
@@ -305,8 +301,13 @@ def invalid_range(mo, traverse):
 
     _TINY_GML = (
         _Path(__file__).parent.parent
-        / "open_kgo" / "feature_groups" / "kg" / "ontology"
-        / "tests" / "fixtures" / "metaqa_tiny.gml"
+        / "open_kgo"
+        / "feature_groups"
+        / "kg"
+        / "ontology"
+        / "tests"
+        / "fixtures"
+        / "metaqa_tiny.gml"
     )
     _tiny = _nx.read_gml(str(_TINY_GML))
     # Genre "Crime" has no valid outgoing in the ontology — traversal is blocked
@@ -377,7 +378,7 @@ def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
     feature = Feature("networkx_embedded__neighbors", ...)
     ```
 
-    **Neighbors of `Christopher Nolan`:** `{sorted(r['node'] for r in _rows)}`
+    **Neighbors of `Christopher Nolan`:** `{sorted(r["node"] for r in _rows)}`
 
     The `ontology` key is transparent to the existing connector — it loads the registry
     and sets `ctx.ontology_namespace` in `_prepare_load`. Connectors that don't use
@@ -436,9 +437,11 @@ def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
     }
     _feat = _Feature(
         "kuzu_cypher__directed_by",
-        options=_Options(context={
-            "query_text": "MATCH (m:Movie)-[:directed_by]->(p:Person) RETURN m.name AS movie, p.name AS director",
-        }),
+        options=_Options(
+            context={
+                "query_text": "MATCH (m:Movie)-[:directed_by]->(p:Person) RETURN m.name AS movie, p.name AS director",
+            }
+        ),
     )
     _dac = _DAC(credentials=[{"kuzu_cypher": _kuzu_creds}])
     _partitions = _mloda.run_all(
@@ -463,8 +466,7 @@ def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
     _shutil.rmtree(_tmp, ignore_errors=True)
 
     _check_rows = "\n".join(
-        f"| `{src}` | `{rel}` | `{tgt}` | {'valid' if ok else 'invalid'} |"
-        for src, rel, tgt, ok in _valid_edges
+        f"| `{src}` | `{rel}` | `{tgt}` | {'valid' if ok else 'invalid'} |" for src, rel, tgt, ok in _valid_edges
     )
 
     mo.md(f"""
@@ -519,8 +521,7 @@ def standalone_demo(ONTOLOGY_YAML, OntologyRegistry, mo):
     ]
 
     _rows_md = "\n".join(
-        f"| `{ns}` | `{et}` | `{rel}` | {'✓ valid' if expected else '✗ invalid'} |"
-        for ns, et, rel, expected in _checks
+        f"| `{ns}` | `{et}` | `{rel}` | {'✓ valid' if expected else '✗ invalid'} |" for ns, et, rel, expected in _checks
     )
 
     mo.md(f"""

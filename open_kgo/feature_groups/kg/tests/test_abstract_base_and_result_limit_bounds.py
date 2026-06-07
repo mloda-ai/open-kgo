@@ -1,12 +1,12 @@
-"""Regression tests for defects #11 and #12 from issue mloda-ai/prototypes#5.
+"""Regression tests for abstract-base probing and bounded ``result_limit`` cost.
 
-#11: Abstract bases inherited ``supports_scoped_data_access=True`` and a
-direct ``load_data(None, None)`` probe surfaced ``TypeError`` from the strict
-``_wrap_credentials`` instead of ``NotImplementedError``. Both paths are
+Abstract-base probe: abstract bases inherited ``supports_scoped_data_access=True``
+and a direct ``load_data(None, None)`` probe surfaced ``TypeError`` from the
+strict ``_wrap_credentials`` instead of ``NotImplementedError``. Both paths are
 covered here so a regression is loud rather than silent.
 
-#12: ``result_limit`` semantics are documented as *bound-output* on the base,
-but readers MUST short-circuit work to bound cost. The dbt manifest reader
+Bounded cost: ``result_limit`` semantics are documented as *bound-output* on the
+base, but readers MUST short-circuit work to bound cost. The dbt manifest reader
 historically walked the entire BFS frontier and sliced at the end; tests
 below assert the walk stops at the limit (observable via a counting
 neighbour-iterator) and that the per-branch budget arithmetic in
@@ -250,7 +250,7 @@ def test_dbt_manifest_load_data_zero_result_limit_rejected_at_credential_surface
 ) -> None:
     """``result_limit=0`` is rejected at the credential surface, not silently empty.
 
-    Issue #18 A3 pinned the policy: ``_validate_shape`` rejects
+    The policy: ``_validate_shape`` rejects
     ``result_limit < 1`` so the cross-reader divergence in append-then-check
     vs slice-at-end no longer matters. ``_prepare_load`` re-runs the check so
     direct ``load_data`` callers that bypass ``is_valid_credentials`` hit the

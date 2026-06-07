@@ -12,7 +12,7 @@ at the property layer but are no-ops on Kuzu (single-process embedded).
 Resource lifecycle: ``kuzu.Database`` is the FD holder and is cached
 process-wide by absolute path (see ``kg.fixtures.load_kuzu_database``)
 so a 100-feature ``mloda.run_all`` opens the DB once instead of 100x
-(issue #32 item 3 / issue #18 D-section native FD leak). Each call
+(repeated full re-parse of the same source, plus native FD leak). Each call
 builds a fresh ``kuzu.Connection(db)`` on top of the cached Database;
 the Connection is caller-owned and may be closed by direct callers
 without poisoning the cache.

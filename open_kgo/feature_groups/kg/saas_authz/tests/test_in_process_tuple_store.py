@@ -59,14 +59,14 @@ class TestInProcessTupleStoreReader(SaasAuthzContractTestBase):
         )
 
     def test_unknown_tenant_rejected_on_both_layers(self) -> None:
-        """Issue #5 item 16: tenant validation runs at two layers.
+        """Tenant validation runs at two layers.
 
         Validate-time (matcher-safe): the closed-world enum from the
         ``PROPERTY_MAPPING`` override rejects unknown tenants before any
         fixture I/O, so ``is_valid_credentials`` returns False.
 
         Connect-time (loud): the public ``connect()`` runs ``_validate_shape``
-        first (issue #18 item A5), so the strict-enum gate also fires there
+        first, so the strict-enum gate also fires there
         for an unknown tenant value. ``_connect_from_slot`` itself raises
         ``UnknownTenantError`` for callers that bypass the shape gate; this
         is the typed-error defense-in-depth that mirrors agent_memory's
@@ -83,7 +83,7 @@ class TestInProcessTupleStoreReader(SaasAuthzContractTestBase):
     def test_allowed_tenants_mirror_fixture(self) -> None:
         """The strict-validation enum and the pinned fixture agree on the supported tenant set.
 
-        Issue #5 item 16 introduces a second source of truth for "which
+        The strict-validation enum is a second source of truth for "which
         tenants this concrete serves" (the ``allowed_values`` override on
         the ``tenant`` spec, alongside the pinned fixture's top-level keys).
         The two must stay aligned: a tenant in the fixture but not in the

@@ -1,4 +1,4 @@
-"""Direct unit tests for ``KgPythonDictFramework`` (issue #5 item 10).
+"""Direct unit tests for ``KgPythonDictFramework``.
 
 The KG-aware ``PythonDictFramework`` adapter wraps native KG rows under the
 requested feature name during column slicing, so the wrap-for-column-matching
@@ -65,7 +65,7 @@ def test_select_data_rejects_multi_feature_call() -> None:
 
 
 def test_select_data_returns_empty_list_for_empty_input() -> None:
-    """Empty input returns ``[]`` (issue #30).
+    """Empty input returns ``[]``.
 
     The parent ``PythonDictFramework`` raises on ``[]`` because for tabular
     data an empty selection is usually a schema-discovery failure. KG

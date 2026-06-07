@@ -4,8 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "open-kgo"
-# Always start at least at 0.2.0 to make semver work.
-# Initial release for semver needs also a manually pushed minimum tag (likely 0.2.0).
+# Bootstrap floor for semantic-release: it computes the next version by bumping
+# the latest git tag, so the repo needs a matching `0.2.0` tag pushed once by
+# hand before the first automated release (no tag => semantic-release has no
+# baseline to bump from). The high mloda floor (>=0.8.0) is unrelated: this
+# package's own version line stays low until releases start cutting it.
 version = "0.2.0"
 description = "Open Knowledge Graphs and Ontologies plugin for mloda."
 readme = "README.md"
@@ -50,6 +53,10 @@ kg-embedded = ["networkx>=3.2"]
 kg-network-pg = ["kuzu>=0.4"]
 kg-memory = ["networkx>=3.2"]
 kg-ontology = ["pyyaml>=6.0"]
+# These five families are pure-stdlib (no third-party runtime deps), so their
+# extras are intentionally empty. They exist so every family installs with the
+# same `open-kgo[kg-<family>]` syntax and so `kg-all` can list them uniformly;
+# do not delete them as "unused".
 kg-rest = []
 kg-lineage = []
 kg-codebuild = []
@@ -79,7 +86,11 @@ markers = [
 
 [tool.ruff]
 line-length = 120
-exclude = ["demo/*.py"]
+# demo/ is linted (unused imports, undefined names, formatting): it ships in the
+# repo and runs in CI via the notebook tests, so style/correctness drift there is
+# a real bug, not cosmetic. mypy and bandit still skip demo/ (see their excludes):
+# marimo's cell-function style is awkward to type-check, and the demo scripts are
+# not part of the importable package surface bandit guards.
 
 [tool.mypy]
 strict = true
@@ -92,5 +103,18 @@ exclude = ["demo/", "build/"]
 exclude_dirs = [".tox", ".venv", "tests", "demo"]
 
 [tool.uv]
+# Supply-chain cooldown: ignore any third-party release younger than 7 days so a
+# freshly compromised upload cannot land here automatically.
 exclude-newer = "7 days"
-exclude-newer-package = { mloda = "2026-12-31", "mloda-testing" = "2026-12-31", "mloda-registry" = "2026-12-31" }
+# mloda, mloda-testing, and mloda-registry are first-party packages maintained by
+# this project's own org, so the cooldown that guards against compromised
+# *third-party* releases does not apply: we want their latest releases
+# immediately (e.g. to pick up a coordinated mloda bump without a 7-day lag). A
+# rolling "0 days" span expresses exactly that and, unlike a hard-coded calendar
+# date, never ages out into a silent behaviour flip. Owner: tk.
+#
+# Accepted tradeoff: this removes the cooldown for these three deps entirely, so a
+# compromised upload to the mloda org's PyPI account would land here immediately
+# with no quarantine window. We take that risk for first-party packages we
+# control; do NOT add third-party packages to this override.
+exclude-newer-package = { mloda = "0 days", "mloda-testing" = "0 days", "mloda-registry" = "0 days" }

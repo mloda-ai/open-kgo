@@ -104,7 +104,7 @@ def narrow_property_mapping(source: dict[str, Any], *exclude: str) -> dict[str, 
     return {k: v for k, v in source.items() if k not in excluded}
 
 
-# Issue #32 item 2: the universal property mapping previously declared
+# History: the universal property mapping previously declared
 # ``auth_method`` + the three ``auth_*_env`` companion keys, and a paired
 # ``_UNIVERSAL_CONDITIONAL_REQUIRED_KEYS`` tuple tied them together. No
 # concrete plugin in the shipped 9 families ever called ``_resolve_env`` from
@@ -113,11 +113,11 @@ def narrow_property_mapping(source: dict[str, Any], *exclude: str) -> dict[str, 
 # actually opens a network socket. The auth surface was therefore decorative:
 # the framework loudly validated a credential surface no concrete read.
 #
-# The fix follows #5 item 20's narrowing approach: drop the surface from the
-# universal base until at least one networked concrete honors it, and
-# re-introduce per-concrete (or per-family) when that lands. The
-# ``_resolve_env`` helper below is kept as opt-in infrastructure so a future
-# networked concrete has something to call without re-implementing the
+# The fix follows the same narrowing approach used elsewhere in this base:
+# drop the surface from the universal base until at least one networked
+# concrete honors it, and re-introduce per-concrete (or per-family) when that
+# lands. The ``_resolve_env`` helper below is kept as opt-in infrastructure so
+# a future networked concrete has something to call without re-implementing the
 # env-var-resolution contract.
 
 
@@ -159,16 +159,46 @@ _UNIVERSAL_PROPERTY_MAPPING: dict[str, Any] = {
 }
 
 
+# Memoized result of ``_collect_kg_known_keys``. ``None`` means "not yet
+# computed / stale"; any new ``KgConnectorReaderBase`` subclass resets it to
+# ``None`` from ``__init_subclass__``, so the union is rebuilt exactly once per
+# change to the subclass tree rather than on every ``build_params`` call. A
+# family imported after the first call still defines a subclass, which flips
+# this back to ``None``, so the next call rewalks and picks it up. The cached
+# set is treated as read-only by callers (they only do set algebra against it,
+# never mutate it in place).
+#
+# INVARIANT: ``__init_subclass__`` is the ONLY invalidator. The cache is correct
+# only because every key that can enter the union arrives via a
+# ``KgConnectorReaderBase`` subclass definition, which fires ``__init_subclass__``
+# and resets this to ``None``. A future change that sources reserved keys from
+# anything other than a subclass definition (e.g. a dynamic reader registry, or
+# keys read from config) MUST also reset this to ``None``, or the union goes
+# stale silently.
+_KG_KNOWN_KEYS_CACHE: set[str] | None = None
+
+
 def _collect_kg_known_keys() -> set[str]:
     """Return the union of declared keys across every ``KgConnectorReaderBase`` subclass.
 
     Walks ``KgConnectorReaderBase.__subclasses__()`` transitively and unions
     each subclass's ``PROPERTY_MAPPING`` and ``PARAMS_MAPPING`` (when present).
     Used by ``ParamReader.build_params`` to detect cross-reader leakage of
-    reserved-but-not-declared keys passed via ``feature.options``. Walks the
-    tree on each call rather than caching: the count is small (under 20),
-    and a cache would shadow families imported after first call.
+    reserved-but-not-declared keys passed via ``feature.options``.
+
+    The walk is memoized in ``_KG_KNOWN_KEYS_CACHE`` and invalidated by
+    ``KgConnectorReaderBase.__init_subclass__`` whenever a new subclass is
+    defined, so repeated ``build_params`` calls cost O(1) instead of re-walking
+    the tree, while a family imported later still resets the cache (its class
+    definition fires ``__init_subclass__``) and is reflected on the next call.
+
+    Import-order caveat (unchanged): the union only ever covers families that
+    have actually been imported. The reserved-key warning therefore still cannot
+    flag a key reserved by a family that no code has imported yet.
     """
+    global _KG_KNOWN_KEYS_CACHE
+    if _KG_KNOWN_KEYS_CACHE is not None:
+        return _KG_KNOWN_KEYS_CACHE
     known: set[str] = set()
     pending: list[type[KgConnectorReaderBase]] = [KgConnectorReaderBase]
     while pending:
@@ -180,6 +210,7 @@ def _collect_kg_known_keys() -> set[str]:
         if params_mapping is not None:
             known.update(params_mapping.keys())
         pending.extend(klass.__subclasses__())
+    _KG_KNOWN_KEYS_CACHE = known
     return known
 
 
@@ -206,11 +237,10 @@ class KgConnectorReaderBase(ReadDB):
     # Per-property "requires" rules resolved against sibling values. Each entry
     # is ``(prop_name, prop_value, OR-groups)``: when ``creds.get(prop_name) ==
     # prop_value``, the OR-groups are enforced just like ``REQUIRED_KEYS`` (each
-    # group needs one truthy member). Empty by default — the universal base no
-    # longer declares any conditional rule (issue #32 item 2: the prior
-    # ``auth_method`` rules were paired with a credential surface no concrete
-    # honored). Subclasses that introduce conditional rules add them directly
-    # without an ``EXTEND`` step.
+    # group needs one truthy member). Empty by default: the universal base no
+    # longer declares any conditional rule (the prior ``auth_method`` rules were
+    # paired with a credential surface no concrete honored). Subclasses that
+    # introduce conditional rules add them directly without an ``EXTEND`` step.
     CONDITIONAL_REQUIRED_KEYS: ClassVar[tuple[tuple[str, Any, tuple[tuple[str, ...], ...]], ...]] = ()
 
     PROPERTY_MAPPING: ClassVar[dict[str, Any]] = dict(_UNIVERSAL_PROPERTY_MAPPING)
@@ -243,6 +273,13 @@ class KgConnectorReaderBase(ReadDB):
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         super().__init_subclass__(**kwargs)
+        # A new family/concrete may declare keys, so the memoized reserved-key
+        # union (``_collect_kg_known_keys``) is now stale: drop it so the next
+        # call rebuilds it. Cleared eagerly (before the validators below, which
+        # may raise) so a rejected subclass still leaves the cache in a
+        # rebuild-on-next-call state rather than a stale one.
+        global _KG_KNOWN_KEYS_CACHE
+        _KG_KNOWN_KEYS_CACHE = None
         cls._validate_mapping_spec_shapes()
         cls._validate_supported_values_invariant()
 
@@ -606,8 +643,8 @@ class KgConnectorReaderBase(ReadDB):
         validates via ``is_valid_credentials`` (matcher-safe ``False`` on
         error), and the direct-call path validates via ``connect()``
         (loud ``InvalidCredentialShape`` / ``MissingRequiredKeysError`` on
-        error, issue #18 item A5). This helper only unpacks the slot; concrete
-        readers no longer need to defensively re-check for ``None``.
+        error). This helper only unpacks the slot; concrete readers no longer
+        need to defensively re-check for ``None``.
 
         ``_prepare_load`` calls this *without* running ``_validate_shape``
         because the matcher already validated before dispatch; a direct call
@@ -729,7 +766,7 @@ class KgConnectorReaderBase(ReadDB):
         ``load_data`` both call into it so ``_extract_slot`` runs at most once
         per ``load_data``.
 
-        Connection-lifecycle contract (issue #32 item 3): every concrete
+        Connection-lifecycle contract: every concrete
         plugin's returned object falls into one of three categories. The
         category determines what direct callers may do with the return
         value and whether two ``_connect_from_slot`` calls for the same
@@ -796,8 +833,8 @@ class KgConnectorReaderBase(ReadDB):
 
         Opt-in helper for concretes that consume credentials from an env var
         (a bearer token, a username/password pair, etc.). The universal base
-        does NOT call this hook — issue #32 item 2 documented that no shipped
-        concrete authenticated against a network, so a universally-required
+        does NOT call this hook: no shipped concrete authenticated against a
+        network, so a universally-required
         env-var surface would be a contract the framework could not enforce.
         Concretes that introduce a real auth surface declare the matching
         ``auth_*_env`` keys themselves (on a family base or the concrete) and
@@ -811,7 +848,7 @@ class KgConnectorReaderBase(ReadDB):
         ``"   "``, ``"\t"``, ``"\n"``, or any mix). Downstream auth would
         otherwise fail opaquely with no diagnostic on such values.
 
-        Issue #18 C4: the contract is "value must contain at least one
+        The contract is "value must contain at least one
         non-whitespace character." The returned value is ``value.strip()`` so
         stray surrounding whitespace (a common ``.env``/copy-paste artifact)
         does not leak through to downstream auth either — if the rejection
@@ -1072,8 +1109,8 @@ class KgConnectorFeatureGroupBase(FeatureGroup):
 
     ``compute_framework_rule`` is pinned to ``{KgPythonDictFramework}`` so the
     feature-name wrap that mloda's column-matcher needs lives in a
-    framework-specific adapter rather than every reader's ``load`` (issue #5
-    item 10). Subclasses MUST NOT override this hook to a framework that does
+    framework-specific adapter rather than every reader's ``load``.
+    Subclasses MUST NOT override this hook to a framework that does
     not perform an equivalent wrap: native KG rows have keys like ``s``/``p``/``o``
     that never match the user-defined feature name, so a non-wrapping framework
     silently loses every row in column slicing. If a different framework is
