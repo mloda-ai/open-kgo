@@ -76,7 +76,7 @@ def helpers():
         Options as _Options,
         mloda as _mloda,
     )
-    from open_kgo.feature_groups.kg.python_dict_kg_framework import (
+    from open_kgo.compute_frameworks.python_dict_kg_framework import (
         KgPythonDictFramework as _KgPythonDictFramework,
     )
 

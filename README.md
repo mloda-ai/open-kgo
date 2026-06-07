@@ -25,7 +25,7 @@ from pathlib import Path
 from mloda.user import DataAccessCollection, Feature, Options, mloda
 
 import open_kgo.feature_groups.kg.rdf.rdflib_sparql as rdf_mod
-from open_kgo.feature_groups.kg.python_dict_kg_framework import KgPythonDictFramework
+from open_kgo.compute_frameworks.python_dict_kg_framework import KgPythonDictFramework
 
 # Point at any RDF file. Here: the Turtle sample shipped in this repo.
 ttl = Path(rdf_mod.__file__).parent / "tests" / "fixtures" / "sample.ttl"

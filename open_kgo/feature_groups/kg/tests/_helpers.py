@@ -26,7 +26,7 @@ from mloda.core.abstract_plugins.components.default_options_key import DefaultOp
 from mloda.user import DataAccessCollection, Feature, mloda
 
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase
-from open_kgo.feature_groups.kg.python_dict_kg_framework import KgPythonDictFramework
+from open_kgo.compute_frameworks.python_dict_kg_framework import KgPythonDictFramework
 
 
 def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -> list[Any]:

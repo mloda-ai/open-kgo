@@ -14,7 +14,7 @@ import pytest
 from mloda.core.abstract_plugins.components.parallelization_modes import ParallelizationMode
 from mloda.user import FeatureName
 
-from open_kgo.feature_groups.kg.python_dict_kg_framework import KgPythonDictFramework
+from open_kgo.compute_frameworks.python_dict_kg_framework import KgPythonDictFramework
 
 
 def _make_framework() -> KgPythonDictFramework:
