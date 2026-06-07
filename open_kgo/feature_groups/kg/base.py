@@ -34,7 +34,7 @@ from open_kgo.feature_groups.kg.errors import (
     NonDictSpecError,
     PropertyMappingCollision,
 )
-from open_kgo.feature_groups.kg.python_dict_kg_framework import KgPythonDictFramework
+from open_kgo.compute_frameworks.python_dict_kg_framework import KgPythonDictFramework
 
 
 @dataclass(frozen=True)
