@@ -21,27 +21,36 @@ relationships:
   directed_by:
     domain: Movie
     range: Person
+    weight: 0.9
   written_by:
     domain: Movie
     range: Person
+    weight: 0.8
   starred_actors:
     domain: Movie
     range: Person
+    weight: 0.8
   has_genre:
     domain: Movie
     range: Genre
+    weight: 0.7
   release_year:
     domain: Movie
     range: Year
+    weight: 0.5
   has_imdb_rating:
     domain: Movie
     range: Rating
+    weight: 0.4
   has_imdb_votes:
     domain: Movie
     range: Votes
+    weight: 0.3
   in_language:
     domain: Movie
     range: Language
+    weight: 0.5
   has_tags:
     domain: Movie
     range: Tag
+    weight: 0.2

@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Open-KGO — Semantic Field Circuit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f1117;
+      font-family: 'Geist', sans-serif;
+      padding: 2.5rem 2.5rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #5a6580;
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2rem;
+      font-weight: 400;
+      color: #e8eaf0;
+      margin-bottom: 0.4rem;
+    }
+    .subtitle {
+      font-size: 1rem;
+      color: #7a8599;
+      margin-bottom: 2rem;
+    }
+    .footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.75rem;
+      color: #3a4255;
+      letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+
+  <p class="eyebrow">Open-KGO · SemanticField · Layer 2</p>
+  <h1>AND Query as Series Circuit</h1>
+  <p class="subtitle">Query: "Sci-Fi films by Nolan" &mdash; Nolan fixed at V=1.0 (source), Sci-Fi fixed at V=0.0 (sink). Score = current through each movie.</p>
+
+  <svg viewBox="0 0 1100 600" xmlns="http://www.w3.org/2000/svg"
+       style="width:100%;max-width:1100px;display:block;">
+
+    <defs>
+      <marker id="arr-on" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto">
+        <polygon points="0 0, 12 5, 0 10" fill="#f97316"/>
+      </marker>
+      <marker id="arr-off" markerWidth="12" markerHeight="10" refX="11" refY="5" orient="auto">
+        <polygon points="0 0, 12 5, 0 10" fill="#e8eaf0"/>
+      </marker>
+    </defs>
+
+    <rect width="1100" height="600" fill="#0f1117"/>
+
+    <!-- ═══════════════════════════════════
+         LIVE EDGES (orange)
+         ═══════════════════════════════════ -->
+
+    <!-- Nolan → Inception -->
+    <line x1="236" y1="185" x2="456" y2="110"
+          stroke="#f97316" stroke-width="3" marker-end="url(#arr-on)"/>
+    <rect x="304" y="126" width="80" height="22" rx="4" fill="#0f1117"/>
+    <text x="344" y="141" fill="#f97316" font-size="13" font-family="'Geist Mono',monospace"
+          text-anchor="middle" font-weight="500">G = 0.9</text>
+
+    <!-- Inception → Sci-Fi -->
+    <line x1="596" y1="110" x2="816" y2="185"
+          stroke="#f97316" stroke-width="3" marker-end="url(#arr-on)"/>
+    <rect x="664" y="126" width="80" height="22" rx="4" fill="#0f1117"/>
+    <text x="704" y="141" fill="#f97316" font-size="13" font-family="'Geist Mono',monospace"
+          text-anchor="middle" font-weight="500">G = 0.7</text>
+
+    <!-- Nolan → Interstellar -->
+    <line x1="236" y1="220" x2="456" y2="220"
+          stroke="#f97316" stroke-width="3" marker-end="url(#arr-on)"/>
+    <rect x="300" y="204" width="80" height="22" rx="4" fill="#0f1117"/>
+    <text x="340" y="219" fill="#f97316" font-size="13" font-family="'Geist Mono',monospace"
+          text-anchor="middle" font-weight="500">G = 0.9</text>
+
+    <!-- Interstellar → Sci-Fi -->
+    <line x1="596" y1="220" x2="816" y2="220"
+          stroke="#f97316" stroke-width="3" marker-end="url(#arr-on)"/>
+    <rect x="664" y="204" width="80" height="22" rx="4" fill="#0f1117"/>
+    <text x="704" y="219" fill="#f97316" font-size="13" font-family="'Geist Mono',monospace"
+          text-anchor="middle" font-weight="500">G = 0.7</text>
+
+    <!-- ═══════════════════════════════════
+         DEAD EDGES (white dashed)
+         ═══════════════════════════════════ -->
+
+    <!-- Nolan → Dark Knight -->
+    <line x1="236" y1="248" x2="456" y2="380"
+          stroke="#e8eaf0" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arr-off)"/>
+    <rect x="296" y="306" width="80" height="22" rx="4" fill="#0f1117"/>
+    <text x="336" y="321" fill="#e8eaf0" font-size="13" font-family="'Geist Mono',monospace"
+          text-anchor="middle" font-weight="500">G = 0.9</text>
+
+    <!-- Dark Knight → Action -->
+    <line x1="596" y1="380" x2="780" y2="380"
+          stroke="#e8eaf0" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arr-off)"/>
+    <rect x="644" y="364" width="80" height="22" rx="4" fill="#0f1117"/>
+    <text x="684" y="379" fill="#e8eaf0" font-size="13" font-family="'Geist Mono',monospace"
+          text-anchor="middle" font-weight="500">G = 0.7</text>
+
+    <!-- ═══════════════════════════════════
+         NODES
+         ═══════════════════════════════════ -->
+
+    <!-- NOLAN (source) -->
+    <rect x="56" y="180" width="180" height="88" rx="8" fill="#1a1f2e" stroke="#e8eaf0" stroke-width="2"/>
+    <text x="76" y="204" fill="#7a8599" font-size="10" font-family="'Geist Mono',monospace"
+          letter-spacing="0.14em">SOURCE</text>
+    <text x="146" y="238" fill="#e8eaf0" font-size="20" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Nolan</text>
+    <text x="146" y="258" fill="#a0abc0" font-size="12" font-family="'Geist Mono',monospace"
+          text-anchor="middle">V = 1.0</text>
+
+    <!-- INCEPTION (result) -->
+    <rect x="456" y="68" width="140" height="88" rx="8" fill="#1f1408" stroke="#f97316" stroke-width="2"/>
+    <text x="476" y="92" fill="#f97316" font-size="10" font-family="'Geist Mono',monospace"
+          letter-spacing="0.14em">RESULT</text>
+    <text x="526" y="126" fill="#fb923c" font-size="18" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Inception</text>
+    <text x="526" y="148" fill="#f97316" font-size="12" font-family="'Geist Mono',monospace"
+          text-anchor="middle">V=0.56  I=0.31</text>
+
+    <!-- INTERSTELLAR (result) -->
+    <rect x="456" y="176" width="140" height="88" rx="8" fill="#1f1408" stroke="#f97316" stroke-width="2"/>
+    <text x="476" y="200" fill="#f97316" font-size="10" font-family="'Geist Mono',monospace"
+          letter-spacing="0.14em">RESULT</text>
+    <text x="526" y="234" fill="#fb923c" font-size="18" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Interstellar</text>
+    <text x="526" y="256" fill="#f97316" font-size="12" font-family="'Geist Mono',monospace"
+          text-anchor="middle">V=0.56  I=0.39</text>
+
+    <!-- DARK KNIGHT (excluded) -->
+    <rect x="456" y="336" width="140" height="88" rx="8" fill="#1a1f2e" stroke="#e8eaf0" stroke-width="2" stroke-dasharray="8,5"/>
+    <text x="476" y="360" fill="#a0abc0" font-size="10" font-family="'Geist Mono',monospace"
+          letter-spacing="0.14em">EXCLUDED</text>
+    <text x="526" y="394" fill="#e8eaf0" font-size="18" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Dark Knight</text>
+    <text x="526" y="416" fill="#a0abc0" font-size="12" font-family="'Geist Mono',monospace"
+          text-anchor="middle">V=1.0  I=0</text>
+
+    <!-- ACTION (dead end) -->
+    <rect x="780" y="336" width="140" height="88" rx="8" fill="#1a1f2e" stroke="#e8eaf0" stroke-width="2" stroke-dasharray="8,5"/>
+    <text x="800" y="360" fill="#a0abc0" font-size="10" font-family="'Geist Mono',monospace"
+          letter-spacing="0.14em">DEAD END</text>
+    <text x="850" y="394" fill="#e8eaf0" font-size="18" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Action</text>
+    <text x="850" y="416" fill="#a0abc0" font-size="12" font-family="'Geist Mono',monospace"
+          text-anchor="middle">no path to sink</text>
+
+    <!-- SCI-FI (sink) -->
+    <rect x="816" y="180" width="180" height="88" rx="8" fill="#1a1f2e" stroke="#e8eaf0" stroke-width="2"/>
+    <text x="836" y="204" fill="#7a8599" font-size="10" font-family="'Geist Mono',monospace"
+          letter-spacing="0.14em">SINK</text>
+    <text x="906" y="238" fill="#e8eaf0" font-size="20" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Sci-Fi</text>
+    <text x="906" y="258" fill="#a0abc0" font-size="12" font-family="'Geist Mono',monospace"
+          text-anchor="middle">V = 0.0</text>
+
+    <!-- ═══════════════════════════════════
+         CALLOUT
+         ═══════════════════════════════════ -->
+    <rect x="400" y="460" width="300" height="52" rx="6"
+          fill="rgba(249,115,22,0.07)" stroke="rgba(249,115,22,0.25)" stroke-width="1"/>
+    <text x="550" y="480" fill="#f97316" font-size="11" font-family="'Geist Mono',monospace"
+          text-anchor="middle">Dark Knight only touches Nolan.</text>
+    <text x="550" y="498" fill="#f97316" font-size="11" font-family="'Geist Mono',monospace"
+          text-anchor="middle">Action is a dead end → V floats to 1.0 → I = 0</text>
+
+    <!-- ═══════════════════════════════════
+         LEGEND
+         ═══════════════════════════════════ -->
+    <line x1="56" y1="534" x2="1044" y2="534" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+
+    <line x1="80" y1="556" x2="128" y2="556" stroke="#f97316" stroke-width="3" marker-end="url(#arr-on)"/>
+    <text x="140" y="560" fill="#a0abc0" font-size="11" font-family="'Geist Mono',monospace">Current flows — in results</text>
+
+    <line x1="380" y1="556" x2="428" y2="556" stroke="#e8eaf0" stroke-width="2" stroke-dasharray="8,5" marker-end="url(#arr-off)"/>
+    <text x="440" y="560" fill="#a0abc0" font-size="11" font-family="'Geist Mono',monospace">Dead end — excluded (I = 0)</text>
+
+    <rect x="720" y="546" width="24" height="20" rx="3" fill="#1a1f2e" stroke="#e8eaf0" stroke-width="1.5"/>
+    <text x="752" y="560" fill="#a0abc0" font-size="11" font-family="'Geist Mono',monospace">Anchor (fixed V)</text>
+
+    <rect x="900" y="546" width="24" height="20" rx="3" fill="#1f1408" stroke="#f97316" stroke-width="1.5"/>
+    <text x="932" y="560" fill="#a0abc0" font-size="11" font-family="'Geist Mono',monospace">Result</text>
+
+  </svg>
+
+  <!-- ═══════════════════════════════════════════════════
+       EXPLANATION PANELS
+       ═══════════════════════════════════════════════════ -->
+  <div style="margin-top: 3rem; display: grid; gap: 1px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden;">
+
+    <!-- Section header -->
+    <div style="background: #0f1117; padding: 1.5rem 2rem 1rem;">
+      <p style="font-family:'Geist Mono',monospace; font-size:0.7rem; letter-spacing:0.18em; text-transform:uppercase; color:#5a6580; margin-bottom:0.5rem;">How it works</p>
+      <h2 style="font-family:'Instrument Serif',serif; font-size:1.5rem; font-weight:400; color:#e8eaf0;">The electric circuit analogy, step by step</h2>
+    </div>
+
+    <!-- Step 1 -->
+    <div style="background: #13161f; padding: 1.5rem 2rem; display:grid; grid-template-columns: 3rem 1fr; gap: 1.5rem; align-items:start;">
+      <div style="font-family:'Geist Mono',monospace; font-size:1.5rem; font-weight:600; color:#f97316; line-height:1;">1</div>
+      <div>
+        <p style="font-family:'Geist',sans-serif; font-size:1rem; font-weight:600; color:#e8eaf0; margin-bottom:0.4rem;">The knowledge graph is a resistor network</p>
+        <p style="font-size:0.9rem; color:#7a8599; line-height:1.7;">
+          Every entity (Nolan, Interstellar, Sci-Fi…) is a <strong style="color:#a0abc0;">node</strong>. Every relationship (directed_by, has_genre…) is a <strong style="color:#a0abc0;">resistor</strong> connecting two nodes.
+          The resistance of each edge comes directly from the ontology: a high-weight relationship like <code style="font-family:'Geist Mono',monospace; color:#f97316;">directed_by = 0.9</code> is a low-resistance (high-conductance) wire — it passes signal easily.
+          A weak relationship like <code style="font-family:'Geist Mono',monospace; color:#f97316;">has_tags = 0.2</code> is a high-resistance wire — it barely passes signal.
+        </p>
+        <p style="margin-top:0.75rem; font-family:'Geist Mono',monospace; font-size:0.8rem; color:#5a6580; letter-spacing:0.04em;">
+          Conductance G = ontology weight &nbsp;·&nbsp; Resistance R = 1/G
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div style="background: #13161f; padding: 1.5rem 2rem; display:grid; grid-template-columns: 3rem 1fr; gap: 1.5rem; align-items:start; border-top: 1px solid rgba(255,255,255,0.04);">
+      <div style="font-family:'Geist Mono',monospace; font-size:1.5rem; font-weight:600; color:#f97316; line-height:1;">2</div>
+      <div>
+        <p style="font-family:'Geist',sans-serif; font-size:1rem; font-weight:600; color:#e8eaf0; margin-bottom:0.4rem;">The query anchors are voltage sources</p>
+        <p style="font-size:0.9rem; color:#7a8599; line-height:1.7;">
+          When you issue an AND query — "Sci-Fi films by Nolan" — you are clamping two nodes to fixed voltages and letting the rest of the network reach equilibrium.
+          <strong style="color:#e8eaf0;">Nolan is the source: V = 1.0.</strong> Think of it as the positive terminal of a battery.
+          <strong style="color:#e8eaf0;">Sci-Fi is the sink: V = 0.0.</strong> That is the negative terminal — the ground.
+          Every other node's voltage is determined by Kirchhoff's laws: at equilibrium, the current flowing into each interior node equals the current flowing out.
+        </p>
+        <p style="margin-top:0.75rem; font-family:'Geist Mono',monospace; font-size:0.8rem; color:#5a6580; letter-spacing:0.04em;">
+          Anchors = Dirichlet boundary conditions &nbsp;·&nbsp; Solved via graph Laplacian L·V = s
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div style="background: #13161f; padding: 1.5rem 2rem; display:grid; grid-template-columns: 3rem 1fr; gap: 1.5rem; align-items:start; border-top: 1px solid rgba(255,255,255,0.04);">
+      <div style="font-family:'Geist Mono',monospace; font-size:1.5rem; font-weight:600; color:#f97316; line-height:1;">3</div>
+      <div>
+        <p style="font-family:'Geist',sans-serif; font-size:1rem; font-weight:600; color:#e8eaf0; margin-bottom:0.4rem;">Voltage = how close an entity is to each anchor</p>
+        <p style="font-size:0.9rem; color:#7a8599; line-height:1.7;">
+          Interstellar is connected to Nolan via <code style="font-family:'Geist Mono',monospace; color:#f97316;">directed_by (G=0.9)</code> and to Sci-Fi via <code style="font-family:'Geist Mono',monospace; color:#f97316;">has_genre (G=0.7)</code>.
+          It sits between two voltage sources and its equilibrium voltage settles at <strong style="color:#fb923c;">V = 0.5625</strong> — closer to Nolan (0.9 conductance) than to Sci-Fi (0.7 conductance), like a voltage divider.
+        </p>
+        <p style="margin-top:0.5rem; font-size:0.9rem; color:#7a8599; line-height:1.7;">
+          Dark Knight is connected to Nolan via <code style="font-family:'Geist Mono',monospace; color:#e8eaf0;">directed_by (G=0.9)</code> but its other edge leads to Action — a genre with no path to Sci-Fi.
+          With no second anchor to pull it down, Dark Knight's voltage <strong style="color:#e8eaf0;">floats to V = 1.0</strong>, identical to Nolan.
+        </p>
+        <p style="margin-top:0.75rem; font-family:'Geist Mono',monospace; font-size:0.8rem; color:#5a6580; letter-spacing:0.04em;">
+          Voltage divider: V(entity) = G_source / (G_source + G_sink) when connected to both
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div style="background: #13161f; padding: 1.5rem 2rem; display:grid; grid-template-columns: 3rem 1fr; gap: 1.5rem; align-items:start; border-top: 1px solid rgba(255,255,255,0.04);">
+      <div style="font-family:'Geist Mono',monospace; font-size:1.5rem; font-weight:600; color:#f97316; line-height:1;">4</div>
+      <div>
+        <p style="font-family:'Geist',sans-serif; font-size:1rem; font-weight:600; color:#e8eaf0; margin-bottom:0.4rem;">Current = the score</p>
+        <p style="font-size:0.9rem; color:#7a8599; line-height:1.7;">
+          Current only flows where there is a <strong style="color:#a0abc0;">potential difference</strong>. An entity scores well if it sits on a conducting path between source and sink — carrying current from high voltage to low voltage.
+          Interstellar: V = 0.5625, neighbors at V = 1.0 and V = 0.0 → potential difference exists → <strong style="color:#fb923c;">I = 0.39</strong>.
+          Dark Knight: V = 1.0, same as Nolan → zero potential difference with its only live neighbor → <strong style="color:#e8eaf0;">I = 0</strong>. It is automatically excluded.
+        </p>
+        <p style="margin-top:0.75rem; font-family:'Geist Mono',monospace; font-size:0.8rem; color:#5a6580; letter-spacing:0.04em;">
+          I(entity) = Σ G(e,j) × max(0, V(j) − V(e)) &nbsp;·&nbsp; score = current
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 5: why this is novel -->
+    <div style="background: rgba(249,115,22,0.05); padding: 1.5rem 2rem; display:grid; grid-template-columns: 3rem 1fr; gap: 1.5rem; align-items:start; border-top: 1px solid rgba(249,115,22,0.15);">
+      <div style="font-family:'Geist Mono',monospace; font-size:1.5rem; font-weight:600; color:#f97316; line-height:1;">→</div>
+      <div>
+        <p style="font-family:'Geist',sans-serif; font-size:1rem; font-weight:600; color:#f97316; margin-bottom:0.4rem;">Why this matters: no other tool does all three</p>
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-top:0.75rem;">
+          <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius:6px; border: 1px solid rgba(255,255,255,0.07);">
+            <p style="font-family:'Geist Mono',monospace; font-size:0.75rem; color:#5a6580; letter-spacing:0.1em; margin-bottom:0.4rem;">SPARQL / graph query</p>
+            <p style="font-size:0.85rem; color:#7a8599; line-height:1.6;">Schema-grounded. Typed edges. But binary — a path either exists or it doesn't. No partial matches, no scoring.</p>
+          </div>
+          <div style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius:6px; border: 1px solid rgba(255,255,255,0.07);">
+            <p style="font-family:'Geist Mono',monospace; font-size:0.75rem; color:#5a6580; letter-spacing:0.1em; margin-bottom:0.4rem;">Vector / embedding search</p>
+            <p style="font-size:0.85rem; color:#7a8599; line-height:1.6;">Continuous scoring. Handles partial similarity. But schema-free — no typed edges, no ontology, no multi-hop structure.</p>
+          </div>
+          <div style="padding: 1rem; background: rgba(249,115,22,0.08); border-radius:6px; border: 1px solid rgba(249,115,22,0.25);">
+            <p style="font-family:'Geist Mono',monospace; font-size:0.75rem; color:#f97316; letter-spacing:0.1em; margin-bottom:0.4rem;">open-kgo SemanticField</p>
+            <p style="font-size:0.85rem; color:#a0abc0; line-height:1.6;">Schema-grounded <em>and</em> continuous. Typed edges with weights. Multi-hop AND queries. Partial satisfaction scored, not binary.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="footer" style="margin-top:2rem;">
+    open-kgo · semantic field · DC circuit AND query · feat/semantic-field
+  </footer>
+
+</body>
+</html>

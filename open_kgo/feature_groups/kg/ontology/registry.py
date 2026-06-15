@@ -31,6 +31,7 @@ class RelationshipRule:
 
     domain: str
     range_type: str
+    weight: float = 1.0
 
 
 @dataclass
@@ -145,6 +146,7 @@ class OntologyRegistry:
             relationships[str(name)] = RelationshipRule(
                 domain=str(spec["domain"]),
                 range_type=str(spec["range"]),
+                weight=float(spec.get("weight", 1.0)),
             )
 
         return NamespaceOntology(

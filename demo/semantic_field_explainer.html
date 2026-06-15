@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>open-kgo · SemanticField</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0f1117;
+      --surface:  #13161f;
+      --border:   rgba(255,255,255,0.07);
+      --ink:      #e8eaf0;
+      --muted:    #7a8599;
+      --dim:      #4a5570;
+      --accent:   #f97316;
+      --accent2:  #fb923c;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: 'Geist', sans-serif;
+      line-height: 1.7;
+      padding: 0;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 5rem 2rem 4rem;
+      max-width: 760px;
+      margin: 0 auto;
+      border-bottom: 1px solid var(--border);
+    }
+    .eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 1rem;
+    }
+    .hero h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 3rem;
+      font-weight: 400;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 span { color: var(--accent); }
+    .hero p {
+      font-size: 1.125rem;
+      color: var(--muted);
+      max-width: 600px;
+    }
+
+    /* ── SECTIONS ── */
+    .section {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-num {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .section h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2rem;
+      font-weight: 400;
+      margin-bottom: 1.5rem;
+    }
+    .section h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      margin: 2rem 0 0.75rem;
+      text-transform: uppercase;
+      font-family: 'Geist Mono', monospace;
+    }
+    .section p { color: var(--muted); margin-bottom: 1rem; max-width: 680px; }
+    .section p strong { color: var(--ink); }
+
+    /* ── TABLES ── */
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      text-align: left;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: var(--muted);
+      vertical-align: top;
+    }
+    td:first-child { color: var(--ink); font-weight: 500; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ── CODE BLOCKS ── */
+    pre {
+      background: #0a0c12;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin: 1.25rem 0;
+      overflow-x: auto;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.82rem;
+      line-height: 1.65;
+      color: #a0b4d8;
+    }
+    pre .kw  { color: #f97316; }
+    pre .str { color: #7dd3a8; }
+    pre .cm  { color: #3a4a60; }
+    pre .num { color: #c084fc; }
+
+    /* ── CALLOUT BOX ── */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: rgba(249,115,22,0.06);
+      padding: 1rem 1.25rem;
+      border-radius: 0 6px 6px 0;
+      margin: 1.5rem 0;
+    }
+    .callout p { color: #c8a070; margin: 0; }
+
+    /* ── STAT CARDS ── */
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+    }
+    .card {
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
+    }
+    .card-label {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 0.4rem;
+    }
+    .card-val {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.25rem;
+    }
+    .card-sub { font-size: 0.8rem; color: var(--dim); }
+
+    /* ── PERF TABLE ── */
+    .perf-before td:last-child { color: #ef4444; }
+    .perf-after  td:last-child { color: #22c55e; }
+
+    /* ── DIAGRAM WRAP ── */
+    .diagram { margin: 2rem 0; }
+
+    /* ── LAYER BADGE ── */
+    .badge {
+      display: inline-block;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+    .badge-built   { background: rgba(249,115,22,0.12); color: var(--accent); border: 1px solid rgba(249,115,22,0.3); }
+    .badge-planned { background: rgba(255,255,255,0.04); color: var(--dim); border: 1px solid var(--border); }
+
+    /* ── FOOTER ── */
+    footer {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2rem;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--dim);
+      letter-spacing: 0.06em;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
+<div class="hero">
+  <p class="eyebrow">open-kgo · Layer 2</p>
+  <h1>Semantic<span>Field</span></h1>
+  <p>
+    Schema-grounded, continuous, multi-hop entity scoring —
+    grounded in DC electrical circuit theory.
+    Layer 1 says valid or invalid. Layer 2 says <em>how much</em>.
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════ 1. WHAT ═══════════════════════════════════════ -->
+<div class="section">
+  <p class="section-num">01</p>
+  <h2>What it is</h2>
+
+  <p>
+    SemanticField sits between your KG connector and your application.
+    You pass it a subgraph and a query expressed as two anchor nodes —
+    a <strong>source</strong> (who or what you're searching from) and a
+    <strong>sink</strong> (the category or target you want to reach).
+    It returns a ranked list of entities scored by how much signal flows through them.
+  </p>
+
+<pre><span class="cm"># incoming query → SemanticField → ranked results</span>
+
+scores = SemanticField.compute_and(
+    namespace = <span class="str">"metaqa"</span>,
+    edges     = subgraph_edges,          <span class="cm"># 2-hop neighbourhood of anchors</span>
+    source    = {<span class="str">"Nolan"</span>: <span class="num">1.0</span>},      <span class="cm"># WHO   ← high voltage</span>
+    sink      = {<span class="str">"Sci-Fi"</span>: <span class="num">0.0</span>},    <span class="cm"># WHAT  ← ground</span>
+)
+<span class="cm"># → {"Interstellar": 0.394, "Inception": 0.312, "Dark Knight": 0.0, ...}</span></pre>
+
+  <table>
+    <tr><th>Parameter</th><th>Role</th></tr>
+    <tr><td><code>source</code></td><td>High-voltage anchor — the "who" or "from" side</td></tr>
+    <tr><td><code>sink</code></td><td>Low-voltage anchor — the "what" or category side</td></tr>
+    <tr><td><code>edges</code></td><td>Subgraph — typically 2-hop neighbourhood of both anchors</td></tr>
+    <tr><td><code>namespace</code></td><td>Ontology namespace — looks up relationship weights from Layer 1</td></tr>
+  </table>
+
+  <p>
+    The subgraph is <strong>not the full KG</strong> — it's the 2-hop neighbourhood
+    around your anchors. This keeps the solver tractable and the results focused.
+    Unknown relationships default to G=1.0 (open-world assumption).
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════ 2. HOPS ═══════════════════════════════════════ -->
+<div class="section">
+  <p class="section-num">02</p>
+  <h2>1-hop, 2-hop, and multi-hop</h2>
+
+  <p>SemanticField doesn't know about hop count — it sees a graph and solves it.
+  The <em>shape</em> of your query determines what depth you need.</p>
+
+  <h3>1-hop — single relationship</h3>
+  <p><em>"Which actors has Nolan worked with?"</em> — one step from director to actor via movies.</p>
+<pre>SemanticField.compute(
+    namespace=<span class="str">"metaqa"</span>,
+    edges=one_hop_edges,          <span class="cm"># Movie → starred_actors → Actor</span>
+    anchors={<span class="str">"Nolan"</span>: <span class="num">1.0</span>},
+    relation_type=<span class="str">"starred_actors"</span>,
+)</pre>
+  <p>Actors directly connected to Nolan's films score above zero. Everything else scores 0.</p>
+
+  <h3>2-hop — the standard AND query</h3>
+  <p><em>"Sci-Fi films by Nolan."</em> — director → movie → genre. The movie sits between two anchors.</p>
+<pre>SemanticField.compute_and(
+    namespace=<span class="str">"metaqa"</span>,
+    edges=two_hop_edges,          <span class="cm"># Director→Movie→Genre</span>
+    source={<span class="str">"Nolan"</span>: <span class="num">1.0</span>},
+    sink={<span class="str">"Sci-Fi"</span>: <span class="num">0.0</span>},
+)</pre>
+  <p>Current flows through a movie only if it connects both anchors. Dark Knight connects to Nolan
+  but Action is a dead end — no path to Sci-Fi ground, zero current, excluded automatically.</p>
+
+  <h3>Multi-hop — drug repurposing</h3>
+  <p><em>"Which drugs, via their protein targets and pathways, are candidates for Alzheimer's?"</em></p>
+<pre><span class="cm"># 3-hop path:</span>
+<span class="cm"># Drug → binds → Protein → involved_in → Pathway → associated_with → Disease</span>
+
+SemanticField.compute_and(
+    namespace=<span class="str">"biokg"</span>,
+    edges=subgraph,               <span class="cm"># 2-hop neighbourhood of Drug + Disease anchors</span>
+    source={<span class="str">"Metformin"</span>: <span class="num">1.0</span>, <span class="str">"Aspirin"</span>: <span class="num">1.0</span>},
+    sink={<span class="str">"Alzheimer's"</span>: <span class="num">0.0</span>},
+)</pre>
+  <p>
+    Drugs with <strong>partial</strong> pathway overlap still score above zero.
+    Partial satisfaction is built into the physics — no thresholding, no binary cutoff.
+    A drug with a weak pathway connection scores lower than one with a strong direct hit,
+    in proportion to the conductance (ontology weight) of each relationship.
+  </p>
+
+  <div class="callout">
+    <p>This is the gap no existing tool fills: <strong>SPARQL</strong> is schema-grounded but binary.
+    <strong>Vector search</strong> is continuous but schema-free. SemanticField is both —
+    typed edges with weights, continuous scores, partial satisfaction.</p>
+  </div>
+
+  <table>
+    <tr><th>Query type</th><th>Depth</th><th>Method</th></tr>
+    <tr><td>Single-anchor potential</td><td>1–2 hops</td><td><code>compute(anchors)</code></td></tr>
+    <tr><td>AND query (2 anchors)</td><td>2–3 hops</td><td><code>compute_and(source, sink)</code></td></tr>
+    <tr><td>Multi-constraint</td><td>3–4 hops</td><td>Multiple source/sink pairs, merge scores</td></tr>
+    <tr><td>Discovery / exploration</td><td>BFS-bounded</td><td>Layer 3 (planned) automates this</td></tr>
+  </table>
+</div>
+
+
+<!-- ═══════════════════════════════════════ 3. WHY EM ═══════════════════════════════════════ -->
+<div class="section">
+  <p class="section-num">03</p>
+  <h2>Why electromagnetism</h2>
+
+  <p>
+    We evaluated several physics frameworks before committing to DC circuits.
+    The requirement: it must map naturally onto typed, weighted knowledge graphs
+    and support both schema grounding and continuous scoring simultaneously.
+  </p>
+
+  <table>
+    <tr><th>Framework</th><th>What it models</th><th>Why we passed</th></tr>
+    <tr>
+      <td>Thermodynamics / diffusion</td>
+      <td>Spreading, heat flow, equilibration</td>
+      <td>Maps to random walks — no natural AND semantics, no voltage/current duality</td>
+    </tr>
+    <tr>
+      <td>Quantum mechanics</td>
+      <td>Superposition, interference, probability amplitudes</td>
+      <td>No intuitive analogy for "a query"; requires complex amplitudes</td>
+    </tr>
+    <tr>
+      <td>Fluid dynamics</td>
+      <td>Flow through networks, Reynolds number</td>
+      <td>Close, but EM has richer theory for discrete graphs; conductance cleaner than viscosity</td>
+    </tr>
+    <tr>
+      <td><strong>DC electrical circuits</strong></td>
+      <td>Voltage sources, resistors, current, Kirchhoff's laws</td>
+      <td style="color:#22c55e;font-weight:600;">Maps perfectly onto typed weighted KGs ✓</td>
+    </tr>
+  </table>
+
+  <h3>Why DC circuits fit</h3>
+
+  <p><strong>1. Ontology weights are conductances.</strong>
+  A high-weight relationship (<code>directed_by = 0.9</code>) is a low-resistance wire — signal passes easily.
+  A weak relationship (<code>has_tags = 0.2</code>) resists signal.
+  The ontology literally is the impedance map of the graph.</p>
+
+  <p><strong>2. Query anchors are voltage sources.</strong>
+  Fixing voltage at anchor nodes is the standard impressed-voltage treatment in electrical
+  network theory (Strang, <em>Introduction to Linear Algebra</em>, ch. 10).
+  No approximation — this is the exact analytical solution.</p>
+
+  <p><strong>3. AND is free.</strong>
+  In a series circuit, current only flows if both ends are connected.
+  Dark Knight connects to Nolan but Action is a dead end — no path to ground,
+  voltage floats to 1.0, zero potential difference, zero current.
+  The physics enforces the AND constraint with no extra logic.</p>
+
+  <p><strong>4. Partial satisfaction is built in.</strong>
+  A drug with a weak pathway connection scores lower than one with a strong direct hit —
+  in proportion to G. No thresholding, no binary cutoff.</p>
+
+  <p><strong>5. Well-understood math.</strong>
+  Graph Laplacian, Kirchhoff's current law, Gaussian elimination.
+  Every step is traceable and explainable to an engineer with a circuits background.</p>
+
+  <div class="callout">
+    <p>
+      Every step is grounded in established electrical network theory — Kirchhoff's current law,
+      graph Laplacian, Dirichlet boundary conditions. Nothing exotic, everything traceable.
+    </p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════ 4. CIRCUIT ═══════════════════════════════════════ -->
+<div class="section">
+  <p class="section-num">04</p>
+  <h2>The circuit — visually</h2>
+  <p style="margin-bottom:1.5rem;">
+    Query: <em>"Sci-Fi films by Nolan."</em>
+    Nolan is the battery (anode V=1.0). Sci-Fi is ground (V=0.0).
+    Interstellar bridges both — it carries current and scores.
+    Dark Knight connects to Nolan but Action is a dead end — open circuit, I=0.
+  </p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;max-width:1000px;display:block;">
+      <defs>
+        <marker id="arr-live" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0,10 4,0 8" fill="#f97316"/>
+        </marker>
+        <linearGradient id="bat-body" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="#1e2a42"/>
+          <stop offset="45%"  stop-color="#2e4068"/>
+          <stop offset="100%" stop-color="#1e2a42"/>
+        </linearGradient>
+        <linearGradient id="bat-cap-g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"  stop-color="#d0d8f0"/>
+          <stop offset="100%" stop-color="#90a0c0"/>
+        </linearGradient>
+      </defs>
+      <rect width="1000" height="620" fill="#0f1117"/>
+
+      <!-- title -->
+      <text x="500" y="30" fill="#4a5570" font-size="10" font-family="'Geist Mono',monospace"
+            text-anchor="middle" letter-spacing="0.16em">DC RESISTOR NETWORK · QUERY: "Sci-Fi films by Nolan"</text>
+
+      <!-- TOP RAIL -->
+      <line x1="100" y1="110" x2="880" y2="110" stroke="#a0b4d8" stroke-width="2"/>
+      <text x="500" y="100" fill="#3a4a60" font-size="9" font-family="'Geist Mono',monospace"
+            text-anchor="middle" letter-spacing="0.1em">HIGH RAIL  V = 1.0</text>
+
+      <!-- ── BATTERY (Nolan) ── -->
+      <!-- body -->
+      <rect x="60" y="155" width="80" height="200" fill="url(#bat-body)" stroke="#2e4068" stroke-width="1.5" rx="6"/>
+      <!-- highlight -->
+      <rect x="72" y="174" width="56" height="7" rx="3" fill="rgba(255,255,255,0.07)"/>
+      <!-- top ellipse -->
+      <ellipse cx="100" cy="155" rx="40" ry="9" fill="url(#bat-cap-g)" stroke="#8090b8" stroke-width="1"/>
+      <!-- nub -->
+      <rect x="87" y="139" width="26" height="17" rx="5" fill="url(#bat-cap-g)" stroke="#90a0c0" stroke-width="1"/>
+      <ellipse cx="100" cy="139" rx="13" ry="4" fill="#c8d4f0"/>
+      <!-- bottom ellipse -->
+      <ellipse cx="100" cy="355" rx="40" ry="9" fill="#3a4255" stroke="#4a5570" stroke-width="1"/>
+      <!-- + − labels -->
+      <text x="100" y="143" fill="#0f1117" font-size="13" font-weight="700"
+            font-family="'Geist Mono',monospace" text-anchor="middle">+</text>
+      <text x="100" y="372" fill="#0f1117" font-size="13" font-weight="700"
+            font-family="'Geist Mono',monospace" text-anchor="middle">−</text>
+      <!-- labels inside -->
+      <text x="100" y="208" fill="#a0b4d8" font-size="10" font-weight="600"
+            font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">ANODE</text>
+      <text x="100" y="226" fill="#6a7898" font-size="9"
+            font-family="'Geist Mono',monospace" text-anchor="middle">V = 1.0</text>
+      <line x1="68" y1="262" x2="132" y2="262" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <text x="100" y="285" fill="#5a6878" font-size="10" font-weight="600"
+            font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.08em">CATHODE</text>
+      <text x="100" y="303" fill="#3a4860" font-size="9"
+            font-family="'Geist Mono',monospace" text-anchor="middle">ref</text>
+      <!-- wire from nub to top rail -->
+      <line x1="100" y1="139" x2="100" y2="110" stroke="#a0b4d8" stroke-width="2"/>
+      <!-- wire from bottom down -->
+      <line x1="100" y1="364" x2="100" y2="530" stroke="#3a4255" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <!-- entity label -->
+      <text x="100" y="408" fill="#e8eaf0" font-size="15" font-weight="600"
+            font-family="'Geist',sans-serif" text-anchor="middle">Nolan</text>
+      <text x="100" y="424" fill="#4a5570" font-size="8"
+            font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">QUERY ANCHOR</text>
+
+      <!-- ── GROUND (Sci-Fi) ── -->
+      <line x1="880" y1="110" x2="880" y2="200" stroke="#a0b4d8" stroke-width="2"/>
+      <line x1="844" y1="200" x2="916" y2="200" stroke="#e8eaf0" stroke-width="4"/>
+      <line x1="856" y1="216" x2="904" y2="216" stroke="#e8eaf0" stroke-width="2.5"/>
+      <line x1="868" y1="232" x2="892" y2="232" stroke="#e8eaf0" stroke-width="1.5"/>
+      <text x="880" y="255" fill="#a0abc0" font-size="11"
+            font-family="'Geist Mono',monospace" text-anchor="middle">V = 0.0</text>
+      <text x="880" y="280" fill="#e8eaf0" font-size="16" font-weight="600"
+            font-family="'Geist',sans-serif" text-anchor="middle">Sci-Fi</text>
+      <text x="880" y="298" fill="#4a5570" font-size="8"
+            font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.1em">QUERY ANCHOR · GROUND</text>
+
+      <!-- ── INTERSTELLAR BRANCH (live, orange) ── -->
+      <line x1="260" y1="110" x2="260" y2="210" stroke="#f97316" stroke-width="2.5"/>
+      <line x1="700" y1="110" x2="700" y2="210" stroke="#f97316" stroke-width="2.5"/>
+      <!-- wire in -->
+      <line x1="260" y1="230" x2="295" y2="230" stroke="#f97316" stroke-width="2.5"/>
+      <!-- R1 zigzag -->
+      <polyline points="295,230 303,210 311,250 319,210 327,250 335,210 343,250 351,210 359,230"
+                fill="none" stroke="#f97316" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="359" y1="230" x2="440" y2="230" stroke="#f97316" stroke-width="2.5"/>
+      <circle cx="480" cy="230" r="7" fill="#f97316"/>
+      <line x1="440" y1="230" x2="480" y2="230" stroke="#f97316" stroke-width="2.5"/>
+      <line x1="480" y1="230" x2="540" y2="230" stroke="#f97316" stroke-width="2.5"/>
+      <!-- R2 zigzag -->
+      <polyline points="540,230 548,210 556,250 564,210 572,250 580,210 588,250 596,210 604,230"
+                fill="none" stroke="#f97316" stroke-width="3" stroke-linejoin="round"/>
+      <line x1="604" y1="230" x2="700" y2="230" stroke="#f97316" stroke-width="2.5"/>
+      <!-- vertical drops -->
+      <line x1="260" y1="210" x2="260" y2="230" stroke="#f97316" stroke-width="2.5"/>
+      <line x1="700" y1="210" x2="700" y2="230" stroke="#f97316" stroke-width="2.5"/>
+      <!-- current arrow -->
+      <line x1="224" y1="148" x2="284" y2="148" stroke="#f97316" stroke-width="2" marker-end="url(#arr-live)"/>
+      <text x="254" y="141" fill="#f97316" font-size="10" font-family="'Geist Mono',monospace"
+            text-anchor="middle">I = 0.394</text>
+      <!-- R labels -->
+      <rect x="285" y="256" width="120" height="30" rx="4" fill="rgba(249,115,22,0.07)" stroke="rgba(249,115,22,0.2)" stroke-width="1"/>
+      <text x="345" y="270" fill="#f97316" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">directed_by</text>
+      <text x="345" y="282" fill="#f97316" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">G = 0.9</text>
+      <rect x="530" y="256" width="100" height="30" rx="4" fill="rgba(249,115,22,0.07)" stroke="rgba(249,115,22,0.2)" stroke-width="1"/>
+      <text x="580" y="270" fill="#f97316" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">has_genre</text>
+      <text x="580" y="282" fill="#f97316" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">G = 0.7</text>
+      <!-- node label -->
+      <rect x="400" y="294" width="160" height="50" rx="7" fill="#1f1408" stroke="#f97316" stroke-width="2"/>
+      <text x="480" y="317" fill="#fb923c" font-size="14" font-weight="600"
+            font-family="'Geist',sans-serif" text-anchor="middle">Interstellar</text>
+      <text x="480" y="335" fill="#f97316" font-size="9"
+            font-family="'Geist Mono',monospace" text-anchor="middle">V = 0.5625  ·  I = 0.394  ✓</text>
+
+      <!-- ── DARK KNIGHT BRANCH (dead, dim) ── -->
+      <line x1="260" y1="110" x2="260" y2="460" stroke="#2a3042" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <line x1="260" y1="478" x2="295" y2="478" stroke="#2a3042" stroke-width="1.5"/>
+      <polyline points="295,478 303,458 311,498 319,458 327,498 335,458 343,498 351,458 359,478"
+                fill="none" stroke="#2a3042" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="359" y1="478" x2="480" y2="478" stroke="#2a3042" stroke-width="1.5"/>
+      <circle cx="480" cy="478" r="6" fill="#1e2535" stroke="#2a3042" stroke-width="2"/>
+      <line x1="480" y1="478" x2="540" y2="478" stroke="#2a3042" stroke-width="1.5"/>
+      <polyline points="540,478 548,458 556,498 564,458 572,498 580,458 588,498 596,458 604,478"
+                fill="none" stroke="#2a3042" stroke-width="2" stroke-linejoin="round"/>
+      <line x1="604" y1="478" x2="660" y2="478" stroke="#2a3042" stroke-width="1.5"/>
+      <!-- open circuit -->
+      <circle cx="686" cy="478" r="17" fill="#13161f" stroke="#3a4255" stroke-width="2"/>
+      <line x1="674" y1="466" x2="698" y2="490" stroke="#4a5570" stroke-width="2.5"/>
+      <line x1="698" y1="466" x2="674" y2="490" stroke="#4a5570" stroke-width="2.5"/>
+      <!-- I=0 -->
+      <text x="258" y="448" fill="#2a3042" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">I = 0</text>
+      <!-- annotation -->
+      <text x="716" y="466" fill="#4a5570" font-size="10" font-family="'Geist Mono',monospace">open circuit</text>
+      <text x="716" y="480" fill="#3a4255" font-size="10" font-family="'Geist Mono',monospace">no path to ground</text>
+      <text x="716" y="494" fill="#3a4255" font-size="10" font-family="'Geist Mono',monospace">V floats → 1.0  ·  I = 0</text>
+      <!-- R dim labels -->
+      <rect x="285" y="502" width="120" height="30" rx="4" fill="rgba(42,48,66,0.4)" stroke="rgba(58,66,90,0.4)" stroke-width="1"/>
+      <text x="345" y="516" fill="#2a3042" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">directed_by</text>
+      <text x="345" y="528" fill="#2a3042" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">G = 0.9</text>
+      <rect x="530" y="502" width="100" height="30" rx="4" fill="rgba(42,48,66,0.4)" stroke="rgba(58,66,90,0.4)" stroke-width="1"/>
+      <text x="580" y="516" fill="#2a3042" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">has_genre</text>
+      <text x="580" y="528" fill="#2a3042" font-size="9" font-family="'Geist Mono',monospace" text-anchor="middle">G = 0.7</text>
+      <!-- DK label -->
+      <rect x="400" y="540" width="160" height="50" rx="7" fill="#13161f" stroke="#2a3042" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="480" y="563" fill="#4a5570" font-size="14" font-weight="600"
+            font-family="'Geist',sans-serif" text-anchor="middle">Dark Knight</text>
+      <text x="480" y="581" fill="#2a3042" font-size="9"
+            font-family="'Geist Mono',monospace" text-anchor="middle">V = 1.0  ·  I = 0  ✗</text>
+
+      <!-- legend -->
+      <line x1="40" y1="603" x2="960" y2="603" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      <line x1="56" y1="616" x2="96" y2="616" stroke="#f97316" stroke-width="2.5" marker-end="url(#arr-live)"/>
+      <text x="104" y="620" fill="#4a5570" font-size="9" font-family="'Geist Mono',monospace">Current flows (scored)</text>
+      <line x1="300" y1="616" x2="340" y2="616" stroke="#2a3042" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <text x="348" y="620" fill="#4a5570" font-size="9" font-family="'Geist Mono',monospace">Dead-end (I = 0)</text>
+      <polyline points="560,616 565,608 570,624 575,608 580,624 585,608 590,616"
+                fill="none" stroke="#4a5570" stroke-width="2" stroke-linejoin="round"/>
+      <text x="598" y="620" fill="#4a5570" font-size="9" font-family="'Geist Mono',monospace">Resistor = relationship weight</text>
+      <circle cx="840" cy="616" r="8" fill="none" stroke="#4a5570" stroke-width="1.5"/>
+      <line x1="833" y1="609" x2="847" y2="623" stroke="#4a5570" stroke-width="2"/>
+      <line x1="847" y1="609" x2="833" y2="623" stroke="#4a5570" stroke-width="2"/>
+      <text x="856" y="620" fill="#4a5570" font-size="9" font-family="'Geist Mono',monospace">Open circuit</text>
+    </svg>
+  </div>
+
+  <table>
+    <tr><th>Circuit element</th><th>Knowledge graph concept</th></tr>
+    <tr><td>Battery (anode +)</td><td>Source anchor — "who" entity, fixed V=1.0</td></tr>
+    <tr><td>Ground (−)</td><td>Sink anchor — target category, fixed V=0.0</td></tr>
+    <tr><td>Resistor (zigzag)</td><td>Relationship instance between two entities</td></tr>
+    <tr><td>Conductance G</td><td>Ontology weight for that relationship type</td></tr>
+    <tr><td>Voltage V(e)</td><td>How "aligned" entity e is with the query</td></tr>
+    <tr><td>Current I(e)</td><td><strong>The score</strong> — signal flowing through e</td></tr>
+    <tr><td>Open circuit ✕</td><td>Dead-end branch — entity not connected to both anchors</td></tr>
+  </table>
+</div>
+
+
+<!-- ═══════════════════════════════════════ 5. MATH ═══════════════════════════════════════ -->
+<div class="section">
+  <p class="section-num">05</p>
+  <h2>The math</h2>
+
+  <h3>Step 1 — Graph Laplacian</h3>
+  <p>Build the conductance-weighted Laplacian L from all edges:</p>
+  <pre>L[i][i]  =  Σ G(i,j)   # sum of conductances at node i
+L[i][j]  = -G(i,j)    # negative conductance between i and j</pre>
+
+  <h3>Step 2 — Dirichlet boundary conditions</h3>
+  <p>Partition nodes into <strong>boundary</strong> B (anchors, fixed voltage) and <strong>interior</strong> I (unknown).
+  Solve the reduced system:</p>
+  <pre>L_II · V_I  =  −L_IB · V_B</pre>
+  <p>Gaussian elimination with partial pivoting. Disconnected nodes receive V=0.</p>
+
+  <h3>Step 3 — Score by current</h3>
+  <p>After solving, score each interior entity by the current it carries:</p>
+  <pre>I(e) = Σ  G(e,j) × (V(j) − V(e))
+        j : V(j) > V(e)</pre>
+
+  <p><strong>Why current and not voltage?</strong>
+  Voltage alone doesn't enforce the AND constraint — an entity close to the source gets a high voltage
+  regardless of whether it connects to the sink.
+  Current is zero unless <em>both</em> a high-voltage and a low-voltage neighbour exist.</p>
+</div>
+
+
+<!-- ═══════════════════════════════════════ 6. RESULTS ═══════════════════════════════════════ -->
+<div class="section">
+  <p class="section-num">06</p>
+  <h2>Test results &amp; performance</h2>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-label">Unit tests</div>
+      <div class="card-val">18</div>
+      <div class="card-sub">All pass · ruff · mypy strict · bandit</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Speedup with numba</div>
+      <div class="card-val">70×</div>
+      <div class="card-sub">5,000-node subgraphs in ~12s</div>
+    </div>
+    <div class="card">
+      <div class="card-label">MetaQA dataset</div>
+      <div class="card-val">43k</div>
+      <div class="card-sub">nodes · 134k edges · 4 director queries pass</div>
+    </div>
+  </div>
+
+  <h3>Before numba — pure Python</h3>
+  <table class="perf-before">
+    <tr><th>Query</th><th>Subgraph</th><th>Time</th></tr>
+    <tr><td>Nolan + Sci-Fi</td><td>159 nodes</td><td>0.03s</td></tr>
+    <tr><td>Spielberg + Action</td><td>1,200 nodes</td><td>14.1s</td></tr>
+    <tr><td>Cameron + Thriller</td><td>1,200 nodes</td><td>14.2s</td></tr>
+    <tr><td>Ridley Scott + Drama</td><td>1,200 nodes</td><td>14.5s</td></tr>
+  </table>
+
+  <h3>After numba — JIT-compiled kernel</h3>
+  <p>Numba compiles the Gaussian elimination inner loop at first call, caches it.
+  Falls back to pure Python silently when numba isn't installed — no breaking change.</p>
+  <table class="perf-after">
+    <tr><th>Query</th><th>Subgraph</th><th>Time</th></tr>
+    <tr><td>Nolan + Sci-Fi</td><td>159 nodes</td><td>0.11s *</td></tr>
+    <tr><td>Spielberg + Action</td><td>5,340 nodes</td><td>14.2s</td></tr>
+    <tr><td>Cameron + Thriller</td><td>4,916 nodes</td><td>11.1s</td></tr>
+    <tr><td>Ridley Scott + Drama</td><td>5,000 nodes</td><td>11.9s</td></tr>
+  </table>
+  <p style="font-size:0.8rem;color:var(--dim);">* First run includes JIT compilation (~2s). Subsequent calls are &lt;0.01s for this subgraph size.</p>
+
+  <h3>What the unit tests cover</h3>
+  <table>
+    <tr><th>Test group</th><th>What it pins</th></tr>
+    <tr><td>Conductance lookup</td><td>Ontology weight returned; unknown relation defaults to 1.0</td></tr>
+    <tr><td>Single-anchor potential</td><td>Anchor carries declared voltage; connected nodes non-zero</td></tr>
+    <tr><td>Disconnected nodes</td><td>Receive 0.0 — no spurious scores</td></tr>
+    <tr><td>Relation-type filter</td><td><code>compute(relation_type=…)</code> isolates the subgraph</td></tr>
+    <tr><td>Voltage divider</td><td>V(movie) = G_source / (G_source + G_sink)</td></tr>
+    <tr><td>AND — Dark Knight</td><td><code>compute_and</code> gives exactly 0.0 (dead-end branch)</td></tr>
+    <tr><td>AND — Arrival</td><td>Also 0.0 (connected to Sci-Fi but not Nolan)</td></tr>
+    <tr><td>Verified calculation</td><td>Interstellar I = 0.9 × (1.0 − 0.9/1.6) = 0.39375</td></tr>
+    <tr><td>Weight from YAML</td><td>Ontology weights load correctly from fixture file</td></tr>
+  </table>
+</div>
+
+
+<!-- ═══════════════════════════════════════ 7. THREE LAYERS ═══════════════════════════════════════ -->
+<div class="section">
+  <p class="section-num">07</p>
+  <h2>The three layers</h2>
+
+  <div class="diagram">
+    <svg viewBox="0 0 860 290" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;display:block;background:#13161f;border-radius:8px;padding:8px;">
+      <rect width="860" height="290" fill="#13161f"/>
+      <rect x="36" y="16" width="788" height="64" rx="6"
+            fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="5,3"/>
+      <text x="52" y="44" fill="#4a5570" font-size="9" font-family="monospace" letter-spacing="0.1em">L3</text>
+      <text x="76" y="56" fill="#4a5570" font-size="15" font-weight="bold" font-family="sans-serif">Discovery Engine</text>
+      <text x="296" y="44" fill="#2a3042" font-size="9" font-family="monospace" letter-spacing="0.08em">PLANNED</text>
+      <text x="816" y="52" fill="#2a3042" font-size="9" font-family="monospace" text-anchor="end">mloda.discover(start, goal_type, namespace)  ·  ranked paths by field strength</text>
+
+      <rect x="36" y="92" width="788" height="76" rx="6"
+            fill="rgba(249,115,22,0.07)" stroke="#f97316" stroke-width="1.5"/>
+      <text x="52" y="122" fill="#f97316" font-size="9" font-family="monospace" letter-spacing="0.1em">L2</text>
+      <text x="76" y="135" fill="#fb923c" font-size="15" font-weight="bold" font-family="sans-serif">SemanticField</text>
+      <text x="230" y="122" fill="#f97316" font-size="9" font-family="monospace" letter-spacing="0.08em">BUILT</text>
+      <text x="816" y="126" fill="#a0abc0" font-size="9" font-family="monospace" text-anchor="end">compute(anchors)  ·  compute_and(source, sink)</text>
+      <text x="816" y="142" fill="#5a6580" font-size="9" font-family="monospace" text-anchor="end">ontology weights → conductances  ·  score = current  ·  numba-accelerated</text>
+
+      <rect x="36" y="180" width="788" height="64" rx="6"
+            fill="rgba(255,255,255,0.03)" stroke="#e8eaf0" stroke-width="1.2"/>
+      <text x="52" y="208" fill="#a0abc0" font-size="9" font-family="monospace" letter-spacing="0.1em">L1</text>
+      <text x="76" y="220" fill="#e8eaf0" font-size="15" font-weight="bold" font-family="sans-serif">OntologyRegistry</text>
+      <text x="258" y="208" fill="#a0abc0" font-size="9" font-family="monospace" letter-spacing="0.08em">BUILT</text>
+      <text x="816" y="216" fill="#a0abc0" font-size="9" font-family="monospace" text-anchor="end">is_valid_edge()  ·  get_range_type()  ·  YAML-declared  ·  binary valid / invalid</text>
+
+      <text x="16" y="168" fill="#2a3042" font-size="8" font-family="monospace"
+            transform="rotate(-90,16,168)" text-anchor="middle" letter-spacing="0.12em">ABSTRACTION ↑</text>
+
+      <line x1="36" y1="258" x2="824" y2="258" stroke="rgba(255,255,255,0.05)" stroke-width="0.8"/>
+      <rect x="56" y="266" width="16" height="12" rx="2" fill="rgba(249,115,22,0.07)" stroke="#f97316" stroke-width="1.2"/>
+      <text x="78" y="276" fill="#4a5570" font-size="9" font-family="monospace">Focal — this release</text>
+      <rect x="220" y="266" width="16" height="12" rx="2" fill="rgba(255,255,255,0.03)" stroke="#e8eaf0" stroke-width="1"/>
+      <text x="242" y="276" fill="#4a5570" font-size="9" font-family="monospace">Built / stable</text>
+      <rect x="356" y="266" width="16" height="12" rx="2" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="378" y="276" fill="#4a5570" font-size="9" font-family="monospace">Planned</text>
+    </svg>
+  </div>
+
+  <h3>Layer 1 — OntologyRegistry <span class="badge badge-built">built</span></h3>
+  <p>YAML-declared per domain. Relationship types, valid domain/range pairs, and weights.
+  Weights flow into Layer 2 as conductances.</p>
+<pre>relationships:
+  directed_by: { domain: Movie, range: Person, <span class="kw">weight: 0.9</span> }
+  has_genre:   { domain: Movie, range: Genre,  <span class="kw">weight: 0.7</span> }
+  has_tags:    { domain: Movie, range: Tag,    <span class="kw">weight: 0.2</span> }</pre>
+
+  <h3>Layer 2 — SemanticField <span class="badge badge-built">built</span></h3>
+  <p>DC circuit model. Subgraph + query anchors → ranked entity scores.
+  Implemented in <code>open_kgo/feature_groups/kg/ontology/semantic_field.py</code>.
+  Numba-accelerated, pure-Python fallback when numba not available.</p>
+
+  <h3>Layer 3 — Discovery Engine <span class="badge badge-planned">planned</span></h3>
+  <p>Will use Layer 2 field values to guide multi-hop traversal toward a goal type —
+  a beam search that follows the current. Highest-scoring paths first.
+  This is what turns SemanticField into an autonomous knowledge graph explorer.</p>
+</div>
+
+
+<footer>
+  open-kgo · feat/semantic-field · SemanticField Layer 2
+</footer>
+
+</body>
+</html>

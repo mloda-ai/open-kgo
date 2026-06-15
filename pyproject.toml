@@ -49,6 +49,7 @@ kg-embedded = ["networkx>=3.2", "igraph>=0.11"]
 kg-network-pg = ["kuzu>=0.4", "networkx>=3.2", "grand-cypher>=0.12"]
 kg-memory = ["networkx>=3.2"]
 kg-ontology = ["pyyaml>=6.0"]
+kg-semantic-field = ["pyyaml>=6.0"]
 # Pure-stdlib families: extras intentionally empty so every family installs via
 # `open-kgo[kg-<family>]` and `kg-all` lists them uniformly. Do not delete.
 kg-rest = []
@@ -57,7 +58,7 @@ kg-codebuild = []
 kg-saas = []
 kg-citation = []
 kg-all = [
-    "open-kgo[kg-rdf,kg-embedded,kg-network-pg,kg-memory,kg-rest,kg-lineage,kg-codebuild,kg-saas,kg-citation,kg-ontology]",
+    "open-kgo[kg-rdf,kg-embedded,kg-network-pg,kg-memory,kg-rest,kg-lineage,kg-codebuild,kg-saas,kg-citation,kg-ontology,kg-semantic-field]",
 ]
 demo = ["marimo", "open-kgo[kg-all]"]
 

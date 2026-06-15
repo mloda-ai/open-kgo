@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Semantic Field — Circuit</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0f1117;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 2rem;
+      min-height: 100vh;
+    }
+    .eyebrow {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #4a5570;
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.75rem;
+      font-weight: 400;
+      color: #e8eaf0;
+      margin-bottom: 0.3rem;
+      text-align: center;
+    }
+    .subtitle {
+      font-family: 'Geist', sans-serif;
+      font-size: 0.9rem;
+      color: #5a6580;
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <p class="eyebrow">Open-KGO · SemanticField · Layer 2</p>
+  <h1>AND Query as a DC Circuit</h1>
+  <p class="subtitle">Query: "Sci-Fi films by Nolan" — who carries current between the battery and ground?</p>
+
+  <svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg"
+       style="width:100%;max-width:1000px;display:block;">
+
+    <defs>
+      <!-- current flow arrows -->
+      <marker id="arr-live" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+        <polygon points="0 0,10 4,0 8" fill="#f97316"/>
+      </marker>
+      <!-- battery gradient -->
+      <linearGradient id="bat-body" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%"   stop-color="#1e2a42"/>
+        <stop offset="40%"  stop-color="#2e4068"/>
+        <stop offset="100%" stop-color="#1e2a42"/>
+      </linearGradient>
+      <linearGradient id="bat-cap" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#d0d8f0"/>
+        <stop offset="100%" stop-color="#a0aac8"/>
+      </linearGradient>
+      <linearGradient id="bat-bot" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%"  stop-color="#6a7898"/>
+        <stop offset="100%" stop-color="#4a5570"/>
+      </linearGradient>
+    </defs>
+
+    <rect width="1000" height="640" fill="#0f1117"/>
+
+    <!-- ─────────────────────────────────────────────────────────
+         BATTERY  (left, vertical, cylindrical)
+         Body: x=60, y=160, w=80, h=200
+    ──────────────────────────────────────────────────────────── -->
+
+    <!-- bottom cap (cathode) -->
+    <ellipse cx="100" cy="360" rx="40" ry="10" fill="url(#bat-bot)" stroke="#6a7898" stroke-width="1"/>
+    <!-- body -->
+    <rect x="60" y="165" width="80" height="195" fill="url(#bat-body)" stroke="#2e4068" stroke-width="1.5"/>
+    <!-- body highlight stripe -->
+    <rect x="72" y="185" width="56" height="8" rx="3" fill="rgba(255,255,255,0.07)"/>
+    <!-- top ellipse (anode end) -->
+    <ellipse cx="100" cy="165" rx="40" ry="10" fill="url(#bat-cap)" stroke="#8090b8" stroke-width="1"/>
+    <!-- positive nub on top -->
+    <rect x="88" y="148" width="24" height="18" rx="4" fill="url(#bat-cap)" stroke="#a0aac8" stroke-width="1"/>
+    <ellipse cx="100" cy="148" rx="12" ry="4" fill="#c8d4f0"/>
+
+    <!-- + / − labels -->
+    <text x="100" y="152" fill="#0f1117" font-size="14" font-weight="700"
+          font-family="'Geist Mono',monospace" text-anchor="middle">+</text>
+    <text x="100" y="374" fill="#0f1117" font-size="13" font-weight="700"
+          font-family="'Geist Mono',monospace" text-anchor="middle">−</text>
+
+    <!-- ANODE / CATHODE labels -->
+    <text x="100" y="222" fill="#a0b4d8" font-size="10" font-weight="600"
+          font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.1em">ANODE</text>
+    <text x="100" y="240" fill="#7a8eaa" font-size="9"
+          font-family="'Geist Mono',monospace" text-anchor="middle">V = 1.0</text>
+
+    <!-- voltage divider line inside battery -->
+    <line x1="68" y1="272" x2="132" y2="272" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+    <text x="100" y="296" fill="#6a7898" font-size="10" font-weight="600"
+          font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.1em">CATHODE</text>
+    <text x="100" y="314" fill="#4a5570" font-size="9"
+          font-family="'Geist Mono',monospace" text-anchor="middle">V = 0.0 ref</text>
+
+    <!-- entity name -->
+    <text x="100" y="408" fill="#e8eaf0" font-size="16" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Nolan</text>
+    <text x="100" y="426" fill="#4a5570" font-size="9"
+          font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">QUERY ANCHOR</text>
+
+    <!-- wire from + nub up to junction -->
+    <line x1="100" y1="148" x2="100" y2="100" stroke="#a0b4d8" stroke-width="2"/>
+    <!-- horizontal top rail -->
+    <line x1="100" y1="100" x2="880" y2="100" stroke="#a0b4d8" stroke-width="2"/>
+
+    <!-- wire from bottom down -->
+    <line x1="100" y1="370" x2="100" y2="540" stroke="#4a5570" stroke-width="1.5" stroke-dasharray="6,4"/>
+
+    <!-- ─────────────────────────────────────────────────────────
+         GROUND SYMBOL  (right, Sci-Fi)
+    ──────────────────────────────────────────────────────────── -->
+
+    <!-- wire from top rail down -->
+    <line x1="880" y1="100" x2="880" y2="200" stroke="#a0b4d8" stroke-width="2"/>
+
+    <!-- ground bars -->
+    <line x1="844" y1="200" x2="916" y2="200" stroke="#e8eaf0" stroke-width="3.5"/>
+    <line x1="856" y1="216" x2="904" y2="216" stroke="#e8eaf0" stroke-width="2.5"/>
+    <line x1="868" y1="232" x2="892" y2="232" stroke="#e8eaf0" stroke-width="1.5"/>
+
+    <!-- V label -->
+    <text x="880" y="256" fill="#a0abc0" font-size="12"
+          font-family="'Geist Mono',monospace" text-anchor="middle">V = 0.0</text>
+    <text x="880" y="284" fill="#e8eaf0" font-size="18" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Sci-Fi</text>
+    <text x="880" y="302" fill="#4a5570" font-size="9"
+          font-family="'Geist Mono',monospace" text-anchor="middle" letter-spacing="0.12em">QUERY ANCHOR · GROUND</text>
+
+    <!-- ─────────────────────────────────────────────────────────
+         BRANCH A — INTERSTELLAR  (live, orange)
+         Top branch, y=200
+    ──────────────────────────────────────────────────────────── -->
+
+    <!-- drop from rail -->
+    <line x1="260" y1="100" x2="260" y2="200" stroke="#f97316" stroke-width="2.5"/>
+    <line x1="700" y1="100" x2="700" y2="200" stroke="#f97316" stroke-width="2.5"/>
+
+    <!-- wire in to R1 -->
+    <line x1="260" y1="220" x2="300" y2="220" stroke="#f97316" stroke-width="2.5"/>
+    <!-- R1 zigzag (directed_by, G=0.9) -->
+    <polyline points="300,220 308,200 316,240 324,200 332,240 340,200 348,240 356,200 364,220"
+              fill="none" stroke="#f97316" stroke-width="3" stroke-linejoin="round"/>
+    <!-- wire R1 → node -->
+    <line x1="364" y1="220" x2="430" y2="220" stroke="#f97316" stroke-width="2.5"/>
+    <!-- Interstellar node -->
+    <circle cx="480" cy="220" r="8" fill="#f97316"/>
+    <!-- wire node → R2 -->
+    <line x1="430" y1="220" x2="480" y2="220" stroke="#f97316" stroke-width="2.5"/>
+    <line x1="480" y1="220" x2="536" y2="220" stroke="#f97316" stroke-width="2.5"/>
+    <!-- R2 zigzag (has_genre, G=0.7) -->
+    <polyline points="536,220 544,200 552,240 560,200 568,240 576,200 584,240 592,200 600,220"
+              fill="none" stroke="#f97316" stroke-width="3" stroke-linejoin="round"/>
+    <!-- wire R2 → rail drop -->
+    <line x1="600" y1="220" x2="700" y2="220" stroke="#f97316" stroke-width="2.5"/>
+
+    <!-- vertical drops -->
+    <line x1="260" y1="200" x2="260" y2="220" stroke="#f97316" stroke-width="2.5"/>
+    <line x1="700" y1="200" x2="700" y2="220" stroke="#f97316" stroke-width="2.5"/>
+
+    <!-- current arrow -->
+    <line x1="230" y1="138" x2="292" y2="138" stroke="#f97316" stroke-width="2" marker-end="url(#arr-live)"/>
+    <text x="262" y="130" fill="#f97316" font-size="11" font-family="'Geist Mono',monospace"
+          text-anchor="middle" font-weight="500">I = 0.394</text>
+
+    <!-- R1 label -->
+    <rect x="294" y="248" width="112" height="32" rx="4" fill="rgba(249,115,22,0.08)" stroke="rgba(249,115,22,0.25)" stroke-width="1"/>
+    <text x="350" y="263" fill="#f97316" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">directed_by</text>
+    <text x="350" y="276" fill="#f97316" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">G = 0.9</text>
+
+    <!-- R2 label -->
+    <rect x="530" y="248" width="96" height="32" rx="4" fill="rgba(249,115,22,0.08)" stroke="rgba(249,115,22,0.25)" stroke-width="1"/>
+    <text x="578" y="263" fill="#f97316" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">has_genre</text>
+    <text x="578" y="276" fill="#f97316" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">G = 0.7</text>
+
+    <!-- Interstellar label box -->
+    <rect x="392" y="290" width="176" height="56" rx="8" fill="#1f1408" stroke="#f97316" stroke-width="2"/>
+    <text x="480" y="316" fill="#fb923c" font-size="15" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Interstellar</text>
+    <text x="480" y="336" fill="#f97316" font-size="10"
+          font-family="'Geist Mono',monospace" text-anchor="middle">V = 0.5625  ·  I = 0.394  ✓</text>
+
+    <!-- ─────────────────────────────────────────────────────────
+         BRANCH B — DARK KNIGHT  (dead end, dim)
+         Bottom branch, y=440
+    ──────────────────────────────────────────────────────────── -->
+
+    <!-- drop from rail -->
+    <line x1="260" y1="100" x2="260" y2="440" stroke="#2a3042" stroke-width="1.5" stroke-dasharray="5,4"/>
+
+    <!-- wire in to R1-DK -->
+    <line x1="260" y1="460" x2="300" y2="460" stroke="#2a3042" stroke-width="1.5"/>
+    <!-- R1-DK zigzag -->
+    <polyline points="300,460 308,440 316,480 324,440 332,480 340,440 348,480 356,440 364,460"
+              fill="none" stroke="#2a3042" stroke-width="2" stroke-linejoin="round"/>
+    <line x1="364" y1="460" x2="480" y2="460" stroke="#2a3042" stroke-width="1.5"/>
+    <!-- DK node -->
+    <circle cx="480" cy="460" r="7" fill="#1e2535" stroke="#2a3042" stroke-width="2"/>
+    <line x1="480" y1="460" x2="536" y2="460" stroke="#2a3042" stroke-width="1.5"/>
+    <!-- R2-DK zigzag -->
+    <polyline points="536,460 544,440 552,480 560,440 568,480 576,440 584,480 592,440 600,460"
+              fill="none" stroke="#2a3042" stroke-width="2" stroke-linejoin="round"/>
+    <line x1="600" y1="460" x2="660" y2="460" stroke="#2a3042" stroke-width="1.5"/>
+
+    <!-- OPEN CIRCUIT -->
+    <circle cx="688" cy="460" r="18" fill="#13161f" stroke="#3a4255" stroke-width="2"/>
+    <line x1="675" y1="447" x2="701" y2="473" stroke="#4a5570" stroke-width="2.5"/>
+    <line x1="701" y1="447" x2="675" y2="473" stroke="#4a5570" stroke-width="2.5"/>
+
+    <!-- open circuit annotation -->
+    <text x="720" y="450" fill="#4a5570" font-size="11" font-family="'Geist Mono',monospace">open circuit</text>
+    <text x="720" y="466" fill="#3a4255" font-size="11" font-family="'Geist Mono',monospace">no path to ground</text>
+    <text x="720" y="482" fill="#3a4255" font-size="11" font-family="'Geist Mono',monospace">V floats → 1.0  ·  I = 0</text>
+
+    <!-- I=0 label -->
+    <text x="262" y="428" fill="#3a4255" font-size="11" font-family="'Geist Mono',monospace"
+          text-anchor="middle">I = 0</text>
+
+    <!-- R1-DK label -->
+    <rect x="294" y="486" width="112" height="32" rx="4" fill="rgba(42,48,66,0.5)" stroke="rgba(58,66,90,0.4)" stroke-width="1"/>
+    <text x="350" y="501" fill="#3a4255" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">directed_by</text>
+    <text x="350" y="514" fill="#3a4255" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">G = 0.9</text>
+
+    <!-- R2-DK label -->
+    <rect x="530" y="486" width="96" height="32" rx="4" fill="rgba(42,48,66,0.5)" stroke="rgba(58,66,90,0.4)" stroke-width="1"/>
+    <text x="578" y="501" fill="#3a4255" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">has_genre</text>
+    <text x="578" y="514" fill="#3a4255" font-size="10" font-family="'Geist Mono',monospace" text-anchor="middle">G = 0.7</text>
+
+    <!-- DK label box -->
+    <rect x="392" y="528" width="176" height="56" rx="8" fill="#13161f" stroke="#2a3042" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <text x="480" y="554" fill="#4a5570" font-size="15" font-weight="600"
+          font-family="'Geist',sans-serif" text-anchor="middle">Dark Knight</text>
+    <text x="480" y="574" fill="#2a3042" font-size="10"
+          font-family="'Geist Mono',monospace" text-anchor="middle">V = 1.0  ·  I = 0  ✗</text>
+
+    <!-- ─────────────────────────────────────────────────────────
+         LEGEND
+    ──────────────────────────────────────────────────────────── -->
+    <line x1="40" y1="614" x2="960" y2="614" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+
+    <line x1="60" y1="630" x2="104" y2="630" stroke="#f97316" stroke-width="2.5" marker-end="url(#arr-live)"/>
+    <text x="112" y="634" fill="#5a6580" font-size="10" font-family="'Geist Mono',monospace">Current flows (scored)</text>
+
+    <line x1="310" y1="630" x2="354" y2="630" stroke="#2a3042" stroke-width="1.5" stroke-dasharray="5,4"/>
+    <text x="362" y="634" fill="#5a6580" font-size="10" font-family="'Geist Mono',monospace">Dead-end (I = 0)</text>
+
+    <polyline points="560,630 566,622 572,638 578,622 584,638 590,622 596,630"
+              fill="none" stroke="#5a6580" stroke-width="2" stroke-linejoin="round"/>
+    <text x="604" y="634" fill="#5a6580" font-size="10" font-family="'Geist Mono',monospace">Resistor = relationship</text>
+
+    <circle cx="848" cy="630" r="9" fill="none" stroke="#5a6580" stroke-width="1.5"/>
+    <line x1="840" y1="622" x2="856" y2="638" stroke="#5a6580" stroke-width="2"/>
+    <line x1="856" y1="622" x2="840" y2="638" stroke="#5a6580" stroke-width="2"/>
+    <text x="864" y="634" fill="#5a6580" font-size="10" font-family="'Geist Mono',monospace">Open circuit</text>
+
+  </svg>
+
+</body>
+</html>
