@@ -12,7 +12,8 @@ Open Knowledge Graphs and Ontologies plugin for [mloda](https://github.com/mloda
 |---|---|
 | [Quickstart](#quickstart) | Run a SPARQL query against a shipped sample file in under a minute |
 | [The nine connector families](#the-nine-connector-families) | The core of this repo: a 9-family KG connector taxonomy with two plugins each |
-| [Demos](#demos) | Three marimo notebooks and two evaluation harnesses, all offline |
+| [Semantic Fields — Layer 2](#semantic-fields--layer-2) | Continuous, schema-grounded entity scoring via DC circuit model |
+| [Demos](#demos) | Marimo notebooks and evaluation harnesses, all offline |
 | [Data and acknowledgments](#data-and-acknowledgments) | Where the sample data comes from |
 | [Development setup](#development-setup) | uv, tox, and the individual checks |
 | [Related repositories and documentation](#related-repositories-and-documentation) | mloda core, the plugin registry, and development guides |
@@ -86,6 +87,50 @@ Install all KG extras with: `uv sync --extra kg-all`.
 
 > **No-Docker testing policy.** Every connector test runs against rdflib, networkx, kuzu (embedded), or file fixtures. No Docker, no external services, no network calls.
 
+## Semantic Fields — Layer 2
+
+The connector families (Layer 1 validation) answer: *"is this traversal valid?"* — binary yes/no.
+
+**SemanticField** (Layer 2) answers: *"how relevant is this entity to my query?"* — a continuous score, grounded in DC electrical circuit theory.
+
+The knowledge graph is modelled as a resistor network. Ontology-declared relationship weights become conductances. A query is expressed as two anchor nodes — a **source** (high voltage) and a **sink** (low voltage, ground). The solver finds the electric potential at every entity via the conductance-weighted graph Laplacian, then scores each entity by the current it carries between source and sink.
+
+**Why current?** Current only flows through entities that bridge *both* anchors. An entity connected to only one side floats to that side's extreme voltage — zero potential difference, zero current, automatically excluded. No relation-type filtering needed; the circuit topology enforces the AND constraint.
+
+```python
+from open_kgo.feature_groups.kg.ontology import SemanticField
+
+# AND query: Sci-Fi films by Nolan
+scores = SemanticField.compute_and(
+    namespace="metaqa",
+    edges=subgraph_edges,          # 2-hop neighbourhood of both anchors
+    source={"Nolan": 1.0},         # high-voltage anchor
+    sink={"Sci-Fi": 0.0},          # ground
+)
+# → {"Interstellar": 0.394, "Inception": 0.312, "Dark Knight": 0.0, ...}
+```
+
+Relationship weights are declared in the ontology YAML and flow directly into the solver as conductances:
+
+```yaml
+relationships:
+  directed_by: { domain: Movie, range: Person, weight: 0.9 }
+  has_genre:   { domain: Movie, range: Genre,  weight: 0.7 }
+  has_tags:    { domain: Movie, range: Tag,    weight: 0.2 }
+```
+
+The solver is pure Python (no numpy) with an optional numba JIT kernel that gives a **70× speedup** at ~5 000-node subgraphs; it falls back silently when numba is absent.
+
+| Layer | What it does | Status |
+|---|---|---|
+| L1 — OntologyRegistry | Binary valid/invalid edge checks, YAML-declared | Built |
+| L2 — SemanticField | Continuous entity scoring via DC circuit model | Built |
+| L3 — Discovery Engine | Guided multi-hop traversal by field strength | Planned |
+
+Install: `uv sync --extra kg-semantic-field`
+
+Full visual explainer: [`demo/semantic_field_explainer.html`](demo/semantic_field_explainer.html) — open in any browser, no server needed.
+
 ## Demos
 
 Three marimo notebooks plus two evaluation harnesses live under `demo/`:
@@ -93,6 +138,8 @@ Three marimo notebooks plus two evaluation harnesses live under `demo/`:
 - `demo/demo_kg_connectors.py`: surface tour of all 9 families against the shipped fixtures.
 - `demo/demo_kg_build_repo.py`: builds an RDF graph from this repo (filesystem `repo:contains` + Python `repo:imports`), serializes to Turtle, and runs five SPARQL queries through `RdfLibSparqlReader` via `mloda.run_all`.
 - `demo/demo_kg_ontology.py`: walks the ontology layer end to end.
+- `demo/demo_semantic_field.py`: SemanticField Layer 2 — interactive director + genre query against MetaQA, with live scoring.
+- `demo/semantic_field_explainer.html`: full visual explainer for SemanticField — circuit diagram, layer stack, why EM, 1/2/multi-hop examples, test results. Open in any browser.
 - `demo/eval_arch1_vs_arch2.py` and `demo/eval_qa_accuracy.py`: evaluation harnesses comparing plain traversal vs. ontology-guided traversal.
 
 Install the demo extras and open any notebook:
