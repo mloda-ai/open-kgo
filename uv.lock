@@ -883,6 +883,9 @@ kg-rdf = [
     { name = "pyoxigraph" },
     { name = "rdflib" },
 ]
+kg-semantic-field = [
+    { name = "pyyaml" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -898,17 +901,18 @@ requires-dist = [
     { name = "networkx", marker = "extra == 'kg-memory'", specifier = ">=3.2" },
     { name = "networkx", marker = "extra == 'kg-network-pg'", specifier = ">=3.2" },
     { name = "open-kgo", extras = ["kg-all"], marker = "extra == 'demo'" },
-    { name = "open-kgo", extras = ["kg-rdf", "kg-embedded", "kg-network-pg", "kg-memory", "kg-rest", "kg-lineage", "kg-codebuild", "kg-saas", "kg-citation", "kg-ontology"], marker = "extra == 'kg-all'" },
+    { name = "open-kgo", extras = ["kg-rdf", "kg-embedded", "kg-network-pg", "kg-memory", "kg-rest", "kg-lineage", "kg-codebuild", "kg-saas", "kg-citation", "kg-ontology", "kg-semantic-field"], marker = "extra == 'kg-all'" },
     { name = "pyoxigraph", marker = "extra == 'kg-rdf'", specifier = ">=0.5" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pyyaml", marker = "extra == 'kg-ontology'", specifier = ">=6.0" },
+    { name = "pyyaml", marker = "extra == 'kg-semantic-field'", specifier = ">=6.0" },
     { name = "rdflib", marker = "extra == 'kg-rdf'", specifier = ">=7.0" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "tox", marker = "extra == 'dev'" },
     { name = "tox-uv", marker = "extra == 'dev'" },
     { name = "uv", marker = "extra == 'dev'", specifier = ">=0.11.6" },
 ]
-provides-extras = ["dev", "kg-rdf", "kg-embedded", "kg-network-pg", "kg-memory", "kg-ontology", "kg-rest", "kg-lineage", "kg-codebuild", "kg-saas", "kg-citation", "kg-all", "demo"]
+provides-extras = ["dev", "kg-rdf", "kg-embedded", "kg-network-pg", "kg-memory", "kg-ontology", "kg-semantic-field", "kg-rest", "kg-lineage", "kg-codebuild", "kg-saas", "kg-citation", "kg-all", "demo"]
 
 [[package]]
 name = "packaging"

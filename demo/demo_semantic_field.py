@@ -234,12 +234,14 @@ def s4_circuit(mo):
 
 @app.cell
 def s4_svg():
-    from pathlib import Path
-    _svg_path = Path(__file__).parent / "circuit_schematic.html"
+    from pathlib import Path as _Path
+
+    _svg_path = _Path(__file__).parent / "circuit_schematic.html"
     _html = _svg_path.read_text()
     # extract just the SVG from the HTML file
     import re
-    _match = re.search(r'(<svg[\s\S]*?</svg>)', _html)
+
+    _match = re.search(r"(<svg[\s\S]*?</svg>)", _html)
     _svg = _match.group(1) if _match else "<p>SVG not found</p>"
     return
 
@@ -351,17 +353,18 @@ def s6_ui(director_input, genre_input, mo, run_btn):
 
 @app.cell
 def s6_run(director_input, genre_input, mo, run_btn):
-    import sys, time, re
-    from pathlib import Path
+    import sys
+    import time
+    from pathlib import Path as _Path
     from collections import deque
 
-    _repo = Path(__file__).parent.parent
+    _repo = _Path(__file__).parent.parent
     if str(_repo) not in sys.path:
         sys.path.insert(0, str(_repo))
 
     from open_kgo.feature_groups.kg.ontology.semantic_field import SemanticField
 
-    _GML = Path("/Volumes/ExtraStorage/mloda_New_arch/prototypes/demo/data/metaqa_full.gml")
+    _GML = _Path("/Volumes/ExtraStorage/mloda_New_arch/prototypes/demo/data/metaqa_full.gml")
 
     def _stream_parse(path):
         id_to_label, edges = {}, []
@@ -384,12 +387,17 @@ def s6_run(director_input, genre_input, mo, run_btn):
                             edges.append((s, cur_rel, t))
                     in_node = in_edge = False
                 elif in_node:
-                    if line.startswith("id "): cur_id = int(line[3:])
-                    elif line.startswith('label "'): cur_label = line[7:-1]
+                    if line.startswith("id "):
+                        cur_id = int(line[3:])
+                    elif line.startswith('label "'):
+                        cur_label = line[7:-1]
                 elif in_edge:
-                    if line.startswith("source "): cur_src = int(line[7:])
-                    elif line.startswith("target "): cur_tgt = int(line[7:])
-                    elif line.startswith('relation "'): cur_rel = line[10:-1]
+                    if line.startswith("source "):
+                        cur_src = int(line[7:])
+                    elif line.startswith("target "):
+                        cur_tgt = int(line[7:])
+                    elif line.startswith('relation "'):
+                        cur_rel = line[10:-1]
         return edges
 
     def _build_adj(edges):
@@ -403,11 +411,13 @@ def s6_run(director_input, genre_input, mo, run_btn):
         visited, queue = set(), deque((s, 0) for s in seeds if s in adj)
         while queue and len(visited) < max_nodes:
             node, depth = queue.popleft()
-            if node in visited: continue
+            if node in visited:
+                continue
             visited.add(node)
             if depth < hops:
                 for nbr, _ in adj.get(node, []):
-                    if nbr not in visited: queue.append((nbr, depth + 1))
+                    if nbr not in visited:
+                        queue.append((nbr, depth + 1))
         sub, seen = [], set()
         for node in visited:
             for nbr, rel in adj.get(node, []):
@@ -451,10 +461,7 @@ def s6_run(director_input, genre_input, mo, run_btn):
             _t_solve = time.perf_counter() - _t_solve
 
             _top = sorted(_scores.items(), key=lambda x: x[1], reverse=True)[:15]
-            _rows = "\n".join(
-                f"| {i+1} | **{name}** | {float(score):.4f} |"
-                for i, (name, score) in enumerate(_top)
-            )
+            _rows = "\n".join(f"| {i + 1} | **{name}** | {float(score):.4f} |" for i, (name, score) in enumerate(_top))
 
             result = mo.md(f"""
     **Query:** `{director}` (source, V=1.0) → ? → `{genre}` (sink, V=0.0)
@@ -568,8 +575,8 @@ def s8_header(mo):
 
 
 @app.cell
-def s8_stack():
-    stack_svg = """
+def s8_stack(mo):
+    mo.md("""
     <div style="background:#0f1117;border-radius:8px;padding:16px;">
     <svg viewBox="0 0 860 300" xmlns="http://www.w3.org/2000/svg"
          style="width:100%;max-width:860px;display:block;">
@@ -612,7 +619,7 @@ def s8_stack():
       <text x="382" y="276" fill="#4a5570" font-size="9" font-family="monospace">Planned</text>
     </svg>
     </div>
-    """
+    """)
     return
 
 

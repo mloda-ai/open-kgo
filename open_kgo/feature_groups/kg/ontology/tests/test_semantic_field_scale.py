@@ -181,7 +181,7 @@ def test_compute_and_scale(
 
 
 def test_scores_differ_across_queries(
-    metaqa_adj: dict[str, list[tuple[str, str, str]]],
+    metaqa_adj: dict[str, list[tuple[str, str]]],
     metaqa_data: tuple[set[str], list[tuple[str, str, str]]],
 ) -> None:
     """Two different director+genre pairs should produce different rankings."""
