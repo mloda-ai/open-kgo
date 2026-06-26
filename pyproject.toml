@@ -44,7 +44,7 @@ dev = [
     "mypy",
     "bandit",
 ]
-kg-rdf = ["rdflib>=7.0", "pyoxigraph>=0.5"]
+kg-rdf = ["rdflib>=7.0", "pyoxigraph>=0.5.9"]
 kg-embedded = ["networkx>=3.2", "igraph>=0.11"]
 kg-network-pg = ["kuzu>=0.4", "networkx>=3.2", "grand-cypher>=0.12"]
 kg-memory = ["networkx>=3.2"]
