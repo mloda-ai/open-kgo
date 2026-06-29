@@ -1,6 +1,8 @@
 # GitHub Workflows
 
-This project uses four GitHub Actions workflows to automate testing, security scanning, template synchronization, and releases.
+This project uses two GitHub Actions workflows to automate testing and releases.
+
+Dependency CVE scanning is left to GitHub's native Dependabot security alerts (enable them under **Settings > Code security**), with `tox -e security` (`pip-audit`) available for on-demand local scans. Pulling later template changes is a deliberate, manual step (fetch the template remote and merge), not an automated job.
 
 ## Test Workflow
 
@@ -13,41 +15,6 @@ This project uses four GitHub Actions workflows to automate testing, security sc
 **Purpose:** Runs the full test suite using tox across multiple Python versions (3.10, 3.11, 3.12, 3.13). This includes pytest, ruff linting, mypy type checking, and bandit security analysis.
 
 **Requirements:** None. This workflow uses only public GitHub Actions and requires no secrets.
-
-## Security Scan Workflow
-
-**File:** `.github/workflows/security-scan.yaml`
-
-**Triggers:**
-- Scheduled: Every Monday at 9:00 AM UTC
-- Manual dispatch (can be triggered from any branch)
-
-**Purpose:** Performs CVE vulnerability scanning on the local package using pip-audit via tox. The workflow builds the package and scans its dependencies for known vulnerabilities.
-
-**Requirements:** None. Uses only the default `GITHUB_TOKEN` with read permissions.
-
-## Template Sync Workflow
-
-**File:** `.github/workflows/template-sync.yaml`
-
-**Triggers:**
-- Scheduled: Every Thursday at 9:00 AM UTC
-- Manual dispatch (can be triggered from any branch)
-
-**Purpose:** Keeps this repository in sync with the upstream template repository ([mloda-plugin-template](https://github.com/mloda-ai/mloda-plugin-template)). The workflow:
-1. Checks if there are new commits in the template repository
-2. If new commits exist, creates a branch `chore/template-sync-YYYY-MM-DD`
-3. Merges template changes into the branch
-4. Opens a pull request for review
-
-**Requirements:** None. Uses only the default `GITHUB_TOKEN` with write permissions for contents and pull-requests.
-
-**Note:** If merge conflicts occur, the workflow will fail and manual resolution is required. Run locally:
-```bash
-git remote add template https://github.com/mloda-ai/mloda-plugin-template.git
-git fetch template
-git merge template/main
-```
 
 ## Release Workflow
 

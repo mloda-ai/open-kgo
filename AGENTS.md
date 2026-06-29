@@ -61,7 +61,7 @@ When helping with FeatureGroups, ComputeFrameworks, or Extenders, leverage these
 
 ## Project Practices
 
-`tox` is the gate. It runs `pytest`, then `ruff format --check`, `ruff check`, `mypy --strict --ignore-missing-imports`, and `bandit`. All of these must pass before a PR is mergeable. CVE scanning lives in a separate `tox -e security` environment that runs `pip-audit`; CI invokes it only on a **weekly schedule** (`.github/workflows/security-scan.yaml`), not on PRs, and it is **report-only** (findings do not fail the build), so it is not part of the PR merge gate.
+`tox` is the gate. It runs `pytest`, then `ruff format --check`, `ruff check`, `mypy --strict --ignore-missing-imports`, and `bandit`. All of these must pass before a PR is mergeable. CVE scanning lives in a separate `tox -e security` environment that runs `pip-audit`; it is not part of the PR merge gate. Scheduled CVE scanning is left to GitHub's native Dependabot security alerts, with `tox -e security` available for on-demand local scans.
 
 - **Python**: supported range is `>=3.10`. The default tox env is `python310`.
 - **Type hints**: use modern forms (`list[str]`, `dict[str, int]`, `X | None`).

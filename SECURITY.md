@@ -28,5 +28,5 @@ open-kgo is pre-1.0; security fixes land on the latest release only.
 
 This project ships connectors that run against in-memory libraries and local
 file fixtures (no Docker, no network by policy). Reports about dependency CVEs
-surfaced by the weekly `pip-audit` scan (`.github/workflows/security-scan.yaml`)
-are welcome but are report-only and not release-blocking.
+(surfaced by GitHub's Dependabot alerts or an on-demand `tox -e security` /
+`pip-audit` run) are welcome but are report-only and not release-blocking.
