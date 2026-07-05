@@ -17,6 +17,7 @@ from __future__ import annotations
 import subprocess
 import sys
 import textwrap
+from pathlib import Path
 
 
 def test_non_rdf_connector_imports_without_rdflib() -> None:
@@ -58,18 +59,16 @@ def test_non_rdf_connector_imports_without_rdflib() -> None:
     assert result.returncode == 0, result.stderr
 
 
-def test_load_rdf_graph_still_works_with_rdflib_present(tmp_path: object) -> None:
+def test_load_rdf_graph_still_works_with_rdflib_present(tmp_path: Path) -> None:
     """The deferred import path still parses RDF when rdflib IS installed.
 
     Guards against a deferral that removes the top-level import but forgets to
     re-import inside the loader (which would surface as ``NameError`` on the
     first ``load_rdf_graph`` call rather than at import time).
     """
-    from pathlib import Path
-
     from open_kgo.feature_groups.kg.fixtures import load_rdf_graph
 
-    path = Path(str(tmp_path)) / "g.ttl"
+    path = tmp_path / "g.ttl"
     path.write_text('<urn:s> <urn:p> "o" .\n', encoding="utf-8")
     graph = load_rdf_graph("test", path)
     assert len(graph) == 1
