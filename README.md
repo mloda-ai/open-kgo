@@ -13,6 +13,7 @@ Open Knowledge Graphs and Ontologies plugin for [mloda](https://github.com/mloda
 | [Quickstart](#quickstart) | Run a SPARQL query against a shipped sample file in under a minute |
 | [The nine connector families](#the-nine-connector-families) | The core of this repo: a 9-family KG connector taxonomy with two plugins each |
 | [Semantic Fields — Layer 2](#semantic-fields--layer-2) | Continuous, schema-grounded entity scoring via DC circuit model |
+| [DiscoveryEngine — Layer 3](#discoveryengine--layer-3) | Beam search over the EM field — ranked typed paths, no LLM calls required |
 | [Demos](#demos) | Marimo notebooks and evaluation harnesses, all offline |
 | [Data and acknowledgments](#data-and-acknowledgments) | Where the sample data comes from |
 | [Development setup](#development-setup) | uv, tox, and the individual checks |
@@ -134,11 +135,72 @@ The solver is pure Python (no numpy) with an optional numba JIT kernel that give
 |---|---|---|
 | L1 — OntologyRegistry | Binary valid/invalid edge checks, YAML-declared | Built |
 | L2 — SemanticField | Continuous entity scoring via DC circuit model | Built |
-| L3 — Discovery Engine | Guided multi-hop traversal by field strength | Planned |
+| L3 — Discovery Engine | Guided multi-hop traversal by field strength | Built |
 
 Install: `pip install "open-kgo[kg-semantic-field]"` (from a clone: `uv sync --extra kg-semantic-field`)
 
 Full visual explainer: [`demo/semantic_field_explainer.html`](demo/semantic_field_explainer.html) — open in any browser, no server needed.
+
+## DiscoveryEngine — Layer 3
+
+**DiscoveryEngine** (Layer 3) answers: *"what is the best route through the graph from source to goal?"* — ranked typed paths, guided by the EM field gradient from Layer 2. No LLM calls, no oracle scores, no sampling.
+
+Layer 2 already solved the hard problem: it computed a voltage at every entity. The edge current between adjacent nodes `i` and `j` is `G(i,j) × |V(i) - V(j)|`. That current **is the beam search heuristic** — edges that carry the most signal between source and sink are expanded first. Dead-end branches carry zero current and never enter the beam.
+
+Path scores use **bottleneck current** — the minimum edge current along the path. A path scores high only when every hop is strongly conducting, making the score interpretable: it is the weakest link in the conducting chain.
+
+```python
+from open_kgo.feature_groups.kg.ontology import DiscoveryEngine
+
+# Ranked paths: which movies connect Nolan to Sci-Fi?
+paths = DiscoveryEngine.find_paths(
+    namespace="movie",
+    edges=subgraph_edges,
+    source={"Christopher Nolan": 1.0},   # high-voltage anchor
+    sink={"Science Fiction": 0.0},        # ground
+    beam_width=5,
+    max_depth=4,
+)
+# → [
+#     DiscoveredPath(nodes=("Christopher Nolan", "Inception", "Science Fiction"),
+#                    relations=("directed_by", "has_genre"), score=0.301),
+#     ...
+# ]
+
+# Minimal current-carrying subgraph — the explanation circuit
+circuit_edges = DiscoveryEngine.extract_circuit(
+    namespace="movie",
+    edges=subgraph_edges,
+    source={"Christopher Nolan": 1.0},
+    sink={"Science Fiction": 0.0},
+    current_threshold=0.01,
+)
+# → 25 of 116 edges — dead-end actors and unrelated genres excluded
+```
+
+### Where it helps
+
+**Without an LLM (pure graph analytics):**
+- **Multi-hop path finding** — find all typed routes between two entities ranked by semantic strength, not just shortest hop count.
+- **Influence analysis** — extract the minimal subgraph that bridges a source and a target. Prunes dead-end branches automatically (zero potential difference = zero current).
+- **Bottleneck detection** — the edge with lowest current on the best path is the weakest semantic link. Flag it for curation or ontology-weight tuning.
+- **Subgraph extraction** — `extract_circuit` returns a compact, query-specific subgraph in one pass. Cheaper and more targeted than community detection.
+
+**With an LLM (context and loop engineering):**
+- **Context engineering** — hand the LLM `extract_circuit` output rather than a flat bag of triples or a static GraphRAG community. The circuit is already filtered to the edges live for *this* query. Smaller context window, higher precision.
+- **Loop engineering** — between agent iterations, re-solve the field with updated anchors and call `find_paths` again. The paths from one step become the anchor candidates for the next step. The field carries forward the accumulated relevance signal.
+- **GraphRAG replacement** — GraphRAG pre-computes community summaries over the whole graph and serves the nearest community at query time. The EM field is re-solved per query: source and sink anchors parameterize the field, so every call gets a subgraph tuned to the specific question, not the nearest pre-computed partition.
+- **Think-on-Graph improvement** — Think-on-Graph ranks candidate expansions by asking the LLM at each hop (one LLM call per edge explored). `find_paths` replaces that with the pre-computed edge current: zero LLM calls during traversal, same ranked result.
+
+| Layer | What it does | Status |
+|---|---|---|
+| L1 — OntologyRegistry | Binary valid/invalid edge checks, YAML-declared | Built |
+| L2 — SemanticField | Continuous entity scoring via DC circuit model | Built |
+| L3 — DiscoveryEngine | Beam search over the EM field, ranked typed paths | Built |
+
+Install: `uv sync --extra kg-semantic-field`
+
+Interactive demo: `marimo edit demo/demo_discovery.py`
 
 ## Demos
 
@@ -148,6 +210,7 @@ Three marimo notebooks plus two evaluation harnesses live under `demo/`:
 - `demo/demo_kg_build_repo.py`: builds an RDF graph from this repo (filesystem `repo:contains` + Python `repo:imports`), serializes to Turtle, and runs five SPARQL queries through `RdfLibSparqlReader` via `mloda.run_all`.
 - `demo/demo_kg_ontology.py`: walks the ontology layer end to end.
 - `demo/demo_semantic_field.py`: SemanticField Layer 2 — interactive director + genre query against MetaQA, with live scoring.
+- `demo/demo_discovery.py`: DiscoveryEngine Layer 3 — beam search over the EM field, find_paths and extract_circuit against the sample graph.
 - `demo/semantic_field_explainer.html`: full visual explainer for SemanticField — circuit diagram, layer stack, why EM, 1/2/multi-hop examples, test results. Open in any browser.
 - `demo/eval_arch1_vs_arch2.py` and `demo/eval_qa_accuracy.py`: evaluation harnesses comparing plain traversal vs. ontology-guided traversal.
 
