@@ -20,22 +20,31 @@ Open Knowledge Graphs and Ontologies plugin for [mloda](https://github.com/mloda
 
 ## Quickstart
 
-Install the connectors and run a SPARQL query against the Turtle sample shipped in this repo:
+Install the connectors from PyPI and run a SPARQL query against a small Turtle file:
 
 ```bash
-uv sync --extra kg-all
+pip install "open-kgo[kg-all]"
 ```
+
+(Working from a clone instead? `uv sync --extra kg-all`, see [Development setup](#development-setup).)
 
 ```python
 from pathlib import Path
 
 from mloda.user import DataAccessCollection, Feature, Options, mloda
 
-import open_kgo.feature_groups.kg.rdf.rdflib_sparql as rdf_mod
+# Importing the plugin module registers the rdflib_sparql feature group.
+import open_kgo.feature_groups.kg.rdf.rdflib_sparql  # noqa: F401
 from open_kgo.compute_frameworks.python_dict_kg_framework import KgPythonDictFramework
 
-# Point at any RDF file. Here: the Turtle sample shipped in this repo.
-ttl = Path(rdf_mod.__file__).parent / "tests" / "fixtures" / "sample.ttl"
+# Point at any RDF file. Here: a three-triple sample written on the spot.
+ttl = Path("sample.ttl")
+ttl.write_text(
+    "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n"
+    "@prefix ex: <http://example.org/> .\n"
+    "ex:alice foaf:knows ex:bob .\n"
+    "ex:bob foaf:knows ex:carol .\n"
+)
 
 feature = Feature(
     "rdflib_sparql__knows",
@@ -78,7 +87,7 @@ Swap `rdflib_sparql` for any of the nine connector families below: same `Feature
 
 See [`open_kgo/feature_groups/kg/README.md`](open_kgo/feature_groups/kg/README.md) for the full family map, the plugin anatomy, and what the prototype does and does not validate.
 
-Install all KG extras with: `uv sync --extra kg-all`.
+Install all KG extras with: `pip install "open-kgo[kg-all]"` (from a clone: `uv sync --extra kg-all`).
 
 > **One feature per call.** KG readers dispatch a single feature per load: every
 > reader rejects a multi-feature `FeatureSet` rather than silently labelling all
@@ -127,7 +136,7 @@ The solver is pure Python (no numpy) with an optional numba JIT kernel that give
 | L2 — SemanticField | Continuous entity scoring via DC circuit model | Built |
 | L3 — Discovery Engine | Guided multi-hop traversal by field strength | Planned |
 
-Install: `uv sync --extra kg-semantic-field`
+Install: `pip install "open-kgo[kg-semantic-field]"` (from a clone: `uv sync --extra kg-semantic-field`)
 
 Full visual explainer: [`demo/semantic_field_explainer.html`](demo/semantic_field_explainer.html) — open in any browser, no server needed.
 
