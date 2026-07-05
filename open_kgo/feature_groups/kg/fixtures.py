@@ -48,7 +48,7 @@ from __future__ import annotations
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Callable, Iterable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, Iterable, TypeVar
 from urllib.parse import urlparse
 
 # SAXException is used purely as a parent class for narrowing the
@@ -57,10 +57,15 @@ from urllib.parse import urlparse
 # the nosec comment documents the intent.
 from xml.sax import SAXException  # nosec B406
 
-import rdflib
-import rdflib.exceptions
-
 from open_kgo.feature_groups.kg.errors import FixtureLoadError
+
+# rdflib is imported lazily inside ``_read_rdf_graph_cached`` (like the
+# deferred pyoxigraph / kuzu loaders) so non-RDF families can import this
+# shared module without the ``kg-rdf`` extra. Only the type checker needs the
+# symbol here; ``from __future__ import annotations`` keeps the ``rdflib.Graph``
+# return annotations as strings at runtime.
+if TYPE_CHECKING:
+    import rdflib
 
 
 class _FixtureLoadProblem(Exception):
@@ -224,7 +229,9 @@ def load_rdf_graph(connector_id: str, locator: Any) -> rdflib.Graph:
     ``rdflib.Graph.close()`` is a no-op on the default Memory store
     (verified against rdflib 7.x) so the contract-test path that closes
     ``connect()``'s return survives the cache; ``add`` / ``remove`` calls
-    would corrupt subsequent loads in the same process.
+    would corrupt subsequent loads in the same process. The rdflib import is
+    deferred to call time (like the oxigraph / kuzu loaders) so this module
+    imports without the ``kg-rdf`` extra.
     """
     return _load_cached(connector_id, locator, _read_rdf_graph_cached)
 
@@ -243,8 +250,13 @@ def _read_rdf_graph_cached(abs_path: str, mtime_ns: int) -> rdflib.Graph:
     own ``ParserError`` lives under ``rdflib.exceptions.Error``;
     plus ``ValueError`` / ``UnicodeDecodeError`` for bad bytes). Bare
     ``except Exception`` was previously used; narrowing it stops the
-    block from masking programmer errors like ``AttributeError``.
+    block from masking programmer errors like ``AttributeError``. The rdflib
+    import is deferred here so non-RDF families can import this module without
+    the ``kg-rdf`` extra.
     """
+    import rdflib
+    import rdflib.exceptions
+
     graph = rdflib.Graph()
     try:
         graph.parse(abs_path)
