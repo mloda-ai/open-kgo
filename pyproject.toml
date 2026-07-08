@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "open-kgo"
 # semantic-release bumps the latest git tag; needs a `0.2.0` tag pushed once by
-# hand to bootstrap. The mloda floor (>=0.8.0) is unrelated.
+# hand to bootstrap. The mloda floor (>=0.9.0) is unrelated.
 version = "0.2.2"
 description = "Open Knowledge Graphs and Ontologies plugin for mloda."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Tom Kaltofen", email = "tomkaltofen@mloda.ai" }]
-dependencies = ["mloda>=0.8.0"]
+dependencies = ["mloda>=0.9.0"]
 requires-python = ">=3.10"
 # No `License ::` trove classifier: `license` above is an SPDX expression
 # (PEP 639) and setuptools rejects both together.

@@ -41,13 +41,12 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     The selected
     reader's ``load`` returns native KG rows; ``KgPythonDictFramework``
     (pinned by ``KgConnectorFeatureGroupBase.compute_framework_rule``) wraps
-    each row as ``{feature_name: row}`` during column slicing so this helper
-    can unwrap by feature name and return the underlying row values flattened
-    across partitions.
+    them into a single ``{feature_name: [row, ...]}`` column, so each
+    partition is that columnar dict and this helper unwraps the feature's
+    column and flattens the native rows across partitions.
 
-    Zero-result queries return ``[]``: the adapter passes empty
-    data through unchanged, so the comprehension below contributes no rows
-    and the helper yields ``[]`` to the caller.
+    Zero-result queries return ``[]``: an empty result is the zero-row
+    ``{feature_name: []}`` partition, whose column contributes no rows.
     """
     dac = DataAccessCollection(credentials=[{connector_id: slot_creds}])
     partitions = mloda.run_all(
@@ -55,7 +54,7 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
         compute_frameworks={KgPythonDictFramework},
         data_access_collection=dac,
     )
-    return [row[feature.name] for partition in partitions for row in partition if feature.name in row]
+    return [row for partition in partitions for row in partition.get(feature.name, [])]
 
 
 def make_valid_credentials(
