@@ -21,8 +21,8 @@ def test_family_usage_smoke(case: ConnectorCase, tmp_path: Path) -> None:
     """Drive each connector through the real mloda.run_all path and assert a usable row shape.
 
     Holistic counterpart to the per-connector ``test_calculate_feature_runs_end_to_end``:
-    one sweep, all 9 families, the same DataAccessCollection -> run_all -> KgPythonDictFramework
-    chain a caller uses. A regression in matching, validation, or framework adaptation that
+    one sweep, all 9 families, the same DataAccessCollection -> run_all -> PythonDictFramework
+    chain a caller uses. A regression in matching, validation, or the load-side wrap that
     happens to affect every family at once shows up here as a wall of red rather than one case.
     """
     slot = case.make_slot(tmp_path)

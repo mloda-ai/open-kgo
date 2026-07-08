@@ -12,7 +12,10 @@ from typing import Any, ClassVar
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.provider import BaseInputData, ComputeFramework, FeatureGroup
 
-from open_kgo.compute_frameworks.python_dict_kg_framework import KgPythonDictFramework
+from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
+    PythonDictFramework,
+)
+
 from open_kgo.feature_groups.kg.reader_base import KgConnectorReaderBase
 
 
@@ -24,14 +27,11 @@ class KgConnectorFeatureGroupBase(FeatureGroup):
     instance of ``READER_CLASS``; ``calculate_feature`` calls
     ``reader.load(features)``.
 
-    ``compute_framework_rule`` is pinned to ``{KgPythonDictFramework}`` so the
-    feature-name wrap that mloda's column-matcher needs lives in a
-    framework-specific adapter rather than every reader's ``load``.
-    Subclasses MUST NOT override this hook to a framework that does
-    not perform an equivalent wrap: native KG rows have keys like ``s``/``p``/``o``
-    that never match the user-defined feature name, so a non-wrapping framework
-    silently loses every row in column slicing. If a different framework is
-    truly needed, the override must point at another wrap-equivalent adapter.
+    ``compute_framework_rule`` is pinned to the stock ``PythonDictFramework``:
+    ``KgConnectorReaderBase.load`` already returns the columnar
+    ``{feature_name: [row, ...]}`` frame the framework accepts as-is.
+    Subclasses overriding this hook must pick a framework that consumes that
+    columnar dict shape unchanged.
     """
 
     READER_CLASS: ClassVar[type[KgConnectorReaderBase] | None] = None
@@ -44,7 +44,7 @@ class KgConnectorFeatureGroupBase(FeatureGroup):
 
     @classmethod
     def compute_framework_rule(cls) -> set[type[ComputeFramework]] | None:
-        return {KgPythonDictFramework}
+        return {PythonDictFramework}
 
     @classmethod
     def calculate_feature(cls, data: Any, features: FeatureSet) -> Any:

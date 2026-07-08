@@ -2,9 +2,9 @@
 
 One of the four concern mixins aggregated by ``KgConnectorContractBase``
 (see ``kg_contract.py``). Everything here runs the reader's real load path,
-mostly through ``run_query`` (``mloda.run_all`` + ``KgPythonDictFramework``),
-so regressions in matching, validation, or the framework adapter surface
-here rather than silently passing.
+mostly through ``run_query`` (``mloda.run_all`` + ``PythonDictFramework``),
+so regressions in matching, validation, or the load-side feature-name wrap
+surface here rather than silently passing.
 """
 
 from __future__ import annotations
@@ -117,10 +117,10 @@ class LoadBehaviorContract(KgContractAdapterBase):
         """Run the feature via the real mloda discovery + run_all path.
 
         Covers ``CONNECTOR_ID`` matching, ``is_valid_credentials``, the
-        ``DataAccessCollection`` wiring, and ``KgPythonDictFramework`` row
-        consumption (the KG-aware ``PythonDictFramework`` adapter that wraps
-        native rows into a ``{feature_name: [row, ...]}`` column). A
-        regression in any of these surfaces here.
+        ``DataAccessCollection`` wiring, and the load-side wrap of native
+        rows into a ``{feature_name: [row, ...]}`` column consumed by the
+        stock ``PythonDictFramework``. A regression in any of these
+        surfaces here.
 
         Pre-check that ``is_valid_credentials`` accepts
         ``valid_credentials()`` so an adapter whose canonical slot is itself

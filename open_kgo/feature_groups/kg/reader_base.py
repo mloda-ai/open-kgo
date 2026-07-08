@@ -415,8 +415,8 @@ class KgConnectorReaderBase(ReadDB):
         """Reject a contradictory ``SOURCE_SLOT`` declaration; see ``class_guards.validate_source_slot``."""
         class_guards.validate_source_slot(cls)
 
-    def load(self, features: FeatureSet) -> Any:
-        """Reject multi-feature FeatureSets, then return native rows from ``load_data``.
+    def load(self, features: FeatureSet) -> dict[str, list[Any]]:
+        """Reject multi-feature FeatureSets, then wrap native rows under the feature name.
 
         Concrete ``load_data`` implementations across every family read a single
         feature via ``next(iter(features.features))``; passing more than one
@@ -424,18 +424,23 @@ class KgConnectorReaderBase(ReadDB):
         label every row with that single name. Reject the multi-feature shape
         loudly so the contract violation surfaces immediately.
 
-        The ``{feature_name: row}`` wrap that mloda's ``PythonDictFramework``
-        column-matcher expects no longer lives here; it has moved to
-        ``KgPythonDictFramework`` (the FG base pins that adapter via
-        ``compute_framework_rule``). Native KG rows therefore flow out of
-        ``load_data`` unchanged, so any other compute framework or direct
-        consumer sees what the concrete plugin actually produced.
+        Native KG rows (SPARQL bindings, Cypher rows, BFS hops, ...) carry their
+        own keys (``s``, ``p``, ``o``, ``ancestor``, ...), none of which match
+        the user-defined feature name, so mloda's columnar column selection
+        would drop every row. The wrap returns the columnar single-column frame
+        ``{feature_name: [row, ...]}`` that the stock ``PythonDictFramework``
+        (mloda >= 0.9.0) accepts as-is: each cell holds the whole native row
+        dict and is unwrapped by feature name downstream. The wrap is
+        unconditional, even when the feature name collides with a native row
+        key. An empty result yields the schema-bearing zero-row frame
+        ``{feature_name: []}`` (not the schema-less ``{}`` mloda rejects), so a
+        query with no matches returns zero rows without raising.
 
         ``load_data`` is contractually required to return ``list[dict[str, Any]]``
         (every concrete in this package satisfies that). The shape check below
         turns a future drift (a concrete returning a single dict, ``None``, or
         a generator) into a typed error here rather than an indirect failure
-        downstream in ``KgPythonDictFramework.transform``.
+        downstream in ``PythonDictFramework.transform``.
         """
         self._assert_single_feature(features)
         result = super().load(features)
@@ -448,7 +453,8 @@ class KgConnectorReaderBase(ReadDB):
                     f"{cls_name}.load_data must return list[dict[str, Any]]; "
                     f"row at index {index} is {type(row).__name__}."
                 )
-        return result
+        feature_name = str(next(iter(features.features)).name)
+        return {feature_name: result}
 
     @classmethod
     def _assert_single_feature(cls, features: FeatureSet) -> None:

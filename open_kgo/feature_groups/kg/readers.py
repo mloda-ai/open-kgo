@@ -109,7 +109,7 @@ class ParamReader(KgConnectorReaderBase):
         """ParamReader has no query language; per-call inputs live in build_params."""
         return ""
 
-    def load(self, features: FeatureSet) -> Any:
+    def load(self, features: FeatureSet) -> dict[str, list[Any]]:
         """Run the per-call ``_STRIPPED_PARAMS`` check before delegating to the framework.
 
         Concrete ``load_data`` implementations are not required to call

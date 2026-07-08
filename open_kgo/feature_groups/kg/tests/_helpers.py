@@ -1,21 +1,20 @@
 """Shared test helpers for KG connector contract suites.
 
 ``run_query`` exercises the same path the demo uses:
-``DataAccessCollection.credentials`` + ``mloda.run_all`` +
-``KgPythonDictFramework`` (the KG-aware ``PythonDictFramework`` adapter).
-This means contract tests verify the real reader matching, validation, and
-load chain, not a pre-bound shortcut. If ``CONNECTOR_ID`` matching,
-``is_valid_credentials`` discovery, the subclass-walk wiring, or the
-framework adapter regresses, the failure surfaces here rather than silently
-passing.
+``DataAccessCollection.credentials`` + ``mloda.run_all`` + the stock
+``PythonDictFramework``. This means contract tests verify the real reader
+matching, validation, and load chain, not a pre-bound shortcut. If
+``CONNECTOR_ID`` matching, ``is_valid_credentials`` discovery, the
+subclass-walk wiring, or the load-side feature-name wrap regresses, the
+failure surfaces here rather than silently passing.
 
 Zero-result paths (citation ``stable_id=NOT_THERE``, an empty fixture dir,
 an ``agent_memory`` query with no matches) are returned as ``[]`` by
-``run_query`` itself: ``KgPythonDictFramework`` now relaxes the parent
-``PythonDictFramework``'s "empty is fatal" guard for KG semantics. The
-earlier ``run_query_allowing_empty`` workaround, which bypassed
-``mloda.run_all`` to surface ``[]`` to callers, is therefore retired; all
-contract tests go through ``run_query``.
+``run_query`` itself: ``KgConnectorReaderBase.load`` emits the zero-row
+``{feature_name: []}`` frame, which ``PythonDictFramework`` accepts as a
+schema-bearing empty result. The earlier ``run_query_allowing_empty``
+workaround, which bypassed ``mloda.run_all`` to surface ``[]`` to callers,
+is therefore retired; all contract tests go through ``run_query``.
 """
 
 from __future__ import annotations
@@ -25,8 +24,7 @@ from typing import Any
 from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
 from mloda.user import DataAccessCollection, Feature, mloda
 
-from open_kgo.feature_groups.kg.base import KgConnectorReaderBase
-from open_kgo.compute_frameworks.python_dict_kg_framework import KgPythonDictFramework
+from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, PythonDictFramework
 
 
 def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -> list[Any]:
@@ -38,12 +36,13 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     resolves it back to the ``{CONNECTOR_ID: slot}`` bundle the reader matcher
     expects; passing the bare dict makes mloda treat ``CONNECTOR_ID`` as a
     handle and unwrap to the inner slot, which fails ``is_valid_credentials``.
-    The selected
-    reader's ``load`` returns native KG rows; ``KgPythonDictFramework``
-    (pinned by ``KgConnectorFeatureGroupBase.compute_framework_rule``) wraps
-    them into a single ``{feature_name: [row, ...]}`` column, so each
-    partition is that columnar dict and this helper unwraps the feature's
-    column and flattens the native rows across partitions.
+    The selected reader's ``load`` wraps native KG rows into a single
+    ``{feature_name: [row, ...]}`` column that the stock
+    ``PythonDictFramework`` (pinned by
+    ``KgConnectorFeatureGroupBase.compute_framework_rule``) passes through
+    unchanged, so each partition is that columnar dict and this helper
+    unwraps the feature's column and flattens the native rows across
+    partitions.
 
     Zero-result queries return ``[]``: an empty result is the zero-row
     ``{feature_name: []}`` partition, whose column contributes no rows.
@@ -51,7 +50,7 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     dac = DataAccessCollection(credentials=[{connector_id: slot_creds}])
     partitions = mloda.run_all(
         [feature],
-        compute_frameworks={KgPythonDictFramework},
+        compute_frameworks={PythonDictFramework},
         data_access_collection=dac,
     )
     return [row for partition in partitions for row in partition.get(feature.name, [])]
