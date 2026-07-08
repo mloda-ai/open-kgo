@@ -1,6 +1,7 @@
 """DC circuit beam search over the EM potential landscape (Layer 3).
 
-SemanticField (Layer 2) pre-computes:
+The sibling ``dc_solver`` module (shared with ``semantic_field.SemanticField``,
+Layer 2) pre-computes:
 
   - V[e]: electric potential at every entity (solved via graph Laplacian)
   - Implied edge current: G(i,j) × |V(i) - V(j)|
@@ -34,7 +35,7 @@ import math
 from dataclasses import dataclass
 from typing import Any
 
-from open_kgo.feature_groups.kg.ontology.semantic_field import _compute_field, _conductance
+from open_kgo.feature_groups.kg.ontology.dc_solver import compute_field, conductance
 
 # ---------------------------------------------------------------------------
 # Optional numba acceleration for batch edge-current computation.
@@ -124,7 +125,7 @@ def _compute_edge_currents(
     if _nb_edge_currents is not None and _np_mod is not None:
         v_src_list = [voltages.get(e[0], 0.0) for e in edges]
         v_tgt_list = [voltages.get(e[2], 0.0) for e in edges]
-        cond_list = [_conductance(namespace, e[1]) for e in edges]
+        cond_list = [conductance(namespace, e[1]) for e in edges]
         v_src_arr = _np_mod.array(v_src_list, dtype=_np_mod.float64)
         v_tgt_arr = _np_mod.array(v_tgt_list, dtype=_np_mod.float64)
         cond_arr = _np_mod.array(cond_list, dtype=_np_mod.float64)
@@ -137,7 +138,7 @@ def _compute_edge_currents(
                 result[(t, s)] = c
     else:
         for s, r, t in edges:
-            g = _conductance(namespace, r)
+            g = conductance(namespace, r)
             c = g * abs(voltages.get(s, 0.0) - voltages.get(t, 0.0))
             if c > result.get((s, t), 0.0):
                 result[(s, t)] = c
@@ -219,7 +220,7 @@ class DiscoveryEngine:
             return []
 
         combined_anchors: dict[str, float] = {**sink, **source}
-        voltages = _compute_field(namespace, edges, combined_anchors)
+        voltages = compute_field(namespace, edges, combined_anchors)
         neighbor_edges = _build_neighbor_edges(edges)
         edge_current = _compute_edge_currents(namespace, edges, voltages)
 
@@ -312,11 +313,11 @@ class DiscoveryEngine:
             return []
 
         combined_anchors: dict[str, float] = {**sink, **source}
-        voltages = _compute_field(namespace, edges, combined_anchors)
+        voltages = compute_field(namespace, edges, combined_anchors)
 
         result: list[tuple[str, str, str]] = []
         for s, r, t in edges:
-            g = _conductance(namespace, r)
+            g = conductance(namespace, r)
             c = g * abs(voltages.get(s, 0.0) - voltages.get(t, 0.0))
             if c > current_threshold:
                 result.append((s, r, t))
