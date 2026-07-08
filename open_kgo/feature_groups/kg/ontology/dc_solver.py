@@ -108,7 +108,7 @@ def filter_edges(
     return [(s, r, t) for s, r, t in edges if r == relation_type]
 
 
-def build_laplacian(
+def _build_laplacian(
     nodes: list[str],
     edges: list[tuple[str, str, str]],
     namespace: str,
@@ -133,7 +133,7 @@ def build_laplacian(
     return L
 
 
-def solve_dirichlet(
+def _solve_dirichlet(
     L: list[list[float]],
     interior: list[int],
     boundary: dict[int, float],
@@ -205,8 +205,8 @@ def compute_field(
     boundary = {idx[e]: v for e, v in anchors.items() if e in idx}
     interior = [i for i in range(len(nodes)) if i not in boundary]
 
-    L = build_laplacian(nodes, edges, namespace)
-    V_interior = solve_dirichlet(L, interior, boundary)
+    L = _build_laplacian(nodes, edges, namespace)
+    V_interior = _solve_dirichlet(L, interior, boundary)
 
     result: dict[str, float] = {}
     for e, v in anchors.items():

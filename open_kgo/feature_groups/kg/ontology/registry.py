@@ -25,7 +25,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, ClassVar
 
-from open_kgo.feature_groups.kg.ontology.models import NamespaceOntology, parse_ontology
+from open_kgo.feature_groups.kg.ontology.models import (
+    NamespaceOntology,
+    RelationshipRule,  # noqa: F401 -- back-compat re-export, moved to models.py
+    parse_ontology,
+)
 
 
 class OntologyRegistry:

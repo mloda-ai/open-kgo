@@ -79,6 +79,10 @@ from mloda.provider import HashableDict
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
 from open_kgo.feature_groups.kg import class_guards, composition, credentials as credential_rules
+from open_kgo.feature_groups.kg.composition import (  # noqa: F401 -- back-compat re-export, moved to composition.py
+    compose_property_mapping,
+    narrow_property_mapping,
+)
 from open_kgo.feature_groups.kg.errors import InvalidCredentialShape
 from open_kgo.feature_groups.kg.spec import property_spec
 
