@@ -14,7 +14,8 @@ Covers the test-library helpers exposed by ``_helpers``:
   contract-base signature change.
 - ``run_query`` zero-result paths: the prior
   ``run_query_allowing_empty`` workaround is retired now that the framework
-  adapter passes ``[]`` through unchanged. The end-to-end assertions live
+  adapter emits the zero-row ``{feature_name: []}`` frame for empty
+  results instead of raising. The end-to-end assertions live
   in ``test_run_query_returns_empty_list_for_unknown_stable_id`` and
   ``test_run_query_returns_native_rows_when_present`` below; they exercise
   the full ``mloda.run_all`` path instead of the direct-load shortcut.
@@ -278,12 +279,10 @@ def test_make_valid_credentials_validate_true_rejects_closed_world_violation() -
 def test_run_query_returns_empty_list_for_unknown_stable_id() -> None:
     """An unknown ``stable_id`` is a legitimate zero-result path; we get ``[]``, not a raise.
 
-    Before the empty-result relaxation, ``run_query`` flowed through
-    ``KgPythonDictFramework.select_data_by_column_names`` which rejected
-    ``[]`` with the parent ``PythonDictFramework``'s "Data cannot be empty"
-    guard. The adapter now passes empty data through unchanged so the
-    full ``mloda.run_all`` path is usable for legitimate zero-result
-    queries.
+    ``KgPythonDictFramework.transform`` emits the zero-row
+    ``{feature_name: []}`` frame for an empty result (schema-bearing, so
+    mloda does not raise ``EmptyResultError``), keeping the full
+    ``mloda.run_all`` path usable for legitimate zero-result queries.
 
     Dogfoods ``make_valid_credentials`` (B5) to build the slot so both
     helpers exercise each other in the same test.

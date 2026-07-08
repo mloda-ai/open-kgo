@@ -63,8 +63,8 @@ partitions = mloda.run_all(
 )
 
 for partition in partitions:
-    for row in partition:
-        print(row[feature.name])
+    for row in partition.get(feature.name, []):
+        print(row)
 ```
 
 Swap `rdflib_sparql` for any of the nine connector families below: same `Feature` to `mloda.run_all` shape, different reader.

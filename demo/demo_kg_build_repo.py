@@ -228,7 +228,7 @@ def helpers():
             compute_frameworks={_KgPythonDictFramework},
             data_access_collection=dac,
         )
-        return [row[feat.name] for partition in partitions for row in partition if feat.name in row]
+        return [row for partition in partitions for row in partition.get(feat.name, [])]
 
     return build_graph_to_ttl, run_sparql
 
