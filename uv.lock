@@ -99,7 +99,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser" },
+    { name = "pycparser", marker = "python_full_version < '3.15' and implementation_name != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -220,7 +220,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -646,10 +646,10 @@ wheels = [
 
 [[package]]
 name = "mloda"
-version = "0.8.0"
+version = "0.9.0"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6c/d8/b4f8beceec599fe75b4956fc8614ead1d40bc0642e6562c18c2c683f2685/mloda-0.8.0-py3-none-any.whl", hash = "sha256:521e0425169a99370b3d1cdf9fd480ebecb3f9a0ec67c62fe6a321ca8e3bcabe", size = 428976, upload-time = "2026-06-05T17:24:09.732Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/82/a7893ddd9ab26dd839671c594e9c16437364a8b8ed5dffb02e9b2de52d7f/mloda-0.9.0-py3-none-any.whl", hash = "sha256:d193b03622e6c8670ccde500c9e6d74eba9ef4ed70ca3bd6adbcb9330a370585", size = 430826, upload-time = "2026-07-07T08:48:32.032Z" },
 ]
 
 [[package]]
@@ -895,7 +895,7 @@ requires-dist = [
     { name = "igraph", marker = "extra == 'kg-embedded'", specifier = ">=0.11" },
     { name = "kuzu", marker = "extra == 'kg-network-pg'", specifier = ">=0.4" },
     { name = "marimo", marker = "extra == 'demo'" },
-    { name = "mloda", specifier = ">=0.8.0" },
+    { name = "mloda", specifier = ">=0.9.0" },
     { name = "mloda-testing", marker = "extra == 'dev'", specifier = ">=0.3.1" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "networkx", marker = "extra == 'kg-embedded'", specifier = ">=3.2" },
@@ -1190,7 +1190,7 @@ name = "pyzmq"
 version = "27.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "implementation_name == 'pypy'" },
+    { name = "cffi", marker = "python_full_version < '3.15' and implementation_name == 'pypy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/04/0b/3c9baedbdf613ecaa7aa07027780b8867f57b6293b6ee50de316c9f3222b/pyzmq-27.1.0.tar.gz", hash = "sha256:ac0765e3d44455adb6ddbf4417dcce460fc40a05978c08efdf2948072f6db540", size = 281750, upload-time = "2025-09-08T23:10:18.157Z" }
 wheels = [

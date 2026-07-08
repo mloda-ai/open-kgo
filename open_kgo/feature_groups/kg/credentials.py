@@ -153,13 +153,13 @@ def spec_allowed_values(key: str, spec: dict[str, Any]) -> set[Any]:
     """Return the explicit ``allowed_values`` set declared on a strict-validation spec.
 
     Strict-validation specs must declare their value space explicitly via
-    an ``allowed_values`` field (a dict mapping value to its docstring, or
-    any iterable of values). Deriving the set from the spec's plain string
-    keys would silently expand the allowed set whenever a future doc-only
-    key like ``"see_also"`` is added; the explicit field separates docs
-    from validation data.
+    the core ``DefaultOptionKeys.allowed_values`` field (a dict mapping value
+    to its docstring, or any iterable of values). Deriving the set from the
+    spec's plain string keys would silently expand the allowed set whenever a
+    future doc-only key like ``"see_also"`` is added; the explicit field
+    separates docs from validation data.
     """
-    raw = spec.get("allowed_values")
+    raw = spec.get(DefaultOptionKeys.allowed_values)
     if raw is None:
         raise InvalidCredentialShape(
             f"spec for {key!r} declares strict_validation=True but is missing 'allowed_values'."
