@@ -35,7 +35,9 @@ from mloda.user import DataAccessCollection, Feature, Options, mloda
 
 # Importing the plugin module registers the rdflib_sparql feature group.
 import open_kgo.feature_groups.kg.rdf.rdflib_sparql  # noqa: F401
-from open_kgo.compute_frameworks.python_dict_kg_framework import KgPythonDictFramework
+from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
+    PythonDictFramework,
+)
 
 # Point at any RDF file. Here: a three-triple sample written on the spot.
 ttl = Path("sample.ttl")
@@ -56,7 +58,7 @@ feature = Feature(
 
 partitions = mloda.run_all(
     [feature],
-    compute_frameworks={KgPythonDictFramework},
+    compute_frameworks={PythonDictFramework},
     data_access_collection=DataAccessCollection(
         credentials=[{"rdflib_sparql": {"locator": str(ttl), "result_limit": 100}}],
     ),

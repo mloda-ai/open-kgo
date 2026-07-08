@@ -279,7 +279,7 @@ def test_make_valid_credentials_validate_true_rejects_closed_world_violation() -
 def test_run_query_returns_empty_list_for_unknown_stable_id() -> None:
     """An unknown ``stable_id`` is a legitimate zero-result path; we get ``[]``, not a raise.
 
-    ``KgPythonDictFramework.transform`` emits the zero-row
+    ``KgConnectorReaderBase.load`` emits the zero-row
     ``{feature_name: []}`` frame for an empty result (schema-bearing, so
     mloda does not raise ``EmptyResultError``), keeping the full
     ``mloda.run_all`` path usable for legitimate zero-result queries.

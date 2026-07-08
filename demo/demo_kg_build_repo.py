@@ -76,8 +76,8 @@ def helpers():
         Options as _Options,
         mloda as _mloda,
     )
-    from open_kgo.compute_frameworks.python_dict_kg_framework import (
-        KgPythonDictFramework as _KgPythonDictFramework,
+    from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
+        PythonDictFramework as _PythonDictFramework,
     )
 
     from open_kgo.feature_groups.kg.rdf.rdflib_sparql import (  # noqa: F401
@@ -225,7 +225,7 @@ def helpers():
         )
         partitions = _mloda.run_all(
             [feat],
-            compute_frameworks={_KgPythonDictFramework},
+            compute_frameworks={_PythonDictFramework},
             data_access_collection=dac,
         )
         return [row for partition in partitions for row in partition.get(feat.name, [])]

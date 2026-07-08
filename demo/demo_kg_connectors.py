@@ -67,8 +67,8 @@ def helpers():
         Feature as _Feature,
         mloda as _mloda,
     )
-    from open_kgo.compute_frameworks.python_dict_kg_framework import (
-        KgPythonDictFramework as _KgPythonDictFramework,
+    from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
+        PythonDictFramework as _PythonDictFramework,
     )
 
     def run_query(connector_id: str, slot_creds: dict, feature: _Feature) -> _Any:
@@ -77,14 +77,14 @@ def helpers():
         mloda matches the reader by calling `is_valid_credentials` on each
         `ReadDB` subclass and selecting the one whose `CONNECTOR_ID` slot is
         present in `credentials`. The KG FG base pins `compute_framework_rule`
-        to `KgPythonDictFramework`, the KG-aware adapter that wraps native rows
-        into a `{feature_name: [row, ...]}` column; we flat-concat that column
-        across partitions for the per-cell rendering.
+        to the stock `PythonDictFramework`; the reader's `load` wraps native
+        rows into a `{feature_name: [row, ...]}` column, and we flat-concat
+        that column across partitions for the per-cell rendering.
         """
         dac = _DataAccessCollection(credentials=[{connector_id: slot_creds}])
         partitions = _mloda.run_all(
             [feature],
-            compute_frameworks={_KgPythonDictFramework},
+            compute_frameworks={_PythonDictFramework},
             data_access_collection=dac,
         )
         return [row for partition in partitions for row in partition.get(feature.name, [])]
