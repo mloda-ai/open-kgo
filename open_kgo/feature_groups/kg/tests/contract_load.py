@@ -119,7 +119,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
         Covers ``CONNECTOR_ID`` matching, ``is_valid_credentials``, the
         ``DataAccessCollection`` wiring, and ``KgPythonDictFramework`` row
         consumption (the KG-aware ``PythonDictFramework`` adapter that wraps
-        native rows as ``{feature_name: row}`` during column slicing). A
+        native rows into a ``{feature_name: [row, ...]}`` column). A
         regression in any of these surfaces here.
 
         Pre-check that ``is_valid_credentials`` accepts

@@ -435,7 +435,7 @@ class KgConnectorReaderBase(ReadDB):
         (every concrete in this package satisfies that). The shape check below
         turns a future drift (a concrete returning a single dict, ``None``, or
         a generator) into a typed error here rather than an indirect failure
-        downstream in ``select_data_by_column_names``.
+        downstream in ``KgPythonDictFramework.transform``.
         """
         self._assert_single_feature(features)
         result = super().load(features)

@@ -14,8 +14,8 @@ now split by concern and re-exported here, so existing import sites
   dict on ``PARAMS_MAPPING``).
 - ``feature_group.py`` owns ``KgConnectorFeatureGroupBase``, the thin
   FeatureGroup that delegates to a reader.
-- ``spec.py`` owns the typed ``PropertySpec`` builder spec dicts are
-  authored through.
+- ``spec.py`` wraps mloda core's ``property_spec`` builder that spec dicts
+  are authored through.
 """
 
 from open_kgo.feature_groups.kg.feature_group import KgConnectorFeatureGroupBase

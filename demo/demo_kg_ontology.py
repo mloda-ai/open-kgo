@@ -364,7 +364,7 @@ def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
         compute_frameworks={KgPythonDictFramework},
         data_access_collection=_dac,
     )
-    _rows = [row[_feat.name] for part in _partitions for row in part if _feat.name in row]
+    _rows = [row for part in _partitions for row in part.get(_feat.name, [])]
 
     mo.md(f"""
     **mloda.run_all with ontology credential**
@@ -449,7 +449,7 @@ def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
         compute_frameworks={_KgFW},
         data_access_collection=_dac,
     )
-    _kuzu_rows = [row[_feat.name] for part in _partitions for row in part if _feat.name in row]
+    _kuzu_rows = [row for part in _partitions for row in part.get(_feat.name, [])]
 
     # Same ontology YAML, same validation rules — only the credential locator changed.
     _valid_edges = [

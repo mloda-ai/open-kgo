@@ -78,8 +78,8 @@ def helpers():
         `ReadDB` subclass and selecting the one whose `CONNECTOR_ID` slot is
         present in `credentials`. The KG FG base pins `compute_framework_rule`
         to `KgPythonDictFramework`, the KG-aware adapter that wraps native rows
-        as `{feature_name: row}` during column slicing; we flat-concat across
-        partitions for the per-cell rendering.
+        into a `{feature_name: [row, ...]}` column; we flat-concat that column
+        across partitions for the per-cell rendering.
         """
         dac = _DataAccessCollection(credentials=[{connector_id: slot_creds}])
         partitions = _mloda.run_all(
@@ -87,7 +87,7 @@ def helpers():
             compute_frameworks={_KgPythonDictFramework},
             data_access_collection=dac,
         )
-        return [row[feature.name] for partition in partitions for row in partition if feature.name in row]
+        return [row for partition in partitions for row in partition.get(feature.name, [])]
 
     def fixture_for(module: _Any, *parts: str) -> _Any:
         base = _Path(module.__file__).parent / "tests" / "fixtures"
