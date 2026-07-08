@@ -16,7 +16,16 @@ now split by concern and re-exported here, so existing import sites
   FeatureGroup that delegates to a reader.
 - ``spec.py`` wraps mloda core's ``property_spec`` builder that spec dicts
   are authored through.
+
+``PythonDictFramework`` (the stock mloda compute framework every KG
+FeatureGroup pins) is re-exported here as well, so consumers avoid the deep
+``mloda_plugins.compute_framework.base_implementations...`` path; mloda
+offers no shorter public import for it.
 """
+
+from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
+    PythonDictFramework,
+)
 
 from open_kgo.feature_groups.kg.feature_group import KgConnectorFeatureGroupBase
 from open_kgo.feature_groups.kg.reader_base import (
@@ -33,6 +42,7 @@ __all__ = [
     "KgConnectorReaderBase",
     "LoadContext",
     "ParamReader",
+    "PythonDictFramework",
     "QueryReader",
     "_collect_kg_known_keys",
     "compose_property_mapping",

@@ -24,11 +24,7 @@ from typing import Any
 from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
 from mloda.user import DataAccessCollection, Feature, mloda
 
-from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
-    PythonDictFramework,
-)
-
-from open_kgo.feature_groups.kg.base import KgConnectorReaderBase
+from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, PythonDictFramework
 
 
 def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -> list[Any]:

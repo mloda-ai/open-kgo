@@ -67,9 +67,7 @@ def helpers():
         Feature as _Feature,
         mloda as _mloda,
     )
-    from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
-        PythonDictFramework as _PythonDictFramework,
-    )
+    from open_kgo.feature_groups.kg.base import PythonDictFramework as _PythonDictFramework
 
     def run_query(connector_id: str, slot_creds: dict, feature: _Feature) -> _Any:
         """Run a feature through `mloda.run_all` against a single KG connector.

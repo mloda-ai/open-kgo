@@ -344,9 +344,7 @@ def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
 
     import open_kgo.feature_groups.kg.embedded.networkx_embedded  # noqa: F401
 
-    from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
-        PythonDictFramework,
-    )
+    from open_kgo.feature_groups.kg.base import PythonDictFramework
 
     _creds = {
         "locator": str(GML_FILE),
@@ -411,9 +409,7 @@ def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
     from mloda.user import Options as _Options
     from mloda.user import mloda as _mloda
 
-    from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
-        PythonDictFramework as _PdFW,
-    )
+    from open_kgo.feature_groups.kg.base import PythonDictFramework as _PdFW
 
     # Build a tiny Kuzu movie graph in a temp directory.
     _tmp = _tempfile.mkdtemp(prefix="kg_demo_swap_")

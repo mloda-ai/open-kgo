@@ -76,9 +76,7 @@ def helpers():
         Options as _Options,
         mloda as _mloda,
     )
-    from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
-        PythonDictFramework as _PythonDictFramework,
-    )
+    from open_kgo.feature_groups.kg.base import PythonDictFramework as _PythonDictFramework
 
     from open_kgo.feature_groups.kg.rdf.rdflib_sparql import (  # noqa: F401
         RdfLibSparqlFeatureGroup as _RdfLibSparqlFeatureGroup,

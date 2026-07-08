@@ -35,9 +35,7 @@ from mloda.user import DataAccessCollection, Feature, Options, mloda
 
 # Importing the plugin module registers the rdflib_sparql feature group.
 import open_kgo.feature_groups.kg.rdf.rdflib_sparql  # noqa: F401
-from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
-    PythonDictFramework,
-)
+from open_kgo.feature_groups.kg.base import PythonDictFramework
 
 # Point at any RDF file. Here: a three-triple sample written on the spot.
 ttl = Path("sample.ttl")
