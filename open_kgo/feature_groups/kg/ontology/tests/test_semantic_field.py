@@ -29,8 +29,9 @@ from pathlib import Path
 
 import pytest
 
+from open_kgo.feature_groups.kg.ontology.dc_solver import conductance
 from open_kgo.feature_groups.kg.ontology.registry import OntologyRegistry
-from open_kgo.feature_groups.kg.ontology.semantic_field import SemanticField, _conductance
+from open_kgo.feature_groups.kg.ontology.semantic_field import SemanticField
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures"
 METAQA_YAML = FIXTURE_DIR / "metaqa_ontology.yaml"
@@ -51,16 +52,16 @@ MOVIE_EDGES: list[tuple[str, str, str]] = [
 class TestConductance:
     def test_declared_weight_returned(self) -> None:
         OntologyRegistry.load_file(str(METAQA_YAML))
-        assert _conductance("movie", "directed_by") == pytest.approx(0.9)
-        assert _conductance("movie", "has_genre") == pytest.approx(0.7)
-        assert _conductance("movie", "has_tags") == pytest.approx(0.2)
+        assert conductance("movie", "directed_by") == pytest.approx(0.9)
+        assert conductance("movie", "has_genre") == pytest.approx(0.7)
+        assert conductance("movie", "has_tags") == pytest.approx(0.2)
 
     def test_unknown_relation_defaults_to_one(self) -> None:
         OntologyRegistry.load_file(str(METAQA_YAML))
-        assert _conductance("movie", "nonexistent_rel") == pytest.approx(1.0)
+        assert conductance("movie", "nonexistent_rel") == pytest.approx(1.0)
 
     def test_no_ontology_defaults_to_one(self) -> None:
-        assert _conductance("movie", "directed_by") == pytest.approx(1.0)
+        assert conductance("movie", "directed_by") == pytest.approx(1.0)
 
 
 class TestComputeSingleAnchor:
