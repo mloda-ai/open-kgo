@@ -238,17 +238,18 @@ wheels = [
 
 [[package]]
 name = "grand-cypher"
-version = "1.0.1"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "cachetools" },
     { name = "grandiso" },
     { name = "lark" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/78/5c74812e3f1bc9942f88a0e5f8783113764dbcfda67a47e06dc601c63dc0/grand_cypher-1.0.1.tar.gz", hash = "sha256:576990dbc070d12ba49d39447c83515e8a62dbb1ef83986c1ec7f6391240a3e7", size = 41402, upload-time = "2025-09-23T15:54:18.318Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/3a/758725b7bfc51894a6df3644eea4a29b16cc9cdf935d53f38b3996f24851/grand_cypher-1.1.0.tar.gz", hash = "sha256:87d386616f660a17db4ed189286f74e02a0635f32fe2fca47d734bfaeba47c7e", size = 72306, upload-time = "2026-06-30T13:46:01.396Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7d/fb/e658eaa18dd9103f5a88e7610243584be35501231d7ccd0c3eff3357e932/grand_cypher-1.0.1-py3-none-any.whl", hash = "sha256:af769d1e8c3a9a657953adaf468fbfc9d632b0d34fd6d2965248607007ef51a4", size = 28695, upload-time = "2025-09-23T15:54:16.739Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/50/5951832881afc9f67dbb42760c6dce9e12372018e62fc4e2fce1d027f892/grand_cypher-1.1.0-py3-none-any.whl", hash = "sha256:5ee790f5d8b773fce9105fa88480e61fa2ae6f84e2514c44369dac4107f37aa9", size = 63826, upload-time = "2026-06-30T13:46:00.307Z" },
 ]
 
 [[package]]
@@ -585,33 +586,33 @@ wheels = [
 
 [[package]]
 name = "marimo"
-version = "0.23.9"
+version = "0.23.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "click" },
+    { name = "click", marker = "sys_platform != 'emscripten'" },
     { name = "docutils" },
     { name = "itsdangerous" },
     { name = "jedi" },
-    { name = "loro" },
+    { name = "loro", marker = "sys_platform != 'android' and sys_platform != 'emscripten'" },
     { name = "markdown" },
     { name = "msgspec" },
     { name = "narwhals" },
     { name = "packaging" },
-    { name = "psutil" },
+    { name = "psutil", marker = "sys_platform != 'android' and sys_platform != 'emscripten'" },
     { name = "pygments" },
     { name = "pymdown-extensions" },
     { name = "python-multipart" },
     { name = "pyyaml" },
-    { name = "pyzmq", marker = "python_full_version < '3.15'" },
-    { name = "starlette" },
+    { name = "pyzmq", marker = "python_full_version < '3.15' and sys_platform != 'emscripten'" },
+    { name = "starlette", marker = "sys_platform != 'emscripten'" },
     { name = "tomlkit" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
-    { name = "uvicorn" },
-    { name = "websockets" },
+    { name = "uvicorn", marker = "sys_platform != 'emscripten'" },
+    { name = "websockets", marker = "sys_platform != 'emscripten'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/15/be/4a4c7bc1bc160d825c6ae1b4154add505a466532977a5516434ac57ce050/marimo-0.23.9.tar.gz", hash = "sha256:9fb7123aa0dacb202d53bc0989cecd1892435671efc4107b8d8491986b4a6bb9", size = 38538904, upload-time = "2026-06-04T23:06:06.505Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/33/8d/5527d7ddd38a3a495f38f86a41731437301f0d08d81353fb9ceedf167b3d/marimo-0.23.13.tar.gz", hash = "sha256:12dffd800b3f6beae15e0ee3983cc3e8a3fb03c8a87cb0d58973e560008ba3aa", size = 38641267, upload-time = "2026-07-01T17:36:40.151Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/68/f4/ab8be4e65b37deb4d1d780df4a3555e983849ac280b0ec7967801fb438c8/marimo-0.23.9-py3-none-any.whl", hash = "sha256:2cbd50ce9a995c2a256b9a05cc1844f035060e070b8a85fdb32645719817dbdf", size = 38970788, upload-time = "2026-06-04T23:06:01.628Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/c0/8470e4e383b01d88fa9c80fba2b0b203d6e4a41e4fbcaedcac997b664b42/marimo-0.23.13-py3-none-any.whl", hash = "sha256:bc6e0f2c59d2086b0707fac56edeedf5f6edf8a390b4d59f4c417ce4c683adb9", size = 39091347, upload-time = "2026-07-01T17:36:36.151Z" },
 ]
 
 [[package]]
