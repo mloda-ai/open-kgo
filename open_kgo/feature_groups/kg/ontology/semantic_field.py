@@ -1,11 +1,8 @@
 """DC circuit semantic field for ontology-grounded query scoring (Layer 2).
 
-Models the knowledge graph as a resistor network; the Laplacian construction
-and Dirichlet solve live in the sibling ``dc_solver`` module (shared with
-``discovery.DiscoveryEngine``, Layer 3, which reuses the same solved
-potentials). This module owns the public scoring API:
-
-  - Semantic field    = electric potential V(entity) at every node
+Models the knowledge graph as a resistor network; the Laplacian/Dirichlet
+solve live in the sibling ``dc_solver`` module (shared with
+``discovery.DiscoveryEngine``, Layer 3).
 
 For a multi-constraint AND query (``compute_and``) each constraint specifies
 a relationship-type filter together with its anchor set.  Each constraint is

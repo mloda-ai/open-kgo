@@ -8,9 +8,7 @@ Loads a YAML ontology definition file and provides lookups for:
 The registry is keyed by namespace so rules are reusable across any connector
 or dataset that operates in the same domain (e.g. every movie KG shares the
 ``movie`` namespace ontology regardless of whether it lives in Neo4j, NetworkX,
-or RDF). The parsed ontology shape (``NamespaceOntology`` / ``RelationshipRule``)
-and the YAML parser live in the sibling ``models`` module; this module owns the
-process-wide cache and namespace/path lookup.
+or RDF). Parsed shapes and the YAML parser live in the sibling ``models`` module.
 
 Usage::
 

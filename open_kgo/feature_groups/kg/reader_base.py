@@ -9,16 +9,9 @@ extends ``KgConnectorReaderBase`` (which extends ``ReadDB``) and a
 Module layout: this module owns ``LoadContext`` and ``KgConnectorReaderBase``;
 the two per-call reader flavors (``QueryReader`` / ``ParamReader``) live in
 ``kg.readers`` and the FeatureGroup base in ``kg.feature_group``. All of it is
-re-exported through ``kg.base``, the documented front door, so references
-elsewhere to "base.py" resolve here via one hop. The validation and
-composition bodies live in three concern modules and the base keeps thin
-delegating classmethods: runtime credential validation (slot extraction,
-shape and enum checks, env resolution) in ``kg.credentials``, the
-class-definition-time guards (mapping shapes, ``SUPPORTED_VALUES``
-invariants, waiver hygiene, the source-slot convention) in
-``kg.class_guards``, and the property-mapping composition helpers
-(``compose_property_mapping`` / ``narrow_property_mapping`` /
-``_compose_family_surface``) in ``kg.composition``.
+re-exported through ``kg.base``, the documented front door. Validation and
+composition bodies live in ``kg.credentials``, ``kg.class_guards``, and
+``kg.composition``; the base keeps thin delegating classmethods.
 
 Concrete plugins set ``CONNECTOR_ID`` and implement ``connect``,
 ``build_query``, ``load_data``. mloda's ``BaseInputData.match_data_access``

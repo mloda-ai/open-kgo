@@ -9,8 +9,7 @@ now split by concern and re-exported here, so existing import sites
   "Honest credential surface" rule and the "Source-slot convention") are
   documented on that module's docstring.
 - ``composition.py`` owns the property-mapping composition helpers
-  (``compose_property_mapping`` / ``narrow_property_mapping``) that
-  ``reader_base.py``'s family-base composition delegates to.
+  (``compose_property_mapping`` / ``narrow_property_mapping``).
 - ``readers.py`` owns the two per-call input flavors a family base picks
   between: ``QueryReader`` (query string) and ``ParamReader`` (typed param
   dict on ``PARAMS_MAPPING``).

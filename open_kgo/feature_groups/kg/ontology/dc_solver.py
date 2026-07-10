@@ -1,28 +1,9 @@
-"""Shared DC circuit primitives for the ontology-grounded scoring layers.
+"""Shared DC circuit primitives for the ontology scoring layers.
 
-Both ``semantic_field.SemanticField`` (Layer 2) and ``discovery.DiscoveryEngine``
-(Layer 3) solve the same conductance-weighted graph Laplacian and read edge
-conductances off the same ontology-declared weights; this module is the one
-place that math lives. Layer 3 needs the solved potentials Layer 2 already
-knows how to compute, so it depends on this module rather than reaching into
-``semantic_field``'s internals.
-
-  - Edge conductance  = ontology-declared relationship weight  (G = w)
-  - Edge resistance   = inverse weight                         (R = 1/w)
-  - Query anchors     = Dirichlet boundary conditions          (fixed voltage)
-
-The potential is solved via the conductance-weighted graph Laplacian:
-
-    L · V = s
-
-where L[i,i] = Σ G(i,j) over all neighbours j,  L[i,j] = -G(i,j),
-and the known anchor voltages are applied as Dirichlet boundary conditions
-(standard impressed-voltage treatment from electrical network theory).
-
-Reference: Kirchhoff matrix / graph Laplacian for resistor networks
-(Strang, Introduction to Linear Algebra ch. 10; verified against
-MIT OCW 18.06 and Berkeley Stat260/CS294 lecture notes on spectral graph
-methods; effective-resistance formulation from Ghosh & Boyd, Stanford 2006).
+Solves the conductance-weighted graph Laplacian ``L * V = s`` with anchor
+voltages as Dirichlet boundary conditions. Used by both
+``semantic_field.SemanticField`` (Layer 2) and ``discovery.DiscoveryEngine``
+(Layer 3).
 """
 
 from __future__ import annotations
@@ -31,11 +12,8 @@ from typing import Any
 
 from open_kgo.feature_groups.kg.ontology.registry import OntologyRegistry
 
-# ---------------------------------------------------------------------------
-# Optional numba acceleration for the Gaussian elimination kernel.
-# Falls back to pure Python when numba / numpy are not installed.
-# ---------------------------------------------------------------------------
-
+# Optional numba acceleration for the Gaussian elimination kernel; falls back
+# to pure Python when numba / numpy are not installed.
 _np_mod: Any = None
 _nb_solve: Any = None  # compiled kernel: (aug: ndarray) -> ndarray
 
@@ -45,11 +23,7 @@ try:
 
     @_njit(cache=True)
     def _nb_gauss_elim(aug):  # type: ignore[no-untyped-def]
-        """Gaussian elimination with partial pivoting on an augmented matrix.
-
-        Operates in-place on ``aug`` (shape m × m+1, float64).
-        Returns the solution vector V of length m.
-        """
+        """Gaussian elimination with partial pivoting on an augmented matrix (in-place, m x m+1)."""
         m = aug.shape[0]
         for col in range(m):
             pivot = col
@@ -85,12 +59,7 @@ except ImportError:
 
 
 def conductance(namespace: str, relation: str) -> float:
-    """Return the conductance for ``relation`` in ``namespace``.
-
-    Conductance = declared ontology weight. Falls back to 1.0 when no
-    ontology is registered or the relation is not declared (open-world
-    assumption — unknown edges are treated as unit conductors).
-    """
+    """Return the declared ontology weight for ``relation``, or 1.0 if unknown/unregistered."""
     ontology = OntologyRegistry.get(namespace)
     if ontology is None:
         return 1.0
@@ -113,11 +82,7 @@ def _build_laplacian(
     edges: list[tuple[str, str, str]],
     namespace: str,
 ) -> list[list[float]]:
-    """Return the conductance-weighted graph Laplacian as a 2-D list.
-
-    Edges are treated as undirected — current flows both ways through a
-    resistor regardless of the semantic direction of the relationship.
-    """
+    """Return the conductance-weighted graph Laplacian as a 2-D list (edges treated as undirected)."""
     n = len(nodes)
     idx = {node: i for i, node in enumerate(nodes)}
     L: list[list[float]] = [[0.0] * n for _ in range(n)]
@@ -138,13 +103,7 @@ def _solve_dirichlet(
     interior: list[int],
     boundary: dict[int, float],
 ) -> list[float]:
-    """Solve L_II · V_I = -L_IB · V_B via Gaussian elimination.
-
-    Implements the standard Dirichlet decomposition for resistor networks:
-    partition nodes into boundary B (known voltage) and interior I (unknown),
-    then solve the reduced system. Zero-pivot rows (disconnected nodes)
-    receive potential 0.0.
-    """
+    """Solve L_II * V_I = -L_IB * V_B via Gaussian elimination (boundary = known voltages, interior = unknowns)."""
     m = len(interior)
     if m == 0:
         return []
@@ -156,12 +115,11 @@ def _solve_dirichlet(
         aug_row.append(rhs_val)
         aug.append(aug_row)
 
-    # Numba-compiled path (when numba + numpy are available)
     if _nb_solve is not None:
         aug_arr = _np_mod.array(aug, dtype=_np_mod.float64)
         return list(_nb_solve(aug_arr))
 
-    # Pure-Python fallback — forward elimination with partial pivoting
+    # Pure-Python fallback: forward elimination with partial pivoting, then back substitution.
     for col in range(m):
         pivot_row = col
         for r in range(col + 1, m):
@@ -175,7 +133,6 @@ def _solve_dirichlet(
             for c in range(col, m + 1):
                 aug[r][c] -= factor * aug[col][c]
 
-    # Back substitution
     V: list[float] = [0.0] * m
     for row in range(m - 1, -1, -1):
         if abs(aug[row][row]) < 1e-12:

@@ -1,9 +1,4 @@
-"""Ontology data model and YAML parsing for ``OntologyRegistry``.
-
-Extracted from ``registry.py`` so that module stays focused on the
-process-wide cache/lookup concern; this module owns the shape of a parsed
-ontology file and the parser itself.
-"""
+"""Ontology data model and YAML parsing for ``OntologyRegistry``."""
 
 from __future__ import annotations
 
@@ -29,11 +24,7 @@ class NamespaceOntology:
     relationships: dict[str, RelationshipRule]
 
     def is_valid_edge(self, entity_type: str, relationship: str) -> bool:
-        """Return True if ``relationship`` is a valid outgoing edge from ``entity_type``.
-
-        Unknown entity types pass through (True) so connectors that carry
-        entities not declared in the ontology are not silently broken.
-        """
+        """True if ``relationship`` is a valid outgoing edge from ``entity_type`` (unknown types pass through)."""
         valid = self.entity_valid_outgoing.get(entity_type)
         if valid is None:
             return True
@@ -50,14 +41,7 @@ class NamespaceOntology:
 
 
 def parse_ontology(data: Any) -> NamespaceOntology:
-    """Parse a loaded YAML mapping into a ``NamespaceOntology``.
-
-    Raises ``ValueError`` (the same error type ``OntologyRegistry.load_file``
-    documents for duplicate namespaces) on a malformed file — a non-mapping
-    top level, a missing ``namespace``, or a relationship that omits its
-    ``domain`` / ``range`` — so a bad ontology surfaces a clear, typed
-    error rather than a raw ``KeyError`` / ``TypeError`` from indexing.
-    """
+    """Parse a loaded YAML mapping into a ``NamespaceOntology``; raises ``ValueError`` on a malformed file."""
     if not isinstance(data, dict):
         raise ValueError(f"ontology file must contain a YAML mapping at the top level, got {type(data).__name__}.")
     if "namespace" not in data:
