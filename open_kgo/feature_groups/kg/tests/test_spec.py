@@ -1,9 +1,9 @@
 """Tests for the KG ``property_spec`` wrapper (``kg/spec.py``).
 
 The wrapper delegates construction and invariant validation to mloda core
-(``mloda.provider.property_spec``); these tests pin the one open-kgo-specific
-behavior it adds (``default`` always emitted) and confirm core's validation is
-in force through the wrapper.
+(``mloda.provider.property_spec``); these tests pin the two open-kgo-specific
+behaviors it adds (``default`` always emitted, ``allowed_values`` requires
+strict) and confirm core's validation is in force through the wrapper.
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from __future__ import annotations
 import pytest
 
 from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
+from mloda.provider import property_spec as _core_property_spec
 
 from open_kgo.feature_groups.kg.spec import property_spec
 
@@ -50,11 +51,16 @@ class TestPropertySpecInvariants:
             property_spec("Strict but empty.", strict=True, allowed_values={})
 
     def test_allowed_values_without_strict_rejected(self) -> None:
+        """Wrapper-owned rule: core permits the shape, KG does not (see ``kg/spec.py``)."""
         with pytest.raises(ValueError, match="never enforced"):
             property_spec("Decorative enum.", allowed_values={"a": "Doc."})
 
+        assert _core_property_spec("Decorative enum.", allowed_values={"a": "Doc."})[
+            DefaultOptionKeys.allowed_values
+        ] == {"a": "Doc."}
+
     def test_strict_default_outside_allowed_set_rejected(self) -> None:
-        with pytest.raises(ValueError, match="not in the accepted set"):
+        with pytest.raises(ValueError, match="declares default"):
             property_spec("Bad default.", strict=True, allowed_values={"a": "Doc."}, default="z")
 
     def test_strict_none_default_permitted(self) -> None:
@@ -66,7 +72,7 @@ class TestPropertySpecInvariants:
         """Plain iterables mirror ``spec_allowed_values``; the default check still applies."""
         emitted = property_spec("Tuple enum.", strict=True, allowed_values=("a", "b"), default="b")
         assert emitted["allowed_values"] == ("a", "b")
-        with pytest.raises(ValueError, match="not in the accepted set"):
+        with pytest.raises(ValueError, match="declares default"):
             property_spec("Tuple enum.", strict=True, allowed_values=("a", "b"), default="z")
 
     def test_generator_allowed_values_materialized(self) -> None:

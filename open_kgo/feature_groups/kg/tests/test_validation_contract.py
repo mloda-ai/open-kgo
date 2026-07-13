@@ -33,6 +33,7 @@ from open_kgo.feature_groups.kg.errors import (
 from open_kgo.feature_groups.kg.lineage.dbt_manifest import DbtManifestReader
 from open_kgo.feature_groups.kg.tests._discovery import (
     import_all_kg_readers,
+    iter_nonstrict_specs,
     iter_strict_specs,
     walk_subclasses,
 )
@@ -94,6 +95,20 @@ def test_strict_specs_declare_allowed_values_explicitly() -> None:
         for key, spec, layer_name in iter_strict_specs(klass):
             assert "allowed_values" in spec, (
                 f"{klass.__name__}.{layer_name}[{key!r}] has strict_validation=True but no 'allowed_values' field."
+            )
+
+
+def test_nonstrict_specs_declare_no_allowed_values() -> None:
+    """The converse: a non-strict value space is never enforced, so it must not exist.
+
+    ``kg/spec.py`` rejects it at construction, but specs are also hand-assembled
+    (dict-spread, comprehension narrowing) and core permits the shape.
+    """
+    for klass in walk_subclasses(KgConnectorReaderBase):
+        for key, spec, layer_name in iter_nonstrict_specs(klass):
+            assert "allowed_values" not in spec, (
+                f"{klass.__name__}.{layer_name}[{key!r}] declares 'allowed_values' without "
+                f"strict_validation=True, so the set is never enforced."
             )
 
 
