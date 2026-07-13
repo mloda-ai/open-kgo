@@ -35,8 +35,9 @@ Repository = "https://github.com/mloda-ai/open-kgo"
 Issues = "https://github.com/mloda-ai/open-kgo/issues"
 
 [project.optional-dependencies]
-# mloda-testing backs the in-repo contract harness (open_kgo/**/tests/), which
-# is excluded from the wheel, so it is a dev-only dependency.
+# The KG contract harness (open_kgo/**/tests/) is in-repo and imports nothing
+# from mloda-testing; only tests/test_mloda_imports.py does, as an import smoke
+# test. Dev-only either way: the test trees are excluded from the wheel.
 dev = [
     "tox",
     "tox-uv",

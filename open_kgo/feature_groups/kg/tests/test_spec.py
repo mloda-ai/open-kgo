@@ -65,7 +65,7 @@ class TestPropertySpecInvariants:
         ] == {"a": "Doc."}
 
     def test_strict_default_outside_allowed_set_rejected(self) -> None:
-        with pytest.raises(ValueError, match="not one of the accepted values"):
+        with pytest.raises(ValueError, match="declares default"):
             property_spec("Bad default.", strict=True, allowed_values={"a": "Doc."}, default="z")
 
     def test_strict_none_default_permitted(self) -> None:
@@ -77,7 +77,7 @@ class TestPropertySpecInvariants:
         """Plain iterables mirror ``spec_allowed_values``; the default check still applies."""
         emitted = property_spec("Tuple enum.", strict=True, allowed_values=("a", "b"), default="b")
         assert emitted["allowed_values"] == ("a", "b")
-        with pytest.raises(ValueError, match="not one of the accepted values"):
+        with pytest.raises(ValueError, match="declares default"):
             property_spec("Tuple enum.", strict=True, allowed_values=("a", "b"), default="z")
 
     def test_generator_allowed_values_materialized(self) -> None:

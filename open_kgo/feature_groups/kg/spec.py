@@ -1,10 +1,14 @@
 """Thin KG wrapper over mloda core's ``property_spec`` PROPERTY_MAPPING builder.
 
-mloda>=0.10.0 ships ``mloda.provider.property_spec`` plus the first-class
-``DefaultOptionKeys.allowed_values`` field, so open-kgo no longer maintains its
-own copy of the builder/validation (see mloda-ai/open-kgo#29). Core validates
-the spec's invariants; this wrapper preserves two open-kgo conventions core
-does not:
+Core ships ``mloda.provider.property_spec`` plus the first-class
+``DefaultOptionKeys.allowed_values`` field (since 0.9.0), so open-kgo no longer
+maintains its own copy of the builder/validation (see mloda-ai/open-kgo#29).
+The floor is 0.10.0 because core renamed ``RESERVED_PROPERTY_KEYS`` to
+``PROPERTY_SPEC_KEYS`` with no alias and relaxed the non-strict
+``allowed_values`` rule this wrapper still enforces.
+
+Core validates the spec's invariants; this wrapper preserves two open-kgo
+conventions core does not:
 
 - ``default`` is always emitted (explicit ``None`` when unset) so KG specs read
   uniformly via subscript across the validation/discovery/contract layer. The
