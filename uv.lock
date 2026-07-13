@@ -99,7 +99,7 @@ name = "cffi"
 version = "2.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "pycparser" },
+    { name = "pycparser", marker = "python_full_version < '3.15' and implementation_name != 'PyPy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/eb/56/b1ba7935a17738ae8453301356628e8147c79dbb825bcbc73dc7401f9846/cffi-2.0.0.tar.gz", hash = "sha256:44d1b5909021139fe36001ae048dbdde8214afa20200eda0f64c068cac5d5529", size = 523588, upload-time = "2025-09-08T23:24:04.541Z" }
 wheels = [
@@ -220,7 +220,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [
@@ -238,17 +238,18 @@ wheels = [
 
 [[package]]
 name = "grand-cypher"
-version = "1.0.1"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "cachetools" },
     { name = "grandiso" },
     { name = "lark" },
     { name = "networkx", version = "3.4.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "networkx", version = "3.6.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d1/78/5c74812e3f1bc9942f88a0e5f8783113764dbcfda67a47e06dc601c63dc0/grand_cypher-1.0.1.tar.gz", hash = "sha256:576990dbc070d12ba49d39447c83515e8a62dbb1ef83986c1ec7f6391240a3e7", size = 41402, upload-time = "2025-09-23T15:54:18.318Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/3a/758725b7bfc51894a6df3644eea4a29b16cc9cdf935d53f38b3996f24851/grand_cypher-1.1.0.tar.gz", hash = "sha256:87d386616f660a17db4ed189286f74e02a0635f32fe2fca47d734bfaeba47c7e", size = 72306, upload-time = "2026-06-30T13:46:01.396Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7d/fb/e658eaa18dd9103f5a88e7610243584be35501231d7ccd0c3eff3357e932/grand_cypher-1.0.1-py3-none-any.whl", hash = "sha256:af769d1e8c3a9a657953adaf468fbfc9d632b0d34fd6d2965248607007ef51a4", size = 28695, upload-time = "2025-09-23T15:54:16.739Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/50/5951832881afc9f67dbb42760c6dce9e12372018e62fc4e2fce1d027f892/grand_cypher-1.1.0-py3-none-any.whl", hash = "sha256:5ee790f5d8b773fce9105fa88480e61fa2ae6f84e2514c44369dac4107f37aa9", size = 63826, upload-time = "2026-06-30T13:46:00.307Z" },
 ]
 
 [[package]]
@@ -1190,7 +1191,7 @@ name = "pyzmq"
 version = "27.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cffi", marker = "implementation_name == 'pypy'" },
+    { name = "cffi", marker = "python_full_version < '3.15' and implementation_name == 'pypy'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/04/0b/3c9baedbdf613ecaa7aa07027780b8867f57b6293b6ee50de316c9f3222b/pyzmq-27.1.0.tar.gz", hash = "sha256:ac0765e3d44455adb6ddbf4417dcce460fc40a05978c08efdf2948072f6db540", size = 281750, upload-time = "2025-09-08T23:10:18.157Z" }
 wheels = [
