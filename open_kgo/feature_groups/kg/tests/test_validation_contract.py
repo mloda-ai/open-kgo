@@ -99,21 +99,16 @@ def test_strict_specs_declare_allowed_values_explicitly() -> None:
 
 
 def test_nonstrict_specs_declare_no_allowed_values() -> None:
-    """The converse: a non-strict spec must not carry ``allowed_values``.
+    """The converse: a non-strict value space is never enforced, so it must not exist.
 
-    ``_validate_mapping`` only enforces an allowed set under
-    ``strict_validation``, so a non-strict value space is decorative and would
-    read as a constraint that nothing applies. ``kg/spec.py`` rejects it at
-    construction, but specs are also hand-assembled (dict-spread, comprehension
-    narrowing), and mloda core permits the shape since 0.10.0. This walk covers
-    the builder-bypassing paths.
+    ``kg/spec.py`` rejects it at construction, but specs are also hand-assembled
+    (dict-spread, comprehension narrowing) and core permits the shape.
     """
     for klass in walk_subclasses(KgConnectorReaderBase):
         for key, spec, layer_name in iter_nonstrict_specs(klass):
             assert "allowed_values" not in spec, (
                 f"{klass.__name__}.{layer_name}[{key!r}] declares 'allowed_values' without "
-                f"strict_validation=True, so the set is never enforced. Set strict_validation=True, "
-                f"or drop 'allowed_values'."
+                f"strict_validation=True, so the set is never enforced."
             )
 
 

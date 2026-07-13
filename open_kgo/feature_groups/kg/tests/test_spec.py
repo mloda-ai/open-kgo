@@ -51,12 +51,7 @@ class TestPropertySpecInvariants:
             property_spec("Strict but empty.", strict=True, allowed_values={})
 
     def test_allowed_values_without_strict_rejected(self) -> None:
-        """Wrapper-owned rule: core permits a non-strict value space, KG specs do not.
-
-        Core keeps it for feature-name parsing (a parsed value maps back onto its
-        key). KG specs are never name-parsed and ``_validate_mapping`` enforces the
-        allowed set only under ``strict_validation``, so it would be decorative.
-        """
+        """Wrapper-owned rule: core permits the shape, KG does not (see ``kg/spec.py``)."""
         with pytest.raises(ValueError, match="never enforced"):
             property_spec("Decorative enum.", allowed_values={"a": "Doc."})
 
