@@ -1,7 +1,7 @@
 # KG connector base groups (prototype)
 
 Nine families derived from a 103-system survey (see
-`docs/kg-connector-base-classes.md` Version B). Each family is a
+Version B of the family map below). Each family is a
 `<Family>Reader(KgConnectorReaderBase)` + `<Family>FeatureGroup`, paired with
 **two** concrete plugins that run against in-memory libraries or local fixture
 files. No Docker, no external services. The second concrete per family is

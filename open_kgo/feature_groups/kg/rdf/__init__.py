@@ -1,7 +1,7 @@
 """RDF / SPARQL family of KG connectors.
 
 Family-base properties (beyond the universal layer) follow Version B of
-``docs/kg-connector-base-classes.md``: ``default_graph_uris``,
+``open_kgo/feature_groups/kg/README.md``: ``default_graph_uris``,
 ``named_graph_uris``, ``update_endpoint``, ``result_format``, plus
 ``reasoning_profile`` from ``InferenceMixin``.
 
