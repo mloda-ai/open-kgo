@@ -108,3 +108,9 @@ exclude-newer = "7 days"
 # releases immediately, accepting no quarantine window. Do NOT add third-party
 # packages here. Owner: tk.
 exclude-newer-package = { mloda = "0 days", "mloda-testing" = "0 days", "mloda-registry" = "0 days" }
+# Overrides, not constraints: marimo pins `pymdown-extensions<11`, and the fix for the
+# b64 path-traversal advisory only ships in 11.0. A constraint cannot beat that upper
+# pin, so the pin is overridden here. Drop this once marimo allows 11.x.
+override-dependencies = [
+    "pymdown-extensions>=11.0.1",
+]
