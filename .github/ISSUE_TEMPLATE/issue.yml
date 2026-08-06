@@ -6,7 +6,7 @@ body:
     attributes:
       label: Summary
       description: One-sentence description of the bug, request, or task.
-      placeholder: e.g. "Placeholder rename steps break when the directory contains spaces."
+      placeholder: e.g. "The rdf connector drops the graph prefix when a SPARQL result column is unbound."
     validations:
       required: true
   - type: textarea
@@ -44,5 +44,5 @@ body:
     id: environment
     attributes:
       label: Environment (optional, bugs only)
-      description: Python version, OS, mloda version.
-      placeholder: Python 3.12, Linux, mloda 0.6.1
+      description: Python version, OS, mloda version, open-kgo version.
+      placeholder: Python 3.12, Linux, mloda 0.10.0, open-kgo 0.3.1
