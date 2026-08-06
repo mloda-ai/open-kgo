@@ -41,6 +41,22 @@ It runs pytest, `ruff format --check`, `ruff check`, `mypy --strict`, and bandit
 
 ## Reporting issues
 
-Use the issue template (Bug report / Feature request). One-sentence summary,
-reproduction or motivation, code pointers (`file:line`), and a definition of
-done if scoped.
+There is a single **Issue** form — it covers bugs, feature requests, and small
+tasks alike. Blank issues are disabled, so that form is the only path.
+
+It asks for:
+
+- **Summary** — one sentence describing the bug, request, or task.
+- **Reproduction or motivation** — minimal steps plus expected vs. actual for
+  bugs; motivation, current workaround, and desired behavior for features and
+  tasks.
+- **Code pointers** (optional) — `file:line` references, so a newcomer can find
+  the starting point quickly.
+- **Definition of done** (optional) — what counts as complete: behavior, tests,
+  docs.
+- **Environment** (optional, bugs only) — Python version, OS, mloda version.
+
+For questions that are not issues, the New Issue page also links the
+[mloda documentation](https://mloda-ai.github.io/mloda/) and the
+[mloda framework](https://github.com/mloda-ai/mloda) repository, which is the
+place to start a broader conversation.
