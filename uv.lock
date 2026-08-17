@@ -18,7 +18,7 @@ mloda-registry = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 overrides = [
-    { name = "mloda", specifier = ">=0.11.0" },
+    { name = "mloda", specifier = ">=0.11.0,<0.12.0" },
     { name = "pymdown-extensions", specifier = ">=11.0.1" },
 ]
 
@@ -901,7 +901,7 @@ requires-dist = [
     { name = "igraph", marker = "extra == 'kg-embedded'", specifier = ">=0.11" },
     { name = "kuzu", marker = "extra == 'kg-network-pg'", specifier = ">=0.4" },
     { name = "marimo", marker = "extra == 'demo'" },
-    { name = "mloda", specifier = ">=0.11.0" },
+    { name = "mloda", specifier = ">=0.11.0,<0.12.0" },
     { name = "mloda-testing", marker = "extra == 'dev'", specifier = ">=0.3.2" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "networkx", marker = "extra == 'kg-embedded'", specifier = ">=3.2" },
