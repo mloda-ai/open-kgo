@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Mapping
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
+from mloda.provider import PropertySpec, is_no_default
 
 from open_kgo.feature_groups.kg.credentials import spec_allowed_values
 from open_kgo.feature_groups.kg.errors import NonDictSpecError
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 def validate_mapping_spec_shapes(cls: type[KgConnectorReaderBase]) -> None:
-    """Reject non-dict spec values in ``PROPERTY_MAPPING`` / ``PARAMS_MAPPING`` at class-definition time.
+    """Reject non-``PropertySpec`` spec values in ``PROPERTY_MAPPING`` / ``PARAMS_MAPPING`` at class-definition time.
 
     ``compose_property_mapping`` already enforces this for mappings built
     through the helper, but concretes that hand-assemble their mapping
@@ -36,18 +36,30 @@ def validate_mapping_spec_shapes(cls: type[KgConnectorReaderBase]) -> None:
     ``FileFixtureRestReader``, ``FileFixtureCitationReader``,
     ``InProcessTupleStoreReader``) bypass the compose-time check. Running
     the same guard once more here closes that hole so the rule is
-    "any spec in any mapping must be a dict" regardless of how the
+    "any spec in any mapping must be a PropertySpec" regardless of how the
     mapping was assembled. Raises ``NonDictSpecError`` (the same typed
     error ``compose_property_mapping`` uses) so callers can catch both
     compose-time and class-definition-time bypasses with one handler.
+
+    Also rejects a spec with no declared default (core's ``NO_DEFAULT``
+    sentinel): every KG spec declares an explicit default, ``None`` for
+    "no value by default", so credential-slot code that reads
+    ``spec.default`` can treat it as a plain value without special-casing
+    the sentinel.
     """
     for layer_name in ("PROPERTY_MAPPING", "PARAMS_MAPPING"):
         mapping = getattr(cls, layer_name, None)
         if not mapping:
             continue
         for key, spec in mapping.items():
-            if not isinstance(spec, dict):
+            if not isinstance(spec, PropertySpec):
                 raise NonDictSpecError(key, spec, context=f"{cls.__name__}.{layer_name}")
+            if is_no_default(spec.default):
+                raise ValueError(
+                    f"{cls.__name__}.{layer_name}[{key!r}] declares no default; mloda's PropertySpec "
+                    f"treats an omitted default as required. Every KG spec must declare one explicitly, "
+                    f"pass default=None to property_spec(...) for 'no value by default'."
+                )
 
 
 def validate_supported_values_invariant(cls: type[KgConnectorReaderBase]) -> None:
@@ -82,7 +94,7 @@ def validate_supported_values_invariant(cls: type[KgConnectorReaderBase]) -> Non
                 f"{cls.__name__}.SUPPORTED_VALUES[{key!r}] names a key not present in "
                 f"PROPERTY_MAPPING or PARAMS_MAPPING."
             )
-        if spec.get(DefaultOptionKeys.strict_validation) is not True:
+        if spec.strict_validation is not True:
             raise ValueError(
                 f"{cls.__name__}.SUPPORTED_VALUES[{key!r}] requires the spec to set "
                 f"strict_validation=True; narrowing a non-strict key is meaningless."
@@ -99,7 +111,7 @@ def validate_supported_values_invariant(cls: type[KgConnectorReaderBase]) -> Non
                 f"{cls.__name__}.SUPPORTED_VALUES[{key!r}]={sorted(narrowed)} is not a "
                 f"subset of the family-allowed set {sorted(allowed)}."
             )
-        default = spec.get(DefaultOptionKeys.default)
+        default = spec.default
         if (
             key in cls.PROPERTY_MAPPING
             and default is not None

@@ -62,12 +62,12 @@ class PropertyMappingCollision(InvalidCredentialShape):
 
 
 class NonDictSpecError(InvalidCredentialShape):
-    """Raised when a PROPERTY_MAPPING / PARAMS_MAPPING entry's spec value is not a dict.
+    """Raised when a PROPERTY_MAPPING / PARAMS_MAPPING entry's spec value is not a ``PropertySpec``.
 
     Sibling to ``PropertyMappingCollision``: both signal compose-time /
     class-definition-time misconfiguration of a property-mapping source, and
     both inherit from ``InvalidCredentialShape`` so callers can scope a
-    single handler across the whole structural-error family. A non-dict
+    single handler across the whole structural-error family. A malformed
     spec (typically ``None`` from a stale stub) would otherwise propagate
     to ``_validate_mapping`` and surface as a self-contradicting "unknown
     key" error because ``mapping.get(key) is None`` cannot distinguish a
@@ -77,8 +77,8 @@ class NonDictSpecError(InvalidCredentialShape):
     def __init__(self, key: str, spec: object, context: str = "") -> None:
         prefix = f"{context}: " if context else ""
         super().__init__(
-            f"{prefix}spec for key {key!r} must be a dict, got {type(spec).__name__} ({spec!r}). "
-            f"Non-dict specs would surface downstream as self-contradicting 'unknown key' errors."
+            f"{prefix}spec for key {key!r} must be a PropertySpec, got {type(spec).__name__} ({spec!r}). "
+            f"Malformed specs would surface downstream as self-contradicting 'unknown key' errors."
         )
         self.key = key
         self.spec = spec

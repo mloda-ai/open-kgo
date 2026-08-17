@@ -3,9 +3,9 @@
 Core owns the builder and its invariants (see mloda-ai/open-kgo#29); this wrapper
 adds two open-kgo conventions:
 
-- ``default`` is always emitted (explicit ``None`` when unset) so KG specs read
-  uniformly via subscript. The key is in core's ``PROPERTY_SPEC_KEYS``, so core's
-  own parser ignores it.
+- ``default`` defaults to ``None`` rather than core's ``NO_DEFAULT``, so a KG spec
+  is optional unless the caller explicitly opts into a different default. Core's
+  ``PropertySpec`` treats an omitted ``default`` as required (mloda>=0.11.0).
 - ``allowed_values`` requires ``strict=True``. Core permits a non-strict value
   space (it still maps a name-parsed value back onto its key), but KG specs are
   never name-parsed and ``_validate_mapping`` enforces the set only under
@@ -17,8 +17,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping
 from typing import Any
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
-from mloda.provider import property_spec as _core_property_spec
+from mloda.provider import PropertySpec, property_spec as _core_property_spec
 
 
 def property_spec(
@@ -28,19 +27,30 @@ def property_spec(
     allowed_values: Mapping[Any, str] | Iterable[Any] | None = None,
     default: Any = None,
     context: bool = True,
-) -> dict[str, Any]:
-    """Build a PROPERTY_MAPPING spec dict via core, keeping ``default`` always present."""
+) -> PropertySpec:
+    """Build a PROPERTY_MAPPING ``PropertySpec`` via core, defaulting to optional.
+
+    ``allowed_values`` accepts any iterable (a generator included) for caller
+    convenience; anything that isn't already one of core's accepted concrete
+    shapes is materialized into a tuple before reaching core, whose own type
+    is narrower. A ``str``/``bytes`` value is passed through unmaterialized so
+    core's own guard rejects it (materializing it here would silently explode
+    it into a tuple of characters instead).
+    """
     if allowed_values is not None and not strict:
         raise ValueError(
             f"property_spec({explanation!r}): allowed_values is never enforced without strict=True. "
             f"Pass strict=True, or drop allowed_values."
         )
-    spec = _core_property_spec(
+    materialized: Any
+    if allowed_values is None or isinstance(allowed_values, (Mapping, str, bytes)):
+        materialized = allowed_values
+    else:
+        materialized = tuple(allowed_values)
+    return _core_property_spec(
         explanation,
         strict=strict,
-        allowed_values=allowed_values,
+        allowed_values=materialized,
         default=default,
         context=context,
     )
-    spec.setdefault(DefaultOptionKeys.default, None)
-    return spec

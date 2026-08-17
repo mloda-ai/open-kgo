@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from mloda.provider import PropertySpec
+
 from open_kgo.feature_groups.kg.errors import NonDictSpecError, PropertyMappingCollision
 
 if TYPE_CHECKING:
@@ -15,13 +17,13 @@ if TYPE_CHECKING:
 
 
 def compose_property_mapping(*sources: dict[str, Any], context: str = "") -> dict[str, Any]:
-    """Merge property-mapping dicts, raising on duplicate keys or non-dict spec values."""
+    """Merge property-mapping dicts, raising on duplicate keys or non-PropertySpec spec values."""
     merged: dict[str, Any] = {}
     for source in sources:
         for key, spec in source.items():
             if key in merged:
                 raise PropertyMappingCollision(key, context=context)
-            if not isinstance(spec, dict):
+            if not isinstance(spec, PropertySpec):
                 raise NonDictSpecError(key, spec, context=context)
             merged[key] = spec
     return merged

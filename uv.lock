@@ -17,7 +17,10 @@ mloda = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mloda-registry = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
-overrides = [{ name = "pymdown-extensions", specifier = ">=11.0.1" }]
+overrides = [
+    { name = "mloda", specifier = ">=0.11.0,<0.12.0" },
+    { name = "pymdown-extensions", specifier = ">=11.0.1" },
+]
 
 [[package]]
 name = "anyio"
@@ -649,10 +652,10 @@ wheels = [
 
 [[package]]
 name = "mloda"
-version = "0.10.0"
+version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d6/9d/2251f947bfde5e168b9f6759079c8b54af0393c3e854987268459b860776/mloda-0.10.0-py3-none-any.whl", hash = "sha256:13fd1482566de203cac661c29f5736423ce7d1cc8e43ec26f8d24d19e6386229", size = 456550, upload-time = "2026-07-13T18:35:02.322Z" },
+    { url = "https://files.pythonhosted.org/packages/56/70/f1bb826b6d4fca716a9dcc46a785269eab63a59aa047be52ed82da510a9b/mloda-0.11.0-py3-none-any.whl", hash = "sha256:867834e19723a282df8de5e843e67871703b4113c14f403a0d09dc8b424f5b08", size = 535571, upload-time = "2026-08-17T11:49:27.791Z" },
 ]
 
 [[package]]
@@ -898,7 +901,7 @@ requires-dist = [
     { name = "igraph", marker = "extra == 'kg-embedded'", specifier = ">=0.11" },
     { name = "kuzu", marker = "extra == 'kg-network-pg'", specifier = ">=0.4" },
     { name = "marimo", marker = "extra == 'demo'" },
-    { name = "mloda", specifier = ">=0.10.0" },
+    { name = "mloda", specifier = ">=0.11.0,<0.12.0" },
     { name = "mloda-testing", marker = "extra == 'dev'", specifier = ">=0.3.2" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "networkx", marker = "extra == 'kg-embedded'", specifier = ">=3.2" },
@@ -911,7 +914,7 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'kg-ontology'", specifier = ">=6.0" },
     { name = "pyyaml", marker = "extra == 'kg-semantic-field'", specifier = ">=6.0" },
     { name = "rdflib", marker = "extra == 'kg-rdf'", specifier = ">=7.0" },
-    { name = "ruff", marker = "extra == 'dev'" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = "==0.15.20" },
     { name = "tox", marker = "extra == 'dev'" },
     { name = "tox-uv", marker = "extra == 'dev'" },
     { name = "uv", marker = "extra == 'dev'", specifier = ">=0.11.6" },

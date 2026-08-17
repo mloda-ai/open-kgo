@@ -8,15 +8,14 @@ rather than under each family.
 from __future__ import annotations
 
 import warnings
-from typing import Any
 
 import pytest
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
 from mloda.core.abstract_plugins.components.feature import Feature
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.core.abstract_plugins.components.options import Options
 from mloda.provider import HashableDict
+from mloda.provider import property_spec as _core_property_spec
 
 from open_kgo.feature_groups.kg.base import (
     KgConnectorReaderBase,
@@ -93,7 +92,7 @@ def test_strict_specs_declare_allowed_values_explicitly() -> None:
     """
     for klass in walk_subclasses(KgConnectorReaderBase):
         for key, spec, layer_name in iter_strict_specs(klass):
-            assert "allowed_values" in spec, (
+            assert spec.allowed_values is not None, (
                 f"{klass.__name__}.{layer_name}[{key!r}] has strict_validation=True but no 'allowed_values' field."
             )
 
@@ -106,43 +105,35 @@ def test_nonstrict_specs_declare_no_allowed_values() -> None:
     """
     for klass in walk_subclasses(KgConnectorReaderBase):
         for key, spec, layer_name in iter_nonstrict_specs(klass):
-            assert "allowed_values" not in spec, (
+            assert spec.allowed_values is None, (
                 f"{klass.__name__}.{layer_name}[{key!r}] declares 'allowed_values' without "
                 f"strict_validation=True, so the set is never enforced."
             )
 
 
-def test_spec_allowed_values_ignores_doc_only_keys() -> None:
-    """Adding an unrelated string key to a spec must not affect the allowed set."""
-    spec: dict[Any, Any] = {
-        "explanation": "Probe enum.",
-        "allowed_values": {"a": "A", "b": "B"},
-        # Doc-only key that the prior key-derivation logic would have promoted:
-        "see_also": "https://example.invalid/related",
-        DefaultOptionKeys.context: True,
-        DefaultOptionKeys.strict_validation: True,
-        DefaultOptionKeys.default: "a",
-    }
+def test_spec_allowed_values_dict_form_reduces_to_keys() -> None:
+    """A dict-form ``allowed_values`` (value to docstring) reduces to its keys, not its values."""
+    spec = _core_property_spec("Probe enum.", strict=True, allowed_values={"a": "A", "b": "B"})
     allowed = KgConnectorReaderBase._spec_allowed_values("mode", spec)
     assert allowed == {"a", "b"}
-    assert "see_also" not in allowed
 
 
 def test_spec_allowed_values_raises_when_missing() -> None:
-    """A misconfigured spec (strict=True but no allowed_values) is itself a shape error."""
-    spec: dict[Any, Any] = {
-        "explanation": "Bad spec.",
-        DefaultOptionKeys.context: True,
-        DefaultOptionKeys.strict_validation: True,
-        DefaultOptionKeys.default: "a",
-    }
+    """A misconfigured spec (strict=True but no allowed_values) is itself a shape error.
+
+    ``PropertySpec`` only allows a strict spec with no ``allowed_values`` when
+    an ``element_validator`` takes over as the value space; open-kgo's own
+    ``spec_allowed_values`` does not consult ``element_validator``, so such a
+    spec is still a shape error for the KG credential surface.
+    """
+    spec = _core_property_spec("Bad spec.", strict=True, element_validator=lambda value: True)
     with pytest.raises(InvalidCredentialShape):
         KgConnectorReaderBase._spec_allowed_values("mode", spec)
 
 
 def test_spec_allowed_values_accepts_iterable() -> None:
     """Allowed values may be supplied as a plain list/tuple, not only as a dict."""
-    spec = {"allowed_values": ["x", "y"], DefaultOptionKeys.strict_validation: True}
+    spec = _core_property_spec("Probe enum.", strict=True, allowed_values=["x", "y"])
     assert KgConnectorReaderBase._spec_allowed_values("mode", spec) == {"x", "y"}
 
 

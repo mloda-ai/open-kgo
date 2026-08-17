@@ -19,8 +19,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Any
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
-from mloda.provider import HashableDict
+from mloda.provider import HashableDict, PropertySpec
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
@@ -133,7 +132,7 @@ def validate_mapping(
                     f"{cls.CONNECTOR_ID}: unknown {kind} {key!r}; allowed: {sorted(mapping.keys())}"
                 )
             continue
-        if spec.get(DefaultOptionKeys.strict_validation) is True:
+        if spec.strict_validation is True:
             narrowed = cls.SUPPORTED_VALUES.get(key)
             if narrowed is not None:
                 if value not in narrowed:
@@ -149,17 +148,17 @@ def validate_mapping(
                     )
 
 
-def spec_allowed_values(key: str, spec: dict[str, Any]) -> set[Any]:
+def spec_allowed_values(key: str, spec: PropertySpec) -> set[Any]:
     """Return the explicit ``allowed_values`` set declared on a strict-validation spec.
 
     Strict-validation specs must declare their value space explicitly via
-    the core ``DefaultOptionKeys.allowed_values`` field (a dict mapping value
+    the core ``PropertySpec.allowed_values`` field (a dict mapping value
     to its docstring, or any iterable of values). Deriving the set from the
     spec's plain string keys would silently expand the allowed set whenever a
     future doc-only key like ``"see_also"`` is added; the explicit field
     separates docs from validation data.
     """
-    raw = spec.get(DefaultOptionKeys.allowed_values)
+    raw = spec.allowed_values
     if raw is None:
         raise InvalidCredentialShape(
             f"spec for {key!r} declares strict_validation=True but is missing 'allowed_values'."

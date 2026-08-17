@@ -33,7 +33,7 @@ import textwrap
 from contextlib import contextmanager
 from typing import Any, Iterator, Literal
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
+from mloda.provider import PropertySpec
 
 import open_kgo.feature_groups.kg as _kg_pkg
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, ParamReader
@@ -147,13 +147,13 @@ def clean_kg_subclass_registry() -> Iterator[None]:
 
 def iter_strict_specs(
     reader_class: type[KgConnectorReaderBase],
-) -> Iterator[tuple[str, dict[str, Any], _LayerName]]:
+) -> Iterator[tuple[str, PropertySpec, _LayerName]]:
     """Yield ``(key, spec, layer_name)`` for every strict-validation spec on ``reader_class``.
 
     Walks ``PROPERTY_MAPPING`` for every reader and ``PARAMS_MAPPING`` for
     ``ParamReader`` subclasses only (``QueryReader`` subclasses don't carry
-    one). The ``isinstance(spec, dict)`` guard is defensive: class-time
-    ``_validate_mapping_spec_shapes`` already rejects non-dict specs, so
+    one). The ``isinstance(spec, PropertySpec)`` guard is defensive: class-time
+    ``_validate_mapping_spec_shapes`` already rejects malformed specs, so
     in practice the guard is unreachable through a valid class. The
     integrity check for those lives in ``test_property_mapping_integrity.py``.
 
@@ -167,15 +167,15 @@ def iter_strict_specs(
         layers.append(("PARAMS_MAPPING", reader_class.PARAMS_MAPPING))
     for layer_name, mapping in layers:
         for key, spec in mapping.items():
-            if not isinstance(spec, dict):
+            if not isinstance(spec, PropertySpec):
                 continue
-            if spec.get(DefaultOptionKeys.strict_validation) is True:
+            if spec.strict_validation is True:
                 yield key, spec, layer_name
 
 
 def iter_nonstrict_specs(
     reader_class: type[KgConnectorReaderBase],
-) -> Iterator[tuple[str, dict[str, Any], _LayerName]]:
+) -> Iterator[tuple[str, PropertySpec, _LayerName]]:
     """Yield ``(key, spec, layer_name)`` for every NON-strict-validation spec on ``reader_class``.
 
     The complement of ``iter_strict_specs`` over the same layers, so the
@@ -189,9 +189,9 @@ def iter_nonstrict_specs(
         layers.append(("PARAMS_MAPPING", reader_class.PARAMS_MAPPING))
     for layer_name, mapping in layers:
         for key, spec in mapping.items():
-            if not isinstance(spec, dict):
+            if not isinstance(spec, PropertySpec):
                 continue
-            if spec.get(DefaultOptionKeys.strict_validation) is not True:
+            if spec.strict_validation is not True:
                 yield key, spec, layer_name
 
 

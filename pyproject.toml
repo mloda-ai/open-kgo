@@ -5,13 +5,13 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "open-kgo"
 # semantic-release bumps the latest git tag; needs a `0.2.0` tag pushed once by
-# hand to bootstrap. The mloda floor (>=0.10.0) is unrelated.
+# hand to bootstrap. The mloda floor (>=0.11.0,<0.12.0) is unrelated.
 version = "0.3.1"
 description = "Open Knowledge Graphs and Ontologies plugin for mloda."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Tom Kaltofen", email = "tomkaltofen@mloda.ai" }]
-dependencies = ["mloda>=0.10.0"]
+dependencies = ["mloda>=0.11.0,<0.12.0"]
 requires-python = ">=3.10"
 # No `License ::` trove classifier: `license` above is an SPDX expression
 # (PEP 639) and setuptools rejects both together.
@@ -42,7 +42,11 @@ dev = [
     "tox-uv",
     "uv>=0.11.6",
     "pytest",
-    "ruff",
+    # Pinned exactly: tox's default env resolves dependencies independently of
+    # uv.lock (see mloda-ai/open-kgo#66), so an unpinned ruff can silently drift
+    # to a release with different default rules/formatting than what was
+    # actually tested here, turning CI red for reasons unrelated to any change.
+    "ruff==0.15.20",
     "mypy",
     "bandit",
     "mloda-testing>=0.3.2",
@@ -113,4 +117,5 @@ exclude-newer-package = { mloda = "0 days", "mloda-testing" = "0 days", "mloda-r
 # pin, so the pin is overridden here. Drop this once marimo allows 11.x.
 override-dependencies = [
     "pymdown-extensions>=11.0.1",
+    "mloda>=0.11.0,<0.12.0",
 ]

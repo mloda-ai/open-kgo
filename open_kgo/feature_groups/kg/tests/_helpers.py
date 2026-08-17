@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
+from mloda.provider import PropertySpec
 from mloda.user import DataAccessCollection, Feature, mloda
 
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, PythonDictFramework
@@ -81,18 +81,14 @@ def make_valid_credentials(
     What this helper does fix is the hand-rolled slot-dict duplication
     across scenarios within a single concrete test file.
 
-    Defaults are read via ``DefaultOptionKeys.default`` (not the bare
-    string), matching the spec authoring convention in
+    Defaults are read via ``PropertySpec.default`` (not the bare string),
+    matching the spec authoring convention in
     ``open_kgo/feature_groups/kg/base.py``. ``None`` defaults are
-    treated as "no default to apply" — the spec uses ``None`` to make
+    treated as "no default to apply": the spec uses ``None`` to make
     "absence is intentional" explicit for optional keys like ``locator``
     or family-level pin keys (``species_prefix``, ``dataset_version``,
     ``stable_id``), and pre-filling them with ``None`` would only invite
-    a redundant ``slot.pop(key)`` at every call site. The same branch
-    also covers specs that omit the ``default`` field entirely
-    (``spec.get`` returns ``None``); since every KG spec under
-    ``base.py`` declares ``default`` explicitly, that case currently
-    never fires, but the behaviour is intentional and not accidental.
+    a redundant ``slot.pop(key)`` at every call site.
 
     When ``validate=True`` (default), the resulting slot runs through
     ``reader_class._validate_shape`` so a missing-required-key or
@@ -102,9 +98,9 @@ def make_valid_credentials(
     """
     slot: dict[str, Any] = {}
     for key, spec in reader_class.PROPERTY_MAPPING.items():
-        if not isinstance(spec, dict):
+        if not isinstance(spec, PropertySpec):
             continue
-        default = spec.get(DefaultOptionKeys.default)
+        default = spec.default
         if default is None:
             continue
         slot[key] = default
@@ -143,7 +139,7 @@ def canonical_row_key(row: Any) -> str:
     return repr(_canonical(row))
 
 
-def bogus_value_for_strict_spec(spec: dict[str, Any]) -> Any:
+def bogus_value_for_strict_spec(spec: PropertySpec) -> Any:
     """Return a value guaranteed not to be in this strict spec's allowed set.
 
     Type-coheres to the existing allowed values when possible — prefers a
@@ -177,8 +173,8 @@ def bogus_value_for_strict_spec(spec: dict[str, Any]) -> Any:
       ``allowed_values`` survives ``_validate_mapping``'s upstream
       check and lands here too.
 
-    The helper accepts only the spec dict — not a separately-supplied
-    "narrowed" set — because ``SUPPORTED_VALUES`` is enforced at class
+    The helper accepts only the spec, not a separately-supplied
+    "narrowed" set, because ``SUPPORTED_VALUES`` is enforced at class
     definition time to be a subset of the family-allowed set (see
     ``KgConnectorReaderBase._validate_supported_values_invariant`` in
     ``base.py``). A value outside the family set is therefore also
@@ -191,7 +187,7 @@ def bogus_value_for_strict_spec(spec: dict[str, Any]) -> Any:
     signature may evolve to use its currently-message-only ``key``
     argument for behaviour.
     """
-    raw = spec.get("allowed_values")
+    raw = spec.allowed_values
     if raw is None:
         return object()
     allowed: set[Any] = set(raw.keys()) if isinstance(raw, dict) else set(raw)

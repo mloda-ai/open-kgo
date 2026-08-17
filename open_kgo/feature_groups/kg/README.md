@@ -67,10 +67,10 @@ A concrete plugin (e.g. `RdfLibSparqlReader`) is a `ReadDB` subclass with:
   `load_data(data_access, features)` — the methods mloda's
   `BaseInputData.load` calls.
 
-Properties are declared in `PROPERTY_MAPPING` per the data-operations
-discipline (`DefaultOptionKeys.context: True`,
-`DefaultOptionKeys.strict_validation: True/False`). Strict-validation enums are
-checked in `is_valid_credentials` (inherited from the universal base).
+Properties are declared in `PROPERTY_MAPPING` as `PropertySpec` values built
+via `kg/spec.py`'s `property_spec(explanation, strict=..., allowed_values=...,
+default=...)` wrapper. Strict-validation enums are checked in
+`is_valid_credentials` (inherited from the universal base).
 
 ### Honest surface: two narrowing tools
 

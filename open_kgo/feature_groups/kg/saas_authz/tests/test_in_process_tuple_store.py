@@ -90,5 +90,5 @@ class TestInProcessTupleStoreReader(SaasAuthzContractTestBase):
         ``UnknownTenantError``. This test fails the build on either drift.
         """
         fixture_data = json.loads(InProcessTupleStoreReader._FIXTURE_PATH.read_text(encoding="utf-8"))
-        allowed = set(InProcessTupleStoreReader.PROPERTY_MAPPING["tenant"]["allowed_values"])
+        allowed = set(InProcessTupleStoreReader.PROPERTY_MAPPING["tenant"].allowed_values)
         assert allowed == set(fixture_data)

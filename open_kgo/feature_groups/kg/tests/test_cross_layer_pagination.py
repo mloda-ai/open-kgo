@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import pytest
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.user import Feature, Options
 
@@ -206,7 +205,7 @@ def test_pagination_style_classifications_match_declared_values() -> None:
     from open_kgo.feature_groups.kg.mixins import _PAGINATION_STYLES, PaginationMixin
 
     style_spec = PaginationMixin.PROPERTY_MAPPING_DELTA["pagination_style"]
-    declared = set(style_spec["allowed_values"].keys())
+    declared = set(style_spec.allowed_values.keys())
     classified = set(_PAGINATION_STYLES.keys())
     assert declared == classified, (
         f"pagination_style declarations and family classifications drifted: "
@@ -222,7 +221,7 @@ def test_pagination_style_classifications_match_declared_values() -> None:
         f"only {sorted(valid_family_tags)} feed into _CURSOR_FAMILY_STYLES."
     )
 
-    spec_default = style_spec[DefaultOptionKeys.default]
+    spec_default = style_spec.default
     assert spec_default in _PAGINATION_STYLES, f"pagination_style default {spec_default!r} is not a declared style."
     assert spec_default == "none", (
         "PaginationMixin._validate_cross_layer hard-codes 'none' as the fallback "

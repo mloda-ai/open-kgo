@@ -23,7 +23,7 @@ from typing import Any, ClassVar
 
 import pytest
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
+from mloda.provider import PropertySpec
 
 from open_kgo.feature_groups.kg.agent_memory.base import (
     AgentMemoryReader,
@@ -41,6 +41,7 @@ from open_kgo.feature_groups.kg.errors import (
     NonDictSpecError,
     PropertyMappingCollision,
 )
+from open_kgo.feature_groups.kg.spec import property_spec
 from open_kgo.feature_groups.kg.tests._discovery import (
     clean_kg_subclass_registry,
     import_all_kg_readers,
@@ -248,10 +249,10 @@ def test_memory_scope_specs_propagate_into_agent_memory_property_mapping() -> No
     for name, explanation, default in _MEMORY_SCOPE_SPECS:
         assert name in declared, f"{name!r} declared in _MEMORY_SCOPE_SPECS but absent from PROPERTY_MAPPING"
         spec = declared[name]
-        assert spec["explanation"] == explanation
-        assert spec[DefaultOptionKeys.default] == default
-        assert spec[DefaultOptionKeys.context] is True
-        assert spec[DefaultOptionKeys.strict_validation] is False
+        assert spec.explanation == explanation
+        assert spec.default == default
+        assert spec.context is True
+        assert spec.strict_validation is False
 
 
 # -- compose_property_mapping duplicate handling ------------------------------
@@ -270,8 +271,8 @@ def test_memory_scope_specs_propagate_into_agent_memory_property_mapping() -> No
 
 def test_compose_property_mapping_rejects_duplicate_keys() -> None:
     """Any duplicate key across composed sources raises ``PropertyMappingCollision``."""
-    source_a = {"k": {"explanation": "first"}}
-    source_b = {"k": {"explanation": "second"}}
+    source_a = {"k": property_spec("first")}
+    source_b = {"k": property_spec("second")}
 
     with pytest.raises(PropertyMappingCollision):
         compose_property_mapping(source_a, source_b, context="test")
@@ -293,20 +294,20 @@ def test_compose_property_mapping_rejects_duplicate_keys() -> None:
 
 def test_compose_property_mapping_rejects_none_spec_value() -> None:
     """A ``None`` spec value is misconfiguration and must raise at compose time."""
-    with pytest.raises(NonDictSpecError, match=r"must be a dict"):
+    with pytest.raises(NonDictSpecError, match=r"must be a PropertySpec"):
         compose_property_mapping({"extra": None}, context="test")
 
 
 def test_compose_property_mapping_rejects_non_dict_spec_value() -> None:
     """Any non-dict spec value (string, number, list, ...) is rejected at compose time."""
-    with pytest.raises(NonDictSpecError, match=r"must be a dict"):
+    with pytest.raises(NonDictSpecError, match=r"must be a PropertySpec"):
         compose_property_mapping({"extra": "not_a_dict"}, context="test")
 
 
 def test_compose_property_mapping_rejects_none_spec_value_across_sources() -> None:
     """A ``None`` spec value in a later source is caught alongside valid earlier sources."""
-    with pytest.raises(NonDictSpecError, match=r"must be a dict"):
-        compose_property_mapping({"first": {"explanation": "ok"}}, {"second": None}, context="test")
+    with pytest.raises(NonDictSpecError, match=r"must be a PropertySpec"):
+        compose_property_mapping({"first": property_spec("ok")}, {"second": None}, context="test")
 
 
 def test_compose_property_mapping_non_dict_spec_error_is_invalid_credential_shape() -> None:
@@ -393,7 +394,7 @@ def test_init_subclass_rejects_direct_assignment_of_non_dict_spec_in_property_ma
     """A concrete that assigns ``PROPERTY_MAPPING`` with a non-dict value fails at class definition."""
     from open_kgo.feature_groups.kg.agent_memory.networkx_memory import NetworkxMemoryReader
 
-    with pytest.raises(NonDictSpecError, match=r"must be a dict"):
+    with pytest.raises(NonDictSpecError, match=r"must be a PropertySpec"):
 
         class _BadDirectAssign(NetworkxMemoryReader):
             CONNECTOR_ID = "_invariant_test_non_dict_property_spec"
@@ -407,7 +408,7 @@ def test_init_subclass_rejects_direct_assignment_of_non_dict_spec_in_params_mapp
     """A concrete that assigns ``PARAMS_MAPPING`` with a non-dict value fails at class definition."""
     from open_kgo.feature_groups.kg.code_build.base import CodeBuildReader
 
-    with pytest.raises(NonDictSpecError, match=r"must be a dict"):
+    with pytest.raises(NonDictSpecError, match=r"must be a PropertySpec"):
 
         class _BadDirectAssignParams(CodeBuildReader):
             CONNECTOR_ID = "_invariant_test_non_dict_params_spec"
@@ -415,6 +416,30 @@ def test_init_subclass_rejects_direct_assignment_of_non_dict_spec_in_params_mapp
                 **{k: v for k, v in CodeBuildReader.PARAMS_MAPPING.items()},
                 "_injected_bad_key": None,
             }
+
+
+def test_init_subclass_rejects_spec_with_no_declared_default() -> None:
+    """A ``PropertySpec`` built without a ``default`` (core's ``NO_DEFAULT``) fails at class definition.
+
+    Core's ``property_spec`` (bypassing the KG wrapper, which always supplies
+    a default) leaves ``default`` as the ``NO_DEFAULT`` sentinel when the
+    caller omits it. Without this guard, the sentinel would leak into
+    downstream code that reads ``spec.default`` expecting a plain value or
+    ``None``.
+    """
+    from mloda.provider import property_spec as core_property_spec
+
+    from open_kgo.feature_groups.kg.agent_memory.networkx_memory import NetworkxMemoryReader
+
+    with clean_kg_subclass_registry():
+        with pytest.raises(ValueError, match="declares no default"):
+
+            class _BadNoDefault(NetworkxMemoryReader):
+                CONNECTOR_ID = "_invariant_test_no_default_spec"
+                PROPERTY_MAPPING = {
+                    **{k: v for k, v in NetworkxMemoryReader.PROPERTY_MAPPING.items()},
+                    "extra_probe_key": core_property_spec("Missing default.", strict=True, allowed_values=["a"]),
+                }
 
 
 # -- Default-value legality on strict-validation specs ------------------------
@@ -431,7 +456,7 @@ def test_init_subclass_rejects_direct_assignment_of_non_dict_spec_in_params_mapp
 
 def test_strict_validation_defaults_are_legal() -> None:
     """For every ``strict_validation=True`` spec across PROPERTY_MAPPING/PARAMS_MAPPING
-    on every concrete reader, ``spec[default]`` must be in
+    on every concrete reader, ``spec.default`` must be in
     ``_spec_allowed_values(spec)`` (or be ``None``).
 
     Aggregates failures so a future spec drift surfaces every violation at
@@ -444,11 +469,11 @@ def test_strict_validation_defaults_are_legal() -> None:
         for layer_name in ("PROPERTY_MAPPING", "PARAMS_MAPPING"):
             mapping: dict[str, object] = getattr(sub, layer_name, {}) or {}
             for key, spec in mapping.items():
-                if not isinstance(spec, dict):
+                if not isinstance(spec, PropertySpec):
                     continue
-                if spec.get(DefaultOptionKeys.strict_validation) is not True:
+                if spec.strict_validation is not True:
                     continue
-                default = spec.get(DefaultOptionKeys.default)
+                default = spec.default
                 if default is None:
                     continue
                 allowed = KgConnectorReaderBase._spec_allowed_values(key, spec)
@@ -492,10 +517,7 @@ def test_init_subclass_chain_propagates_invariant_failure_through_param_reader()
 # registry walk.
 
 
-_A6_NON_STRICT_SPEC: dict[str, Any] = {
-    DefaultOptionKeys.context: True,
-    DefaultOptionKeys.strict_validation: False,
-}
+_A6_NON_STRICT_SPEC = property_spec("synthetic test spec")
 
 
 def _build_three_level_chain(
@@ -694,12 +716,7 @@ def test_source_slot_invariant_accepts_declared_rename_and_baked() -> None:
             SOURCE_SLOT = "endpoint_url"
             PROPERTY_MAPPING = {
                 **narrow_property_mapping(NetworkxMemoryReader.PROPERTY_MAPPING, "locator"),
-                "endpoint_url": {
-                    "explanation": "Synthetic renamed address slot.",
-                    DefaultOptionKeys.context: True,
-                    DefaultOptionKeys.strict_validation: False,
-                    DefaultOptionKeys.default: None,
-                },
+                "endpoint_url": property_spec("Synthetic renamed address slot."),
             }
 
         class _DeclaredBaked(NetworkxMemoryReader):
