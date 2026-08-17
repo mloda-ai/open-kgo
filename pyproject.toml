@@ -42,7 +42,11 @@ dev = [
     "tox-uv",
     "uv>=0.11.6",
     "pytest",
-    "ruff",
+    # Pinned exactly: tox's default env resolves dependencies independently of
+    # uv.lock (see mloda-ai/open-kgo#66), so an unpinned ruff can silently drift
+    # to a release with different default rules/formatting than what was
+    # actually tested here, turning CI red for reasons unrelated to any change.
+    "ruff==0.15.20",
     "mypy",
     "bandit",
     "mloda-testing>=0.3.2",
