@@ -41,22 +41,26 @@ It runs pytest, `ruff format --check`, `ruff check`, `mypy --strict`, and bandit
 
 ## Reporting issues
 
-There is a single **Issue** form — it covers bugs, feature requests, and small
-tasks alike. Blank issues are disabled, so that form is the only path.
+There is a single **Issue** form: it covers bugs, feature requests, and small
+tasks alike. Blank issues are disabled for anyone without write access, so
+that form is the way in.
 
 It asks for:
 
-- **Summary** — one sentence describing the bug, request, or task.
-- **Reproduction or motivation** — minimal steps plus expected vs. actual for
+- **Summary**: one sentence describing the bug, request, or task.
+- **Reproduction or motivation**: minimal steps plus expected vs. actual for
   bugs; motivation, current workaround, and desired behavior for features and
   tasks.
-- **Code pointers** (optional) — `file:line` references, so a newcomer can find
+- **Code pointers** (optional): `file:line` references, so a newcomer can find
   the starting point quickly.
-- **Definition of done** (optional) — what counts as complete: behavior, tests,
-  docs.
-- **Environment** (optional, bugs only) — Python version, OS, mloda version.
+- **Definition of done** (optional): behavior, tests, and docs needed to call
+  it complete.
+- **Environment** (optional, bugs only): Python version, OS, mloda version.
 
-For questions that are not issues, the New Issue page also links the
+Security vulnerabilities are the exception: report those privately per
+[SECURITY.md](SECURITY.md), not through the public Issue form.
+
+For questions that are not issues, the issue template chooser also links the
 [mloda documentation](https://mloda-ai.github.io/mloda/) and the
 [mloda framework](https://github.com/mloda-ai/mloda) repository, which is the
 place to start a broader conversation.

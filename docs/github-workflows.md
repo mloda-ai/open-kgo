@@ -21,7 +21,7 @@ Dependency CVE scanning is left to GitHub's native Dependabot security alerts (e
   notebooks end-to-end (`pytest -m notebooks`). That env additionally installs
   the `demo` extra, which pulls in marimo. End-to-end execution is slow, so it
   is kept out of the default `tox` run to keep local iteration and the main
-  matrix fast — but it is its own CI job, so the notebook suite still gates
+  matrix fast, but it is its own CI job, so the notebook suite still gates
   pull requests.
 
 **Requirements:** None. This workflow uses only public GitHub Actions and requires no secrets.
