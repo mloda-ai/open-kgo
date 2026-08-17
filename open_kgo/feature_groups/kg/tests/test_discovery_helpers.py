@@ -27,7 +27,7 @@ from typing import Any, ClassVar
 
 import pytest
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
+from mloda.provider import property_spec
 
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, ParamReader, QueryReader
 from open_kgo.feature_groups.kg.tests._discovery import (
@@ -135,9 +135,9 @@ def test_iter_strict_specs_skips_non_strict_specs() -> None:
             # synthetic reader that replaces PROPERTY_MAPPING wholesale).
             SOURCE_SLOT = None
             PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-                "loose": {DefaultOptionKeys.strict_validation: False, "allowed_values": ["a"]},
-                "strict": {DefaultOptionKeys.strict_validation: True, "allowed_values": ["b"]},
-                "unset": {"allowed_values": ["c"]},
+                "loose": property_spec("loose", default=None, allowed_values=["a"]),
+                "strict": property_spec("strict", default=None, strict=True, allowed_values=["b"]),
+                "unset": property_spec("unset", default=None, allowed_values=["c"]),
             }
 
         return [key for key, _spec, _layer in iter_strict_specs(_MixedStrictness)]
@@ -155,10 +155,10 @@ def test_iter_strict_specs_includes_params_mapping_for_param_reader() -> None:
             CONNECTOR_ID = "_b3_param_reader"
             SOURCE_SLOT = None
             PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-                "prop_strict": {DefaultOptionKeys.strict_validation: True, "allowed_values": ["a"]},
+                "prop_strict": property_spec("prop_strict", default=None, strict=True, allowed_values=["a"]),
             }
             PARAMS_MAPPING: ClassVar[dict[str, Any]] = {
-                "param_strict": {DefaultOptionKeys.strict_validation: True, "allowed_values": ["b"]},
+                "param_strict": property_spec("param_strict", default=None, strict=True, allowed_values=["b"]),
             }
 
         return [(key, layer) for key, _spec, layer in iter_strict_specs(_PR)]
@@ -185,14 +185,16 @@ def test_iter_strict_specs_excludes_params_mapping_for_query_reader() -> None:
             CONNECTOR_ID = "_b3_query_reader"
             SOURCE_SLOT = None
             PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-                "qr_strict": {DefaultOptionKeys.strict_validation: True, "allowed_values": ["x"]},
+                "qr_strict": property_spec("qr_strict", default=None, strict=True, allowed_values=["x"]),
             }
             # Drift: QueryReader subclass with a PARAMS_MAPPING attribute.
             # The helper must not yield its keys regardless of presence —
             # only ParamReader subclasses are supposed to declare per-call
             # params, and the helper enforces that via the issubclass gate.
             PARAMS_MAPPING: ClassVar[dict[str, Any]] = {
-                "should_not_appear": {DefaultOptionKeys.strict_validation: True, "allowed_values": ["y"]},
+                "should_not_appear": property_spec(
+                    "should_not_appear", default=None, strict=True, allowed_values=["y"]
+                ),
             }
 
         return [(key, layer) for key, _spec, layer in iter_strict_specs(_QR)]
@@ -218,11 +220,11 @@ def test_iter_nonstrict_specs_is_the_complement_of_iter_strict_specs() -> None:
             CONNECTOR_ID = "_b4_nonstrict"
             SOURCE_SLOT = None
             PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-                "prop_strict": {DefaultOptionKeys.strict_validation: True, "allowed_values": ["a"]},
-                "prop_loose": {DefaultOptionKeys.strict_validation: False, DefaultOptionKeys.default: None},
+                "prop_strict": property_spec("prop_strict", default=None, strict=True, allowed_values=["a"]),
+                "prop_loose": property_spec("prop_loose", default=None),
             }
             PARAMS_MAPPING: ClassVar[dict[str, Any]] = {
-                "param_loose": {DefaultOptionKeys.strict_validation: False, DefaultOptionKeys.default: None},
+                "param_loose": property_spec("param_loose", default=None),
             }
 
         strict = [(k, str(layer)) for k, _s, layer in iter_strict_specs(_PR)]
@@ -247,8 +249,8 @@ def test_reader_string_literals_separates_read_keys_from_declared_only_keys() ->
             SOURCE_SLOT = None
             PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
                 # Declared but never read in any method body below.
-                "zzz_advertised_only": {DefaultOptionKeys.strict_validation: False, DefaultOptionKeys.default: None},
-                "zzz_consumed_key": {DefaultOptionKeys.strict_validation: False, DefaultOptionKeys.default: None},
+                "zzz_advertised_only": property_spec("zzz_advertised_only", default=None),
+                "zzz_consumed_key": property_spec("zzz_consumed_key", default=None),
             }
 
             @classmethod
@@ -290,8 +292,8 @@ def test_effective_unconsumed_waivers_unions_across_mro() -> None:
         class _FamilyBase(KgConnectorReaderBase):
             SOURCE_SLOT = None
             PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-                "family_key": {DefaultOptionKeys.strict_validation: False, DefaultOptionKeys.default: None},
-                "concrete_key": {DefaultOptionKeys.strict_validation: False, DefaultOptionKeys.default: None},
+                "family_key": property_spec("family_key", default=None),
+                "concrete_key": property_spec("concrete_key", default=None),
             }
             _WAIVED_UNCONSUMED_KEYS: ClassVar[frozenset[str]] = frozenset({"family_key"})
 
@@ -335,14 +337,14 @@ def test_surface_honesty_disposition_flags_a_lie_and_a_waiver_clears_it() -> Non
             CONNECTOR_ID = "_b4_lie"
             SOURCE_SLOT = None
             PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-                "zzz_never_read": {DefaultOptionKeys.strict_validation: False, DefaultOptionKeys.default: None},
+                "zzz_never_read": property_spec("zzz_never_read", default=None),
             }
 
         class _WaivedReader(KgConnectorReaderBase):
             CONNECTOR_ID = "_b4_waived"
             SOURCE_SLOT = None
             PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
-                "zzz_never_read": {DefaultOptionKeys.strict_validation: False, DefaultOptionKeys.default: None},
+                "zzz_never_read": property_spec("zzz_never_read", default=None),
             }
             _WAIVED_UNCONSUMED_KEYS: ClassVar[frozenset[str]] = frozenset({"zzz_never_read"})
 

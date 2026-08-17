@@ -68,7 +68,7 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import HashableDict
+from mloda.provider import HashableDict, PropertySpec
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
 from open_kgo.feature_groups.kg import class_guards, composition, credentials as credential_rules
@@ -453,7 +453,7 @@ class KgConnectorReaderBase(ReadDB):
         credential_rules.validate_mapping(cls, values, mapping, kind=kind, closed_world=closed_world)
 
     @staticmethod
-    def _spec_allowed_values(key: str, spec: dict[str, Any]) -> set[Any]:
+    def _spec_allowed_values(key: str, spec: PropertySpec) -> set[Any]:
         """Return a strict-validation spec's allowed set; see ``credentials.spec_allowed_values``."""
         return credential_rules.spec_allowed_values(key, spec)
 

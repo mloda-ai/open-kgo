@@ -21,10 +21,9 @@ from typing import Any, ClassVar
 
 import pytest
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
-
 from open_kgo.feature_groups.kg.base import ParamReader
 from open_kgo.feature_groups.kg.errors import MissingRequiredParamsError
+from open_kgo.feature_groups.kg.spec import property_spec
 from open_kgo.feature_groups.kg.tests._discovery import clean_kg_subclass_registry
 
 _CONNECTOR_ID = "_test_multi_group_param_reader"
@@ -40,9 +39,9 @@ def _build_multi_group_reader() -> type[ParamReader]:
     class _MultiGroupParamReader(ParamReader):
         CONNECTOR_ID: ClassVar[str] = _CONNECTOR_ID
         PARAMS_MAPPING: ClassVar[dict[str, Any]] = {
-            "alpha": {DefaultOptionKeys.context: True, DefaultOptionKeys.strict_validation: False},
-            "bravo": {DefaultOptionKeys.context: True, DefaultOptionKeys.strict_validation: False},
-            "charlie": {DefaultOptionKeys.context: True, DefaultOptionKeys.strict_validation: False},
+            "alpha": property_spec("alpha"),
+            "bravo": property_spec("bravo"),
+            "charlie": property_spec("charlie"),
         }
         REQUIRED_PARAMS: ClassVar[tuple[tuple[str, ...], ...]] = (
             ("alpha",),

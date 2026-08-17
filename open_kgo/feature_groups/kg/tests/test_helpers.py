@@ -31,11 +31,10 @@ family is reorganised, this module needs the new path.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import pytest
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
+from mloda.provider import property_spec as _core_property_spec
 from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.citation_rest.file_fixture_citation import (
@@ -59,10 +58,7 @@ _CITATION_FIXTURE = Path(__file__).parent.parent / "citation_rest" / "tests" / "
 
 def test_bogus_value_for_strict_spec_string_allowed_values_returns_string_outside_set() -> None:
     """Mirrors the existing kg_contract.py call shape: spec with a string set."""
-    spec: dict[str, Any] = {
-        "allowed_values": {"alpha", "beta", "gamma"},
-        DefaultOptionKeys.strict_validation: True,
-    }
+    spec = _core_property_spec("string set", strict=True, allowed_values={"alpha", "beta", "gamma"})
     bogus = bogus_value_for_strict_spec(spec)
     assert isinstance(bogus, str)
     assert bogus not in {"alpha", "beta", "gamma"}
@@ -70,10 +66,9 @@ def test_bogus_value_for_strict_spec_string_allowed_values_returns_string_outsid
 
 def test_bogus_value_for_strict_spec_string_dict_allowed_values_uses_keys() -> None:
     """``allowed_values`` may be a dict mapping value → docstring; we extract keys."""
-    spec: dict[str, Any] = {
-        "allowed_values": {"read": "read consistency", "linearisable": "strong"},
-        DefaultOptionKeys.strict_validation: True,
-    }
+    spec = _core_property_spec(
+        "dict set", strict=True, allowed_values={"read": "read consistency", "linearisable": "strong"}
+    )
     bogus = bogus_value_for_strict_spec(spec)
     assert isinstance(bogus, str)
     assert bogus not in {"read", "linearisable"}
@@ -81,10 +76,7 @@ def test_bogus_value_for_strict_spec_string_dict_allowed_values_uses_keys() -> N
 
 def test_bogus_value_for_strict_spec_avoids_canonical_candidate_when_collision() -> None:
     """If the canonical ``__bogus_strict_spec_value_0__`` is in the set, the helper sweeps."""
-    spec: dict[str, Any] = {
-        "allowed_values": {"alpha", "__bogus_strict_spec_value_0__"},
-        DefaultOptionKeys.strict_validation: True,
-    }
+    spec = _core_property_spec("collision", strict=True, allowed_values={"alpha", "__bogus_strict_spec_value_0__"})
     bogus = bogus_value_for_strict_spec(spec)
     assert isinstance(bogus, str)
     assert bogus not in {"alpha", "__bogus_strict_spec_value_0__"}
@@ -98,10 +90,7 @@ def test_bogus_value_for_strict_spec_int_allowed_values_returns_int_above_max() 
     refactor when a future spec adds an int enum (e.g. an HTTP status code
     set, a max-hops bound).
     """
-    spec: dict[str, Any] = {
-        "allowed_values": {1, 2, 5, 10},
-        DefaultOptionKeys.strict_validation: True,
-    }
+    spec = _core_property_spec("int set", strict=True, allowed_values={1, 2, 5, 10})
     bogus = bogus_value_for_strict_spec(spec)
     assert isinstance(bogus, int) and not isinstance(bogus, bool)
     assert bogus not in {1, 2, 5, 10}
@@ -121,10 +110,7 @@ def test_bogus_value_for_strict_spec_bool_allowed_values_returns_sentinel() -> N
     bool spec would receive ``max({True, False}) + 1 == 2``, which is
     still not in the set but is a semantically confusing answer.
     """
-    spec: dict[str, Any] = {
-        "allowed_values": {True, False},
-        DefaultOptionKeys.strict_validation: True,
-    }
+    spec = _core_property_spec("bool set", strict=True, allowed_values={True, False})
     bogus = bogus_value_for_strict_spec(spec)
     # ``object()`` is unequal to True/False; the membership check at the
     # validator's `in` returns False.
@@ -142,10 +128,7 @@ def test_bogus_value_for_strict_spec_mixed_bool_int_picks_int_branch() -> None:
     order-dependent answer the first implementation would have returned
     (``object()`` if ``True`` was sampled first, ``6`` if ``5`` was).
     """
-    spec: dict[str, Any] = {
-        "allowed_values": {True, 5},
-        DefaultOptionKeys.strict_validation: True,
-    }
+    spec = _core_property_spec("mixed bool int", strict=True, allowed_values={True, 5})
     bogus = bogus_value_for_strict_spec(spec)
     assert bogus == 6
     assert not isinstance(bogus, bool)
@@ -159,10 +142,7 @@ def test_bogus_value_for_strict_spec_mixed_bool_str_picks_str_branch() -> None:
     a fresh string sentinel. Pins the symmetric case to its int sibling
     so a future refactor that re-orders the branches surfaces here.
     """
-    spec: dict[str, Any] = {
-        "allowed_values": {True, "alpha"},
-        DefaultOptionKeys.strict_validation: True,
-    }
+    spec = _core_property_spec("mixed bool str", strict=True, allowed_values={True, "alpha"})
     bogus = bogus_value_for_strict_spec(spec)
     assert isinstance(bogus, str)
     assert bogus not in {True, "alpha"}
@@ -172,14 +152,12 @@ def test_bogus_value_for_strict_spec_mixed_bool_str_picks_str_branch() -> None:
 def test_bogus_value_for_strict_spec_empty_allowed_returns_sentinel() -> None:
     """An empty iterable allowed_values falls through to the object() sentinel.
 
-    ``_spec_allowed_values`` rejects a *missing* ``allowed_values``, but an
-    empty *non-missing* iterable survives that check. The helper covers
-    the latter for defense-in-depth — a non-member exists trivially.
+    ``PropertySpec`` rejects a strict spec with an empty ``allowed_values``
+    unless an ``element_validator`` takes over as the value space, so that is
+    how this spec is built. The helper covers the empty-set shape for
+    defense-in-depth: a non-member exists trivially.
     """
-    spec: dict[str, Any] = {
-        "allowed_values": frozenset(),
-        DefaultOptionKeys.strict_validation: True,
-    }
+    spec = _core_property_spec("empty", strict=True, allowed_values=(), element_validator=lambda value: True)
     bogus = bogus_value_for_strict_spec(spec)
     # The sentinel is by construction outside any set.
     assert bogus not in frozenset()

@@ -61,7 +61,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, ClassVar, Mapping
 
-from mloda.core.abstract_plugins.components.default_options_key import DefaultOptionKeys
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 
 from open_kgo.feature_groups.kg.base import LoadContext, narrow_property_mapping
@@ -72,6 +71,7 @@ from open_kgo.feature_groups.kg.saas_authz.base import (
     SaasAuthzReader,
 )
 from open_kgo.feature_groups.kg.saas_authz.shared import AuthzTuple, validate_tuples
+from open_kgo.feature_groups.kg.spec import property_spec
 
 
 class InProcessTupleStoreReader(SaasAuthzReader):
@@ -127,12 +127,11 @@ class InProcessTupleStoreReader(SaasAuthzReader):
     # ``tenant``; see module docstring.
     PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
         **narrow_property_mapping(SaasAuthzReader.PROPERTY_MAPPING, "locator"),
-        "tenant": {
-            **SaasAuthzReader.PROPERTY_MAPPING["tenant"],
-            "explanation": "Sole tenant served by the in-process tuple store fixture.",
-            "allowed_values": {"tenant_a": "Sample tenant pre-loaded in the canonical demo fixture."},
-            DefaultOptionKeys.strict_validation: True,
-        },
+        "tenant": property_spec(
+            "Sole tenant served by the in-process tuple store fixture.",
+            strict=True,
+            allowed_values={"tenant_a": "Sample tenant pre-loaded in the canonical demo fixture."},
+        ),
     }
 
     @classmethod
@@ -183,7 +182,7 @@ class InProcessTupleStoreFeatureGroup(SaasAuthzFeatureGroup):
 # explicit ``raise`` instead of ``assert`` so the check survives ``python -O``
 # and doesn't trip bandit B101.
 _supported_tenants = InProcessTupleStoreReader.SUPPORTED_VALUES["tenant"]
-_spec_tenants = frozenset(InProcessTupleStoreReader.PROPERTY_MAPPING["tenant"]["allowed_values"].keys())
+_spec_tenants = frozenset(InProcessTupleStoreReader.PROPERTY_MAPPING["tenant"].allowed_values.keys())
 if _supported_tenants != _spec_tenants:
     raise RuntimeError(
         f"InProcessTupleStoreReader: SUPPORTED_VALUES['tenant']={sorted(_supported_tenants)} drifted from "

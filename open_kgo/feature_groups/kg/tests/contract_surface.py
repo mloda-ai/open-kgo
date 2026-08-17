@@ -9,7 +9,7 @@ explicit disposition; see the "Honest credential surface" section in
 
 from __future__ import annotations
 
-from typing import Any
+from mloda.provider import PropertySpec
 
 from open_kgo.feature_groups.kg.tests._discovery import (
     effective_unconsumed_waivers,
@@ -49,7 +49,7 @@ class SurfaceHonestyContract(KgContractAdapterBase):
         surface.
         """
         cls = self.connector_reader_class()
-        lies: list[tuple[str, str, dict[str, Any]]] = []
+        lies: list[tuple[str, str, PropertySpec]] = []
         for key, spec, layer_name in iter_strict_specs(cls):
             if key in cls.SUPPORTED_VALUES:
                 continue
