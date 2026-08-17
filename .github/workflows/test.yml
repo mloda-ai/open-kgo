@@ -31,7 +31,8 @@ jobs:
       - name: Install tox
         run: |
           python -m pip install --upgrade pip
-          python -m pip install uv
+          # Pinned: a uv minor bump can change lockfile serialization.
+          python -m pip install "uv>=0.12,<0.13"
           uv tool install tox --with tox-uv
 
       - name: Run tox
@@ -58,7 +59,8 @@ jobs:
       - name: Install tox
         run: |
           python -m pip install --upgrade pip
-          python -m pip install uv
+          # Pinned: a uv minor bump can change lockfile serialization.
+          python -m pip install "uv>=0.12,<0.13"
           uv tool install tox --with tox-uv
 
       - name: Run notebook tests
