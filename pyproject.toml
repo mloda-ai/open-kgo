@@ -111,9 +111,12 @@ exclude-newer-package = { mloda = "0 days", "mloda-testing" = "0 days", "mloda-r
 # Overrides, not constraints: marimo pins `pymdown-extensions<11`, and the fix for the
 # b64 path-traversal advisory only ships in 11.0. A constraint cannot beat that upper
 # pin, so the pin is overridden here. Drop this once marimo allows 11.x.
-# mloda-testing>=0.4.0 pins `mloda<0.11.0` (not yet updated for the 0.11.0 release);
-# open-kgo only exercises mloda-testing's FeatureGroupTestBase import, verified working
-# against mloda 0.11.0. Drop this once mloda-testing raises its own mloda ceiling.
+# The committed uv.lock stays on mloda-testing 0.3.2 (no upper mloda pin), so this
+# override is inert there; it only matters for a fresh resolution (e.g. tox, which
+# resolves independently of uv.lock) that picks mloda-testing>=0.4.0, which pins
+# `mloda<0.11.0` (not yet updated for the 0.11.0 release). open-kgo only exercises
+# mloda-testing's FeatureGroupTestBase import, verified working against mloda 0.11.0.
+# Drop this once mloda-testing raises its own mloda ceiling.
 override-dependencies = [
     "pymdown-extensions>=11.0.1",
     "mloda>=0.11.0",

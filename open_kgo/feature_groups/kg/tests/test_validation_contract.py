@@ -111,8 +111,8 @@ def test_nonstrict_specs_declare_no_allowed_values() -> None:
             )
 
 
-def test_spec_allowed_values_ignores_doc_only_keys() -> None:
-    """Adding an unrelated string key to a spec must not affect the allowed set."""
+def test_spec_allowed_values_dict_form_reduces_to_keys() -> None:
+    """A dict-form ``allowed_values`` (value to docstring) reduces to its keys, not its values."""
     spec = _core_property_spec("Probe enum.", strict=True, allowed_values={"a": "A", "b": "B"})
     allowed = KgConnectorReaderBase._spec_allowed_values("mode", spec)
     assert allowed == {"a", "b"}

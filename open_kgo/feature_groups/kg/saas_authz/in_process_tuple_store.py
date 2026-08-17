@@ -58,6 +58,7 @@ declare a closed ``allowed_values`` for ``SUPPORTED_VALUES`` to narrow.
 
 from __future__ import annotations
 
+import dataclasses
 from pathlib import Path
 from typing import Any, ClassVar, Mapping
 
@@ -71,7 +72,6 @@ from open_kgo.feature_groups.kg.saas_authz.base import (
     SaasAuthzReader,
 )
 from open_kgo.feature_groups.kg.saas_authz.shared import AuthzTuple, validate_tuples
-from open_kgo.feature_groups.kg.spec import property_spec
 
 
 class InProcessTupleStoreReader(SaasAuthzReader):
@@ -127,9 +127,10 @@ class InProcessTupleStoreReader(SaasAuthzReader):
     # ``tenant``; see module docstring.
     PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
         **narrow_property_mapping(SaasAuthzReader.PROPERTY_MAPPING, "locator"),
-        "tenant": property_spec(
-            "Sole tenant served by the in-process tuple store fixture.",
-            strict=True,
+        "tenant": dataclasses.replace(
+            SaasAuthzReader.PROPERTY_MAPPING["tenant"],
+            explanation="Sole tenant served by the in-process tuple store fixture.",
+            strict_validation=True,
             allowed_values={"tenant_a": "Sample tenant pre-loaded in the canonical demo fixture."},
         ),
     }
@@ -186,5 +187,5 @@ _spec_tenants = frozenset(InProcessTupleStoreReader.PROPERTY_MAPPING["tenant"].a
 if _supported_tenants != _spec_tenants:
     raise RuntimeError(
         f"InProcessTupleStoreReader: SUPPORTED_VALUES['tenant']={sorted(_supported_tenants)} drifted from "
-        f"PROPERTY_MAPPING['tenant']['allowed_values']={sorted(_spec_tenants)}; update both sides in sync."
+        f"PROPERTY_MAPPING['tenant'].allowed_values={sorted(_spec_tenants)}; update both sides in sync."
     )

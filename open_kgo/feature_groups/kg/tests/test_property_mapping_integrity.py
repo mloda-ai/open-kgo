@@ -418,6 +418,30 @@ def test_init_subclass_rejects_direct_assignment_of_non_dict_spec_in_params_mapp
             }
 
 
+def test_init_subclass_rejects_spec_with_no_declared_default() -> None:
+    """A ``PropertySpec`` built without a ``default`` (core's ``NO_DEFAULT``) fails at class definition.
+
+    Core's ``property_spec`` (bypassing the KG wrapper, which always supplies
+    a default) leaves ``default`` as the ``NO_DEFAULT`` sentinel when the
+    caller omits it. Without this guard, the sentinel would leak into
+    downstream code that reads ``spec.default`` expecting a plain value or
+    ``None``.
+    """
+    from mloda.provider import property_spec as core_property_spec
+
+    from open_kgo.feature_groups.kg.agent_memory.networkx_memory import NetworkxMemoryReader
+
+    with clean_kg_subclass_registry():
+        with pytest.raises(ValueError, match="declares no default"):
+
+            class _BadNoDefault(NetworkxMemoryReader):
+                CONNECTOR_ID = "_invariant_test_no_default_spec"
+                PROPERTY_MAPPING = {
+                    **{k: v for k, v in NetworkxMemoryReader.PROPERTY_MAPPING.items()},
+                    "extra_probe_key": core_property_spec("Missing default.", strict=True, allowed_values=["a"]),
+                }
+
+
 # -- Default-value legality on strict-validation specs ------------------------
 #
 # Every strict-validation spec carries a ``default`` paired with an
@@ -432,7 +456,7 @@ def test_init_subclass_rejects_direct_assignment_of_non_dict_spec_in_params_mapp
 
 def test_strict_validation_defaults_are_legal() -> None:
     """For every ``strict_validation=True`` spec across PROPERTY_MAPPING/PARAMS_MAPPING
-    on every concrete reader, ``spec[default]`` must be in
+    on every concrete reader, ``spec.default`` must be in
     ``_spec_allowed_values(spec)`` (or be ``None``).
 
     Aggregates failures so a future spec drift surfaces every violation at

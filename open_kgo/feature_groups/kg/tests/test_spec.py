@@ -10,19 +10,16 @@ from __future__ import annotations
 
 import pytest
 
-from mloda.provider import property_spec as _core_property_spec
+from mloda.provider import PropertySpec, property_spec as _core_property_spec
 
 from open_kgo.feature_groups.kg.spec import property_spec
 
 
 class TestPropertySpecEmission:
-    def test_non_strict_spec_emits_conventional_dict(self) -> None:
-        """The emitted ``PropertySpec`` matches the hand-written fields."""
+    def test_non_strict_spec_emits_expected_fields(self) -> None:
+        """The emitted ``PropertySpec`` matches the hand-written fields exactly."""
         emitted = property_spec("Endpoint URL or filesystem path.", default=1000)
-        assert emitted.explanation == "Endpoint URL or filesystem path."
-        assert emitted.context is True
-        assert emitted.strict_validation is False
-        assert emitted.default == 1000
+        assert emitted == PropertySpec("Endpoint URL or filesystem path.", default=1000)
 
     def test_strict_spec_emits_allowed_values_unchanged(self) -> None:
         """``allowed_values`` passes through by reference so doc-dicts survive intact."""
@@ -77,3 +74,12 @@ class TestPropertySpecInvariants:
         no_values: tuple[str, ...] = ()
         with pytest.raises(ValueError, match="empty allowed_values would reject"):
             property_spec("Empty generator.", strict=True, allowed_values=(v for v in no_values))
+
+    def test_string_allowed_values_rejected(self) -> None:
+        """A bare string is iterable, so it must not silently explode into per-character values."""
+        with pytest.raises(ValueError, match="substring test"):
+            property_spec("Typo'd enum.", strict=True, allowed_values="tenant_a")
+
+    def test_bytes_allowed_values_rejected(self) -> None:
+        with pytest.raises(ValueError, match="substring test"):
+            property_spec("Typo'd enum.", strict=True, allowed_values=b"tenant_a")
