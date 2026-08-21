@@ -64,3 +64,8 @@ For questions that are not issues, the issue template chooser also links the
 [mloda documentation](https://mloda-ai.github.io/mloda/) and the
 [mloda framework](https://github.com/mloda-ai/mloda) repository, which is the
 place to start a broader conversation.
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the
+[Apache License, Version 2.0](LICENSE).
