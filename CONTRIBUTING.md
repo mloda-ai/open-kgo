@@ -29,6 +29,10 @@ tox
 
 It runs pytest, `ruff format --check`, `ruff check`, `mypy --strict`, and bandit.
 
+The same checks run on your PR through the test workflow; see
+[docs/github-workflows.md](docs/github-workflows.md) for what CI does with them
+and how releases are cut.
+
 ## Ground rules
 
 - **Tests required.** Every feature or fix ships with tests — follow the
