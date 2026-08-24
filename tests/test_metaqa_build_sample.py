@@ -20,6 +20,33 @@ def test_load_kb_parses_pipe_separated_triples() -> None:
     assert {"directed_by", "starred_actors", "has_genre"} <= relations
 
 
+def test_load_kb_skips_blank_and_malformed_lines(tmp_path: Path) -> None:
+    """Blank and not-exactly-3-field lines are skipped, not parsed and not raised on.
+
+    Written to a tmp_path file rather than the shared tiny_kb.txt fixture so the
+    other tests reading that fixture keep their exact expected edge set.
+    """
+    kb = tmp_path / "messy_kb.txt"
+    kb.write_text(
+        "\n".join(
+            [
+                "Movie1|directed_by|Director1",
+                "",  # blank
+                "   ",  # whitespace only, blank after strip()
+                "Movie1|directed_by",  # 2 fields
+                "Movie1|directed_by|Director1|extra",  # 4 fields
+                "Movie1",  # 1 field, no separator at all
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    g = build_sample.load_kb(kb)
+
+    assert list(g.edges(data="relation")) == [("Movie1", "Director1", "directed_by")]
+
+
 def test_read_topic_entities_extracts_brackets() -> None:
     topics = build_sample.read_topic_entities([TINY_QA])
     assert topics == {"Movie1", "Movie2"}
