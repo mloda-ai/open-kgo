@@ -204,7 +204,7 @@ Interactive demo: `marimo edit demo/demo_discovery.py`
 
 ## Demos
 
-Three marimo notebooks plus two evaluation harnesses live under `demo/`:
+Five marimo notebooks plus three evaluation harnesses live under `demo/`:
 
 - `demo/demo_kg_connectors.py`: surface tour of all 9 families against the shipped fixtures.
 - `demo/demo_kg_build_repo.py`: builds an RDF graph from this repo (filesystem `repo:contains` + Python `repo:imports`), serializes to Turtle, and runs five SPARQL queries through `RdfLibSparqlReader` via `mloda.run_all`.
@@ -212,7 +212,7 @@ Three marimo notebooks plus two evaluation harnesses live under `demo/`:
 - `demo/demo_semantic_field.py`: SemanticField Layer 2 — interactive director + genre query against MetaQA, with live scoring.
 - `demo/demo_discovery.py`: DiscoveryEngine Layer 3 — beam search over the EM field, find_paths and extract_circuit against the sample graph.
 - `demo/semantic_field_explainer.html`: full visual explainer for SemanticField — circuit diagram, layer stack, why EM, 1/2/multi-hop examples, test results. Open in any browser.
-- `demo/eval_arch1_vs_arch2.py` and `demo/eval_qa_accuracy.py`: evaluation harnesses comparing plain traversal vs. ontology-guided traversal.
+- `demo/eval_arch1_vs_arch2.py`, `demo/eval_qa_accuracy.py` and `demo/eval_qa_accuracy_2hop.py`: evaluation harnesses comparing plain traversal vs. ontology-guided traversal. `eval_qa_accuracy.py` scores the 1-hop question set and `eval_qa_accuracy_2hop.py` its 2-hop sibling; both share the setup and scoring loop in `demo/qa_eval_lib.py`.
 
 Install the demo extras and open any notebook:
 
