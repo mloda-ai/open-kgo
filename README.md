@@ -17,6 +17,7 @@ Open Knowledge Graphs and Ontologies plugin for [mloda](https://github.com/mloda
 | [Demos](#demos) | Marimo notebooks and evaluation harnesses, all offline |
 | [Data and acknowledgments](#data-and-acknowledgments) | Where the sample data comes from |
 | [Development setup](#development-setup) | uv, tox, and the individual checks |
+| [GitHub workflows](docs/github-workflows.md) | What CI runs on a PR, and how releases are cut |
 | [Related repositories and documentation](#related-repositories-and-documentation) | mloda core, the plugin registry, and development guides |
 
 ## Quickstart
@@ -273,3 +274,4 @@ bandit -c pyproject.toml -r -q .
 - **[mloda-registry](https://github.com/mloda-ai/mloda-registry)**: The central hub for discovering and sharing mloda plugins.
 - **[Plugin development guides](https://github.com/mloda-ai/mloda-registry/tree/main/docs/guides/)**: How to build FeatureGroups, ComputeFrameworks, and Extenders.
 - **[Claude Code skills](https://github.com/mloda-ai/mloda-registry/tree/main/.claude/skills/)**: Assisted plugin development for Claude Code users.
+- **[GitHub workflows](docs/github-workflows.md)**: What the test and release workflows in this repo do, and the two secrets a maintainer needs to set up for a release.
