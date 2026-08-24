@@ -13,3 +13,11 @@ updates:
       all-dependencies:
         patterns:
           - "*"
+  - package-ecosystem: "github-actions"
+    directory: "/" # Workflows live in .github/workflows, but Dependabot expects "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
