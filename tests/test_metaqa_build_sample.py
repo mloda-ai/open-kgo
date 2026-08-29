@@ -23,8 +23,11 @@ def test_load_kb_parses_pipe_separated_triples() -> None:
 def test_load_kb_skips_blank_and_malformed_lines(tmp_path: Path) -> None:
     """Blank and not-exactly-3-field lines are skipped, not parsed and not raised on.
 
-    Written to a tmp_path file rather than the shared tiny_kb.txt fixture so the
-    other tests reading that fixture keep their exact expected edge set.
+    Written to a tmp_path file rather than the shared tiny_kb.txt fixture to keep
+    these malformed-line cases local to this test. load_kb skips them regardless
+    of which file they live in, so appending them to tiny_kb.txt would not have
+    changed any other test's parsed edge set; a dedicated file is fixture hygiene,
+    not a correctness requirement.
     """
     kb = tmp_path / "messy_kb.txt"
     kb.write_text(
@@ -45,6 +48,7 @@ def test_load_kb_skips_blank_and_malformed_lines(tmp_path: Path) -> None:
     g = build_sample.load_kb(kb)
 
     assert list(g.edges(data="relation")) == [("Movie1", "Director1", "directed_by")]
+    assert g.number_of_nodes() == 2
 
 
 def test_read_topic_entities_extracts_brackets() -> None:

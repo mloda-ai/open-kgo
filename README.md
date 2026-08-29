@@ -212,7 +212,7 @@ Five marimo notebooks plus three evaluation harnesses live under `demo/`:
 - `demo/demo_semantic_field.py`: SemanticField Layer 2 — interactive director + genre query against MetaQA, with live scoring.
 - `demo/demo_discovery.py`: DiscoveryEngine Layer 3 — beam search over the EM field, find_paths and extract_circuit against the sample graph.
 - `demo/semantic_field_explainer.html`: full visual explainer for SemanticField — circuit diagram, layer stack, why EM, 1/2/multi-hop examples, test results. Open in any browser.
-- `demo/eval_arch1_vs_arch2.py`, `demo/eval_qa_accuracy.py` and `demo/eval_qa_accuracy_2hop.py`: evaluation harnesses comparing plain traversal vs. ontology-guided traversal. `eval_qa_accuracy.py` scores the 1-hop question set and `eval_qa_accuracy_2hop.py` its 2-hop sibling; both share the setup and scoring loop in `demo/qa_eval_lib.py`.
+- `demo/eval_arch1_vs_arch2.py`, `demo/eval_qa_accuracy.py` and `demo/eval_qa_accuracy_2hop.py`: evaluation harnesses comparing plain traversal vs. ontology-guided traversal, all three sharing setup and hop primitives from `demo/qa_eval_lib.py`. `eval_qa_accuracy.py` scores the 1-hop question set and `eval_qa_accuracy_2hop.py` its 2-hop sibling; only those two also share the scoring loop.
 
 Install the demo extras and open any notebook:
 
@@ -226,7 +226,7 @@ no network, no external services.
 
 ## Data and acknowledgments
 
-The ontology demo and the two evaluation harnesses run against a small
+The ontology demo and the three evaluation harnesses run against a small
 hand-authored sample of public movie facts (`demo/data/sample_kb.txt`) written
 in the triple format of the MetaQA dataset (Zhang, Yuyu et al., "Variational
 Reasoning for Question Answering with Knowledge Graph", AAAI 2018,

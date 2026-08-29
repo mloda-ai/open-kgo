@@ -17,6 +17,8 @@ updates:
     directory: "/" # Workflows live in .github/workflows, but Dependabot expects "/"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7
     groups:
       all-dependencies:
         patterns:
