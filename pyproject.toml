@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "open-kgo"
 # semantic-release bumps the latest git tag; needs a `0.2.0` tag pushed once by
 # hand to bootstrap. The mloda floor (>=0.12.0,<0.13.0) is unrelated.
-version = "0.3.2"
+version = "0.3.3"
 description = "Open Knowledge Graphs and Ontologies plugin for mloda."
 readme = "README.md"
 license = "Apache-2.0"
