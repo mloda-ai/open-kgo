@@ -89,6 +89,10 @@ line-length = 120
 # demo/ is linted (it ships and runs in CI notebook tests). mypy/bandit still
 # skip it: marimo's cell style resists typing and demos aren't importable.
 
+[tool.ruff.lint]
+# Pin ruff's pre-0.16 default rule set (0.16 broadened it from 59 to 413 rules).
+select = ["E4", "E7", "E9", "F"]
+
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
