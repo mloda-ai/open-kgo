@@ -50,10 +50,11 @@ ttl.write_text(
 
 feature = Feature(
     "rdflib_sparql__knows",
-    options=Options(context={
-        "query_text": "PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
-                      "SELECT ?s ?o WHERE { ?s foaf:knows ?o }",
-    }),
+    options=Options(
+        context={
+            "query_text": "PREFIX foaf: <http://xmlns.com/foaf/0.1/> SELECT ?s ?o WHERE { ?s foaf:knows ?o }",
+        }
+    ),
 )
 
 partitions = mloda.run_all(
@@ -114,9 +115,9 @@ from open_kgo.feature_groups.kg.ontology import SemanticField
 # AND query: Sci-Fi films by Nolan
 scores = SemanticField.compute_and(
     namespace="metaqa",
-    edges=subgraph_edges,          # 2-hop neighbourhood of both anchors
-    source={"Nolan": 1.0},         # high-voltage anchor
-    sink={"Sci-Fi": 0.0},          # ground
+    edges=subgraph_edges,  # 2-hop neighbourhood of both anchors
+    source={"Nolan": 1.0},  # high-voltage anchor
+    sink={"Sci-Fi": 0.0},  # ground
 )
 # → {"Interstellar": 0.394, "Inception": 0.312, "Dark Knight": 0.0, ...}
 ```
@@ -157,8 +158,8 @@ from open_kgo.feature_groups.kg.ontology import DiscoveryEngine
 paths = DiscoveryEngine.find_paths(
     namespace="movie",
     edges=subgraph_edges,
-    source={"Christopher Nolan": 1.0},   # high-voltage anchor
-    sink={"Science Fiction": 0.0},        # ground
+    source={"Christopher Nolan": 1.0},  # high-voltage anchor
+    sink={"Science Fiction": 0.0},  # ground
     beam_width=5,
     max_depth=4,
 )
