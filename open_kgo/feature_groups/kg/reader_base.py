@@ -69,7 +69,7 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import CHAIN_SEPARATOR, ComputeFramework
+from mloda.provider import CHAIN_SEPARATOR, INPUT_DATA_STAGE, ComputeFramework, record_match_rejection
 from mloda.user import DataAccessCollection, Options
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
@@ -79,6 +79,7 @@ from open_kgo.feature_groups.kg.composition import (  # noqa: F401 -- back-compa
     narrow_property_mapping,
 )
 from open_kgo.feature_groups.kg.credentials import CredentialRules
+from open_kgo.feature_groups.kg.errors import InvalidCredentialShape
 from open_kgo.feature_groups.kg.spec import property_spec
 
 
@@ -346,7 +347,8 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         therefore part of the matcher-safety contract, not a swallowed bug.
         Loud-failure diagnostics for malformed slots and content errors live
         in ``_extract_slot`` and ``_validate_shape``, which direct callers
-        invoke separately.
+        invoke separately. A present but malformed own slot records a match
+        rejection naming the error type only, since the message may echo a secret.
         """
         if not cls.CONNECTOR_ID:
             return False
@@ -355,6 +357,14 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
             if creds is None:
                 return False
             cls._validate_shape(creds)
+        except InvalidCredentialShape as exc:
+            record_match_rejection(
+                cls.get_class_name(),
+                f"{cls.get_class_name()}: the {cls.CONNECTOR_ID!r} credential slot is present but invalid "
+                f"({type(exc).__name__}); call {cls.get_class_name()}.connect() with the same dict for details",
+                stage=INPUT_DATA_STAGE,
+            )
+            return False
         except Exception:
             return False
         return True
