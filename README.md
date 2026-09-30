@@ -75,6 +75,17 @@ Swap `rdflib_sparql` for any of the nine connector families below: same `Feature
 
 Name KG features `<connector_id>__<name>` with a single `__`: a reader claims only that shape, so any other name never resolves to a KG reader. Chained names such as `rdflib_sparql__knows__sum_aggr` go to the chaining FeatureGroup, and a FeatureGroup with an unrelated name can take a KG feature as input in the same run.
 
+Each cell of `<connector_id>__<name>` is a whole native row. Stock chained groups need a scalar column, so project one row key with `~<row_key>`, and propagate the reader's per-call keys (`query_text`, or a param reader's params) to the input, since context options do not flow down a chain by default:
+
+```python
+Feature(
+    "rdflib_sparql__knows~s__count_aggr",
+    options=Options(context={"query_text": query}, propagate_context_keys=frozenset({"query_text"})),
+)
+```
+
+Projected cells keep the connector's native value types (rdflib returns rdflib terms, which PyArrow reads as strings). A row key containing `__` cannot be projected, since the name would read as a chain.
+
 A family whose extra is not installed is skipped with a warning and listed by `PluginLoader.skipped_plugins()`. Importing a connector module (`import open_kgo.feature_groups.kg.rdf.rdflib_sparql`) registers just that connector.
 
 Lineage and tracing extenders see the connector's source path (credentials stripped) as `data_access_identity`. Readers whose rows depend on the credentials alone (`CycloneDxSbomReader`, `FileFixtureRestReader`, `FileFixturePagedRestReader`) answer `count_rows` before a run, e.g. on a `mloda.explain` step's `reader_data_access`; the others return `None`.
@@ -103,6 +114,7 @@ Install all KG extras with: `pip install "open-kgo[kg-all]"` (from a clone: `uv 
 > reader rejects a multi-feature `FeatureSet` rather than silently labelling all
 > rows with one feature name. Request features individually (one `Feature` per
 > `mloda.run_all` slot) rather than batching `N` of them into a single reader call.
+> Sibling `~<row_key>` projections of one feature with equal options share a single load.
 
 > **No-Docker testing policy.** Every connector test runs against rdflib, networkx, kuzu (embedded), or file fixtures. No Docker, no external services, no network calls.
 

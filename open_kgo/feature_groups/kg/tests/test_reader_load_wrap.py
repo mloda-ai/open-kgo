@@ -15,7 +15,7 @@ from typing import Any, ClassVar
 import pytest
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.user import Feature
+from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase
 
@@ -49,10 +49,15 @@ class _WrapFakeReader(KgConnectorReaderBase):
         return _StubRowSource(self._rows), None
 
 
-def _single_feature_set(name: str) -> FeatureSet:
+def _feature_set(*features: Feature) -> FeatureSet:
     fs = FeatureSet()
-    fs.add(Feature(name))
+    for feature in features:
+        fs.add(feature)
     return fs
+
+
+def _single_feature_set(name: str) -> FeatureSet:
+    return _feature_set(Feature(name))
 
 
 def test_load_wraps_native_rows_under_feature_name() -> None:
@@ -85,3 +90,32 @@ def test_load_rejects_non_dict_rows() -> None:
     """A concrete drifting to non-dict rows is a typed error at the base."""
     with pytest.raises(TypeError):
         _WrapFakeReader([("s", "x")]).load(_single_feature_set("my_feature"))
+
+
+def test_load_projects_row_keys_for_sibling_features_in_one_load() -> None:
+    """``name~key`` yields that key's values (None where a row lacks it) next to the whole-row base column."""
+    rows = [{"s": "a", "n": 1}, {"s": "b"}]
+    fs = _feature_set(Feature("my_feature"), Feature("my_feature~s"), Feature("my_feature~n"))
+    assert _WrapFakeReader(rows).load(fs) == {"my_feature": rows, "my_feature~s": ["a", "b"], "my_feature~n": [1, None]}
+    assert _WrapFakeReader([]).load(_single_feature_set("my_feature~s")) == {"my_feature~s": []}
+
+
+def test_load_rejects_a_row_key_no_row_carries() -> None:
+    with pytest.raises(ValueError, match="no row carries key 'typo'"):
+        _WrapFakeReader([{"s": "a"}]).load(_single_feature_set("my_feature~typo"))
+
+
+@pytest.mark.parametrize(
+    "other",
+    [
+        Feature("other_feature~s"),
+        Feature("my_feature~n", options=Options(context={"query_text": "different"})),
+        Feature("my_feature~n", options=Options(group={"variant": "b"}, context={"query_text": "q"})),
+    ],
+    ids=["other_base", "other_context", "other_group"],
+)
+def test_load_rejects_siblings_that_would_share_one_query_wrongly(other: Feature) -> None:
+    """Only projections of one base feature with equal options share a load."""
+    first = Feature("my_feature~s", options=Options(context={"query_text": "q"}))
+    with pytest.raises(ValueError, match="exactly one feature per call"):
+        _WrapFakeReader([{"s": "a", "n": 1}]).load(_feature_set(first, other))

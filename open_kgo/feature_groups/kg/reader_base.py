@@ -69,7 +69,7 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import CHAIN_SEPARATOR, INPUT_DATA_STAGE, ComputeFramework, record_match_rejection
+from mloda.provider import CHAIN_SEPARATOR, COLUMN_SEPARATOR, INPUT_DATA_STAGE, ComputeFramework, record_match_rejection
 from mloda.user import DataAccessCollection, Options
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
@@ -273,7 +273,7 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         class_guards.validate_source_slot(cls)
 
     def load(self, features: FeatureSet) -> dict[str, list[Any]]:
-        """Reject multi-feature FeatureSets, then wrap native rows under the feature name.
+        """Reject multi-feature FeatureSets, then wrap native rows (or one row key's values) under each feature name.
 
         Concrete ``load_data`` implementations across every family read a single
         feature via ``next(iter(features.features))``; passing more than one
@@ -291,7 +291,9 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         unconditional, even when the feature name collides with a native row
         key. An empty result yields the schema-bearing zero-row frame
         ``{feature_name: []}`` (not the schema-less ``{}`` mloda rejects), so a
-        query with no matches returns zero rows without raising.
+        query with no matches returns zero rows without raising. A
+        ``<id>__<name>~<row_key>`` feature gets that row key's values instead,
+        a scalar column stock chained groups can consume.
 
         ``load_data`` is contractually required to return ``list[dict[str, Any]]``
         (every concrete in this package satisfies that). The shape check below
@@ -310,23 +312,45 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
                     f"{cls_name}.load_data must return list[dict[str, Any]]; "
                     f"row at index {index} is {type(row).__name__}."
                 )
-        feature_name = str(next(iter(features.features)).name)
-        return {feature_name: result}
+        return {str(feature.name): self._project(str(feature.name), result) for feature in features.features}
+
+    @classmethod
+    def _project(cls, feature_name: str, rows: list[dict[str, Any]]) -> list[Any]:
+        """Whole rows for ``<id>__<name>``; one row key's values for ``<id>__<name>~<row_key>``."""
+        _, separator, key = feature_name.partition(COLUMN_SEPARATOR)
+        if not separator:
+            return rows
+        # A row lacking the key (e.g. an unbound SPARQL OPTIONAL) yields None; a key no row has is a typo.
+        if rows and not any(key in row for row in rows):
+            raise ValueError(
+                f"{cls.__name__}: no row carries key {key!r} requested by {feature_name!r}; "
+                f"row keys: {sorted({k for row in rows for k in row})}."
+            )
+        return [row.get(key) for row in rows]
 
     @classmethod
     def _assert_single_feature(cls, features: FeatureSet) -> None:
         """Universal precondition: ``load_data`` dispatches one feature at a time.
 
-        Extracted so subclasses (e.g. ``ParamReader``) can run the guard at the
-        very top of their own ``load`` override, before any per-call validation
-        that iterates ``features.features`` and would otherwise pick one
+        Sibling ``~<row_key>`` projections of one feature with equal options share
+        that load. Extracted so subclasses (e.g. ``ParamReader``) can run the guard
+        at the very top of their own ``load`` override, before any per-call
+        validation that iterates ``features.features`` and would otherwise pick one
         feature silently.
         """
-        if len(features.features) != 1:
+        batch = list(features.features)
+        first = batch[0] if batch else None
+        if first is None or any(
+            str(f.name).partition(COLUMN_SEPARATOR)[0] != str(first.name).partition(COLUMN_SEPARATOR)[0]
+            or dict(f.options.group) != dict(first.options.group)
+            or dict(f.options.context) != dict(first.options.context)
+            for f in batch
+        ):
             raise ValueError(
                 f"{cls.__name__}.load expects exactly one feature per call "
-                f"(KG concrete load_data implementations all dispatch one feature at a time), "
-                f"got {len(features.features)}: {sorted(f.name for f in features.features)}."
+                f"(KG concrete load_data implementations all dispatch one feature at a time; only "
+                f"'~<row_key>' projections of one feature with equal options share a load), "
+                f"got {len(batch)}: {sorted(f.name for f in batch)}."
             )
 
     @classmethod

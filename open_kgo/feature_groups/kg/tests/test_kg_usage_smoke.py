@@ -77,7 +77,8 @@ def test_consumer_takes_kg_feature_as_input_in_one_run(case: ConnectorCase, tmp_
 def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
     """With every stock mloda plugin loaded (``ReadDBFeature`` included), each case still resolves to its own group.
 
-    ``<case feature>__sum_aggr`` must resolve to the stock aggregation groups, never to the KG group.
+    ``<case feature>__sum_aggr`` must resolve to the stock aggregation groups, never to the KG group, and
+    ``<case feature>~<row_key>__max_aggr`` runs end to end with the case's context propagated to the input.
     Runs in a subprocess so ``PluginLoader.all()`` never changes matching for the rest of this pytest process.
     """
     code = textwrap.dedent(
@@ -86,7 +87,7 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
         from pathlib import Path
 
         from mloda.steward import resolve_feature
-        from mloda.user import Credential, DataAccessCollection, PluginLoader
+        from mloda.user import Credential, DataAccessCollection, Feature, Options, PluginLoader, mloda
 
         PluginLoader.all()
 
@@ -111,6 +112,22 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
                 owners = [fg.__name__ for fg in chained.candidates]
                 if not owners or any(issubclass(fg, KgConnectorFeatureGroupBase) for fg in chained.candidates):
                     failures.append((case.connector_id, "__sum_aggr candidates", owners))
+                # max_aggr rejects whole-row cells, so this passes only on a projected scalar column.
+                scalar = (str, int, float)
+                key = sorted(k for k in rows[0] if all(isinstance(row.get(k), scalar) for row in rows))[0]
+                context = dict(case.feature.options.context)
+                maxed = Feature(
+                    f"{{case.feature.name}}~{{key}}__max_aggr",
+                    options=Options(context=context, propagate_context_keys=frozenset(context)),
+                )
+                dac = DataAccessCollection(credentials=Credential({{case.connector_id: slot}}))
+                values = {{
+                    str(value)
+                    for partition in mloda.run_all([maxed], data_access_collection=dac)
+                    for value in partition[maxed.name].to_pylist()
+                }}
+                if len(values) != 1 or not values <= {{str(row[key]) for row in rows}}:
+                    failures.append((case.connector_id, "max_aggr", sorted(values)[:3]))
             except Exception as exc:
                 failures.append((case.connector_id, repr(exc)[:300]))
         sys.exit(repr(failures) if failures else 0)

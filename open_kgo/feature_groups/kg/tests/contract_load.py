@@ -16,7 +16,7 @@ import pytest
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.provider import BaseInputData
-from mloda.user import Feature
+from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
 
 from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
 from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query
@@ -29,7 +29,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
     """Contract tests for the load path of a concrete KG plugin."""
 
     def test_load_rejects_multi_feature_set(self) -> None:
-        """Universal: ``load`` rejects FeatureSets carrying more than one feature.
+        """Universal: ``load`` rejects FeatureSets carrying more than one base feature.
 
         Concrete ``load_data`` implementations all consume a single feature via
         ``next(iter(features.features))``. Passing a
@@ -45,6 +45,26 @@ class LoadBehaviorContract(KgContractAdapterBase):
         fs.add(feat_b)
         with pytest.raises(ValueError):
             cls().load(fs)
+
+    def test_row_key_projection_shares_one_load_with_its_feature(self) -> None:
+        """``<feature>`` and ``<feature>~<row_key>`` in one run: whole rows, and that key's values from the same rows."""
+        connector_id = self.connector_reader_class().CONNECTOR_ID
+        creds = self.valid_credentials()[connector_id]
+        feat = self.feature_under_test()
+        rows = run_query(connector_id, creds, feat)
+        assert rows, f"{self.connector_reader_class().__name__}: projection test needs >= 1 row."
+        key = sorted(rows[0])[0]
+        # Fresh options per feature: mloda writes the matched reader into them.
+        pair = [
+            Feature(name, options=Options(group=dict(feat.options.group), context=dict(feat.options.context)))
+            for name in (feat.name, f"{feat.name}~{key}")
+        ]
+        dac = DataAccessCollection(credentials=Credential({connector_id: creds}))
+        requested: list[Feature | str] = list(pair)
+        partitions = mloda.run_all(requested, compute_frameworks={PythonDictFramework}, data_access_collection=dac)
+        for feature, expected in zip(pair, (rows, [row.get(key) for row in rows])):
+            got = [value for partition in partitions for value in partition.get(feature.name, [])]
+            assert sorted(got, key=canonical_row_key) == sorted(expected, key=canonical_row_key), feature.name
 
     def test_load_is_idempotent(self) -> None:
         """Running the canonical feature twice yields the same rows.
