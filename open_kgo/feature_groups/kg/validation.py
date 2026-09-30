@@ -5,7 +5,7 @@ layer) needs. The first resident is ``parse_bounded_int``, which used to exist
 in four near-identical spellings: ``parse_page_size`` in ``mixins.py``
 (``int >= 1``), ``_parse_depth`` in ``code_build/spdx_sbom.py`` (``int >= 0``),
 an inline ``hierarchy_depth`` check in ``citation_rest/paginated_citation.py``,
-and ``_validate_result_limit`` in ``reader_base.py``. All four rejected bool
+and ``_validate_result_limit`` in ``credentials.py``. All four rejected bool
 explicitly (it is an ``int`` subclass, but a count or depth expressed as a
 truth-value is almost always a caller mistake); centralising them means a
 future validator cannot forget that guard.
