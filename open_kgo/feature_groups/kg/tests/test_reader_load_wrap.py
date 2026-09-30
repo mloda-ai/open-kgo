@@ -100,9 +100,10 @@ def test_load_projects_row_keys_for_sibling_features_in_one_load() -> None:
     assert _WrapFakeReader([]).load(_single_feature_set("my_feature~s")) == {"my_feature~s": []}
 
 
-def test_load_rejects_a_row_key_no_row_carries() -> None:
-    with pytest.raises(ValueError, match="no row carries key 'typo'"):
-        _WrapFakeReader([{"s": "a"}]).load(_single_feature_set("my_feature~typo"))
+@pytest.mark.parametrize(("name", "rows"), [("my_feature~typo", [{"s": "a"}]), ("my_feature~", [])])
+def test_load_rejects_a_row_key_no_row_carries(name: str, rows: list[dict[str, Any]]) -> None:
+    with pytest.raises(ValueError, match="no row carries key"):
+        _WrapFakeReader(rows).load(_single_feature_set(name))
 
 
 @pytest.mark.parametrize(

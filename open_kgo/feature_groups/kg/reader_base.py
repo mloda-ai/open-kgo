@@ -321,7 +321,7 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         if not separator:
             return rows
         # A row lacking the key (e.g. an unbound SPARQL OPTIONAL) yields None; a key no row has is a typo.
-        if rows and not any(key in row for row in rows):
+        if not key or (rows and not any(key in row for row in rows)):
             raise ValueError(
                 f"{cls.__name__}: no row carries key {key!r} requested by {feature_name!r}; "
                 f"row keys: {sorted({k for row in rows for k in row})}."

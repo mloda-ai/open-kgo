@@ -46,7 +46,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
         with pytest.raises(ValueError):
             cls().load(fs)
 
-    def test_row_key_projection_shares_one_load_with_its_feature(self) -> None:
+    def test_row_key_projection_matches_whole_rows_in_one_run(self) -> None:
         """``<feature>`` and ``<feature>~<row_key>`` in one run: whole rows, and that key's values from the same rows."""
         connector_id = self.connector_reader_class().CONNECTOR_ID
         creds = self.valid_credentials()[connector_id]
