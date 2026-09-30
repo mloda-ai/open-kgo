@@ -391,8 +391,11 @@ class KgConnectorReaderBase(ReadDB):
     def check_feature_in_data_access(cls, feature_name: str, data_access: Any) -> bool:
         """Claim only ``<CONNECTOR_ID>__<name>``: chained (``...__sum_aggr``) and unrelated names go to other groups."""
         prefix = f"{cls.CONNECTOR_ID}{CHAIN_SEPARATOR}"
-        name = feature_name.removeprefix(prefix)
-        return feature_name.startswith(prefix) and bool(name) and CHAIN_SEPARATOR not in name
+        if not feature_name.startswith(prefix):
+            return False
+        name = feature_name[len(prefix) :]
+        # A leading "_" would let "<id>___op" read as a chain on "<id>_".
+        return bool(name) and not name.startswith("_") and CHAIN_SEPARATOR not in name
 
     @classmethod
     def is_final_reader(cls) -> bool:

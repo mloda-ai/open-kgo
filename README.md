@@ -73,7 +73,7 @@ for partition in partitions:
 
 Swap `rdflib_sparql` for any of the nine connector families below: same `Feature` to `mloda.run_all` shape, different reader.
 
-Name KG features `<connector_id>__<name>` with a single `__`: a reader claims only that shape, and any other name fails with "No feature groups found". Longer names chain onto KG output (`rdflib_sparql__knows__sum_aggr` aggregates `rdflib_sparql__knows`), and a FeatureGroup with an unrelated name can take a KG feature as input in the same run.
+Name KG features `<connector_id>__<name>` with a single `__`: a reader claims only that shape, so any other name never resolves to a KG reader. Chained names such as `rdflib_sparql__knows__sum_aggr` go to the chaining FeatureGroup, and a FeatureGroup with an unrelated name can take a KG feature as input in the same run.
 
 A family whose extra is not installed is skipped with a warning and listed by `PluginLoader.skipped_plugins()`. Importing a connector module (`import open_kgo.feature_groups.kg.rdf.rdflib_sparql`) registers just that connector.
 

@@ -55,11 +55,17 @@ def test_family_has_registered_connector(family: str) -> None:
 
 
 def test_no_duplicate_connector_ids() -> None:
-    """Two concrete plugins with the same CONNECTOR_ID would silently shadow each other."""
+    """Two concrete plugins with the same CONNECTOR_ID would silently shadow each other.
+
+    An id must also be a clean feature-name prefix: no chain (``__``) or column (``~``) separator, no trailing ``_``.
+    """
     seen: dict[str, type[KgConnectorReaderBase]] = {}
     for sub in walk_subclasses(KgConnectorReaderBase):
         if not sub.CONNECTOR_ID:
             continue
+        assert "__" not in sub.CONNECTOR_ID and "~" not in sub.CONNECTOR_ID and not sub.CONNECTOR_ID.endswith("_"), (
+            f"CONNECTOR_ID={sub.CONNECTOR_ID!r} on {sub.__module__}.{sub.__name__} is not a clean feature-name prefix"
+        )
         if sub.CONNECTOR_ID in seen:
             raise AssertionError(
                 f"Duplicate CONNECTOR_ID={sub.CONNECTOR_ID!r} on "

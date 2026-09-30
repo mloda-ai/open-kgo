@@ -190,6 +190,7 @@ _OWN = _FakeReader.CONNECTOR_ID
         (f"{_OWN}__knows", True),
         (f"{_OWN}__knows__sum_aggr", False),
         (f"{_OWN}__", False),
+        (f"{_OWN}___sum_aggr", False),
         (_OWN, False),
         ("unrelated_consumer", False),
         (f"{_OtherFakeReader.CONNECTOR_ID}__knows", False),
