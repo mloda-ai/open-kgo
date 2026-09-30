@@ -9,7 +9,6 @@ from mloda.user import Feature, Options
 
 import pytest
 
-from mloda.provider import HashableDict
 
 from open_kgo.feature_groups.kg.agent_memory.networkx_memory import NetworkxMemoryReader
 from open_kgo.feature_groups.kg.agent_memory.tests.kg_agent_memory_contract import (
@@ -70,7 +69,7 @@ class TestNetworkxMemoryReader(AgentMemoryContractTestBase):
     def test_unsupported_retrieval_modes_rejected_at_validate_time(self, mode: str) -> None:
         slot = dict(self.valid_credentials()["networkx_memory"])
         slot["retrieval_mode"] = mode
-        creds = HashableDict({"networkx_memory": slot})
+        creds = {"networkx_memory": slot}
         assert NetworkxMemoryReader.is_valid_credentials(creds) is False
         with pytest.raises(InvalidCredentialShape):
             NetworkxMemoryReader._validate_shape(slot)
@@ -86,7 +85,7 @@ class TestNetworkxMemoryReader(AgentMemoryContractTestBase):
         """
         slot = dict(self.valid_credentials()["networkx_memory"])
         slot["memory_scope_user_id"] = "user_does_not_exist"
-        creds = HashableDict({"networkx_memory": slot})
+        creds = {"networkx_memory": slot}
         with pytest.raises(UnknownMemoryScopeError):
             NetworkxMemoryReader.connect(creds)
 
@@ -94,7 +93,7 @@ class TestNetworkxMemoryReader(AgentMemoryContractTestBase):
         """A ``locator`` pointing at a non-existent file raises ``FixtureLoadError``."""
         slot = dict(self.valid_credentials()["networkx_memory"])
         slot["locator"] = "/nonexistent/path/to/memories.json"
-        creds = HashableDict({"networkx_memory": slot})
+        creds = {"networkx_memory": slot}
         with pytest.raises(FixtureLoadError):
             NetworkxMemoryReader.connect(creds)
 
@@ -104,7 +103,7 @@ class TestNetworkxMemoryReader(AgentMemoryContractTestBase):
         bad.write_text("this is not json {", encoding="utf-8")
         slot = dict(self.valid_credentials()["networkx_memory"])
         slot["locator"] = str(bad)
-        creds = HashableDict({"networkx_memory": slot})
+        creds = {"networkx_memory": slot}
         with pytest.raises(FixtureLoadError):
             NetworkxMemoryReader.connect(creds)
 
@@ -120,6 +119,6 @@ class TestNetworkxMemoryReader(AgentMemoryContractTestBase):
         bad.write_text("[]", encoding="utf-8")
         slot = dict(self.valid_credentials()["networkx_memory"])
         slot["locator"] = str(bad)
-        creds = HashableDict({"networkx_memory": slot})
+        creds = {"networkx_memory": slot}
         with pytest.raises(FixtureLoadError):
             NetworkxMemoryReader.connect(creds)

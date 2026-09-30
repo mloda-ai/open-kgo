@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import Any
 
 from mloda.provider import PropertySpec
-from mloda.user import DataAccessCollection, Feature, Options, mloda
+from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
 
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, PythonDictFramework
 
@@ -31,12 +31,9 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     """Run a feature through ``mloda.run_all`` against a single KG connector.
 
     mloda walks ``KgConnectorReaderBase`` subclasses and selects the one whose
-    ``CONNECTOR_ID`` slot is present in ``credentials``. The slot is wrapped in
-    a one-element list (``credentials=[{CONNECTOR_ID: slot}]``) so mloda 0.7.0
-    resolves it back to the ``{CONNECTOR_ID: slot}`` bundle the reader matcher
-    expects; passing the bare dict makes mloda treat ``CONNECTOR_ID`` as a
-    handle and unwrap to the inner slot, which fails ``is_valid_credentials``.
-    The selected reader's ``load`` wraps native KG rows into a single
+    ``CONNECTOR_ID`` slot is present in ``credentials``. ``Credential`` marks
+    ``{CONNECTOR_ID: slot}`` as one credential (a bare dict would read as
+    ``{handle: value}``). The selected reader's ``load`` wraps native KG rows into a single
     ``{feature_name: [row, ...]}`` column that the stock
     ``PythonDictFramework`` (pinned by
     ``KgConnectorFeatureGroupBase.compute_framework_rule``) passes through
@@ -47,7 +44,7 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     Zero-result queries return ``[]``: an empty result is the zero-row
     ``{feature_name: []}`` partition, whose column contributes no rows.
     """
-    dac = DataAccessCollection(credentials=[{connector_id: slot_creds}])
+    dac = DataAccessCollection(credentials=Credential({connector_id: slot_creds}))
     partitions = mloda.run_all(
         [feature],
         compute_frameworks={PythonDictFramework},

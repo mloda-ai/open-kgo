@@ -17,7 +17,7 @@ from typing import Any
 import pytest
 
 from mloda.provider import ComputeFramework, FeatureGroup, FeatureSet
-from mloda.user import DataAccessCollection, Feature, FeatureName, Options, mloda
+from mloda.user import Credential, DataAccessCollection, Feature, FeatureName, Options, mloda
 
 from open_kgo.feature_groups.kg.base import PythonDictFramework
 from open_kgo.feature_groups.kg.tests._family_cases import CASE_IDS, CASES, ConnectorCase
@@ -67,7 +67,7 @@ def test_family_usage_smoke(case: ConnectorCase, tmp_path: Path) -> None:
 @pytest.mark.parametrize("case", CASES, ids=CASE_IDS)
 def test_consumer_takes_kg_feature_as_input_in_one_run(case: ConnectorCase, tmp_path: Path) -> None:
     """With the connector's credentials present, the KG reader leaves the consumer's unrelated name alone."""
-    dac = DataAccessCollection(credentials=[{case.connector_id: case.make_slot(tmp_path)}])
+    dac = DataAccessCollection(credentials=Credential({case.connector_id: case.make_slot(tmp_path)}))
     consumer = Feature("KgRowCount", options=Options(context={"kg_case": case.connector_id}))
     partitions = mloda.run_all([consumer], compute_frameworks={PythonDictFramework}, data_access_collection=dac)
     counts = [count for partition in partitions for count in partition.get(consumer.name, [])]
@@ -86,7 +86,7 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
         from pathlib import Path
 
         from mloda.steward import resolve_feature
-        from mloda.user import DataAccessCollection, PluginLoader
+        from mloda.user import Credential, DataAccessCollection, PluginLoader
 
         PluginLoader.all()
 
@@ -106,7 +106,7 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
                 chained = resolve_feature(
                     f"{{case.feature.name}}__sum_aggr",
                     options=case.feature.options,
-                    data_access_collection=DataAccessCollection(credentials=[{{case.connector_id: slot}}]),
+                    data_access_collection=DataAccessCollection(credentials=Credential({{case.connector_id: slot}})),
                 )
                 owners = [fg.__name__ for fg in chained.candidates]
                 if not owners or any(issubclass(fg, KgConnectorFeatureGroupBase) for fg in chained.candidates):

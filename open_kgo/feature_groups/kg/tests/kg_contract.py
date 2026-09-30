@@ -29,7 +29,6 @@ assertions against each.
 
 from __future__ import annotations
 
-from mloda.provider import HashableDict
 from mloda.user import DataAccessCollection, Feature
 
 from open_kgo.feature_groups.kg.errors import (
@@ -59,7 +58,6 @@ __all__ = [
     "KgConnectorContractBase",
     "DataAccessCollection",
     "Feature",
-    "HashableDict",
     "InvalidCredentialShape",
     "MissingEnvVarError",
     "MissingRequiredKeysError",

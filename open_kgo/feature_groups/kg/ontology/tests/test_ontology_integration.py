@@ -93,7 +93,7 @@ class TestCredentialPipeline:
             "max_threads": 1,
             "ontology": str(METAQA_YAML),
         }
-        ctx = NetworkxEmbeddedReader._prepare_load(slot)
+        ctx = NetworkxEmbeddedReader._prepare_load({NetworkxEmbeddedReader.CONNECTOR_ID: slot})
         assert ctx.ontology_namespace == "movie"
 
     def test_ontology_namespace_none_when_key_absent(self) -> None:
@@ -105,7 +105,7 @@ class TestCredentialPipeline:
             "read_only": True,
             "max_threads": 1,
         }
-        ctx = NetworkxEmbeddedReader._prepare_load(slot)
+        ctx = NetworkxEmbeddedReader._prepare_load({NetworkxEmbeddedReader.CONNECTOR_ID: slot})
         assert ctx.ontology_namespace is None
 
     def test_same_file_loaded_twice_is_idempotent(self) -> None:
@@ -118,8 +118,8 @@ class TestCredentialPipeline:
             "max_threads": 1,
             "ontology": str(METAQA_YAML),
         }
-        ctx1 = NetworkxEmbeddedReader._prepare_load(slot)
-        ctx2 = NetworkxEmbeddedReader._prepare_load(slot)
+        ctx1 = NetworkxEmbeddedReader._prepare_load({NetworkxEmbeddedReader.CONNECTOR_ID: slot})
+        ctx2 = NetworkxEmbeddedReader._prepare_load({NetworkxEmbeddedReader.CONNECTOR_ID: slot})
         assert ctx1.ontology_namespace == ctx2.ontology_namespace == "movie"
 
 

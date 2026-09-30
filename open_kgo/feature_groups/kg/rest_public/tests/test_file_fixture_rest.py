@@ -10,7 +10,6 @@ from mloda.user import Feature, Options
 
 import pytest
 
-from mloda.provider import HashableDict
 
 from open_kgo.feature_groups.kg.errors import InvalidCredentialShape, MissingRequiredKeysError
 from open_kgo.feature_groups.kg.rest_public.file_fixture_rest import (
@@ -60,7 +59,7 @@ class TestFileFixtureRestReader(RestPublicContractTestBase):
     def test_unsupported_pagination_styles_rejected_at_validate_time(self, style: str) -> None:
         slot = dict(self.valid_credentials()["file_fixture_rest"])
         slot["pagination_style"] = style
-        creds = HashableDict({"file_fixture_rest": slot})
+        creds = {"file_fixture_rest": slot}
         assert FileFixtureRestReader.is_valid_credentials(creds) is False
         with pytest.raises(InvalidCredentialShape):
             FileFixtureRestReader._validate_shape(slot)
@@ -76,7 +75,7 @@ class TestFileFixtureRestReader(RestPublicContractTestBase):
         """
         slot = dict(self.valid_credentials()["file_fixture_rest"])
         del slot["pagination_style"]
-        creds = HashableDict({"file_fixture_rest": slot})
+        creds = {"file_fixture_rest": slot}
         assert FileFixtureRestReader.is_valid_credentials(creds) is False
         with pytest.raises(MissingRequiredKeysError):
             FileFixtureRestReader._validate_shape(slot)
@@ -84,7 +83,7 @@ class TestFileFixtureRestReader(RestPublicContractTestBase):
     def test_stripped_keys_rejected_by_closed_world(self) -> None:
         slot = dict(self.valid_credentials()["file_fixture_rest"])
         slot["page_size"] = 2
-        creds = HashableDict({"file_fixture_rest": slot})
+        creds = {"file_fixture_rest": slot}
         assert FileFixtureRestReader.is_valid_credentials(creds) is False
         with pytest.raises(InvalidCredentialShape):
             FileFixtureRestReader._validate_shape(slot)

@@ -69,7 +69,7 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import CHAIN_SEPARATOR, ComputeFramework, HashableDict, PropertySpec
+from mloda.provider import CHAIN_SEPARATOR, ComputeFramework, PropertySpec
 from mloda.user import DataAccessCollection, Options
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
@@ -86,8 +86,7 @@ from open_kgo.feature_groups.kg.spec import property_spec
 class LoadContext:
     """Bundle of values every concrete ``load_data`` needs at the top.
 
-    ``wrapped`` is the normalised ``HashableDict``; ``slot`` is the
-    already-extracted credential dict for this connector, exposed as a
+    ``slot`` is the already-extracted credential dict for this connector, exposed as a
     read-only ``Mapping`` (``MappingProxyType``) so concrete code can't
     accidentally mutate it through the frozen dataclass; ``result_limit``
     is the per-call row cap pulled from the slot (default 1000). Built
@@ -99,7 +98,6 @@ class LoadContext:
     this to ``OntologyRegistry.is_valid_edge(ctx.ontology_namespace, ...)``.
     """
 
-    wrapped: HashableDict
     slot: Mapping[str, Any]
     result_limit: int
     ontology_namespace: str | None = None
@@ -459,7 +457,7 @@ class KgConnectorReaderBase(ReadDB):
         """Rows a load returns for ``ROWS_FROM_SLOT`` readers; None for the rest."""
         if not cls.ROWS_FROM_SLOT:
             return None
-        cls._validate_shape(cls._require_slot(cls._wrap_credentials(data_access)))
+        cls._validate_shape(cls._require_slot(data_access))
         return len(cls.load_data(data_access, FeatureSet()))
 
     @classmethod
@@ -546,19 +544,19 @@ class KgConnectorReaderBase(ReadDB):
         to ``load_data`` that bypasses both gates relies on the slot being
         well-formed, which is the documented contract for that direct path.
         """
+        if not isinstance(credentials, dict):
+            raise InvalidCredentialShape(
+                f"{cls.CONNECTOR_ID}: credentials must be a plain dict {{{cls.CONNECTOR_ID!r}: {{...}}}}, "
+                f"got {type(credentials).__name__}."
+            )
         slot = cls._extract_slot(credentials)
         if slot is None:
             raise InvalidCredentialShape(f"{cls.CONNECTOR_ID}: credentials missing the {cls.CONNECTOR_ID!r} slot.")
         return slot
 
     @classmethod
-    def _wrap_credentials(cls, data_access: Any) -> HashableDict:
-        """Normalise data_access into HashableDict({CONNECTOR_ID: dict}); see ``credentials.wrap_credentials``."""
-        return credential_rules.wrap_credentials(cls, data_access)
-
-    @classmethod
     def _prepare_load(cls, data_access: Any) -> LoadContext:
-        """Wrap credentials, extract the slot, and parse the result_limit default.
+        """Extract the slot and parse the result_limit default.
 
         Uses ``_require_slot`` (not ``_extract_slot or {}``): a missing slot
         here means the caller bypassed mloda discovery and should hit a typed
@@ -579,8 +577,7 @@ class KgConnectorReaderBase(ReadDB):
         skips the second validation) silently turns the annotation into a
         lie, since ``slot.get`` returns ``Any``.
         """
-        wrapped = cls._wrap_credentials(data_access)
-        slot = cls._require_slot(wrapped)
+        slot = cls._require_slot(data_access)
         cls._validate_result_limit(slot)
         ontology_namespace: str | None = None
         ontology_path = slot.get("ontology")
@@ -589,7 +586,6 @@ class KgConnectorReaderBase(ReadDB):
 
             ontology_namespace = OntologyRegistry.load_file(str(ontology_path))
         return LoadContext(
-            wrapped=wrapped,
             slot=MappingProxyType(slot),
             result_limit=slot.get("result_limit", 1000),
             ontology_namespace=ontology_namespace,
@@ -604,11 +600,9 @@ class KgConnectorReaderBase(ReadDB):
         ``cls._connect_from_slot(ctx.slot)``); the prologue now lives here
         once and concretes implement ``_load_rows`` only. ``ReadDB.load``
         dispatches into this hook unchanged, so direct callers and the
-        matcher path see identical behavior.
-
-        ``data_access=None`` raises ``NotImplementedError`` from
-        ``_wrap_credentials`` (inside ``_prepare_load``), preserving the
-        scoped-access probe contract documented there.
+        matcher path see identical behavior. ``data_access`` must be the plain
+        ``{CONNECTOR_ID: slot}`` dict mloda matched; anything else raises
+        ``InvalidCredentialShape``.
         """
         ctx = cls._prepare_load(data_access)
         connection = cls._connect_from_slot(ctx.slot)

@@ -186,11 +186,10 @@ class TestPaginatedCitationReader(CitationRestContractTestBase):
         slot would validate, serve a cursor-paginated page 1, and then reject
         its own continuation token at the cross-layer guard.
         """
-        from mloda.provider import HashableDict
 
         slot = dict(self.valid_credentials()["paginated_citation"])
         del slot["pagination_style"]
-        creds = HashableDict({"paginated_citation": slot})
+        creds = {"paginated_citation": slot}
         assert PaginatedCitationReader.is_valid_credentials(creds) is False
         with pytest.raises(MissingRequiredKeysError):
             PaginatedCitationReader._validate_shape(slot)

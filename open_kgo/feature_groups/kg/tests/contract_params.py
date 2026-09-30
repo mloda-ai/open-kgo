@@ -11,7 +11,6 @@ from __future__ import annotations
 import pytest
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import HashableDict
 from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.base import ParamReader
@@ -52,7 +51,7 @@ class ParamContract(KgContractAdapterBase):
 
         feat = self.feature_under_test()
         raw = feat.options.context
-        full_ctx = dict(raw.data) if isinstance(raw, HashableDict) else dict(raw)
+        full_ctx = dict(raw)
         base_params = {k: v for k, v in full_ctx.items() if k in cls.PARAMS_MAPPING}
 
         accepted: list[str] = []
@@ -173,7 +172,7 @@ class ParamContract(KgContractAdapterBase):
             )
 
         raw = feat.options.context
-        ctx = dict(raw.data) if isinstance(raw, HashableDict) else dict(raw)
+        ctx = dict(raw)
         for group in cls.REQUIRED_PARAMS:
             for k in group:
                 ctx.pop(k, None)

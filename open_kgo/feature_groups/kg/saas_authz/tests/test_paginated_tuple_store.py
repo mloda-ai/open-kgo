@@ -137,11 +137,10 @@ class TestPaginatedTupleStoreReader(SaasAuthzContractTestBase):
         slot would validate, serve a cursor-paginated page 1, and then reject
         its own continuation token at the cross-layer guard.
         """
-        from mloda.provider import HashableDict
 
         slot = dict(self.valid_credentials()["paginated_tuple_store"])
         del slot["pagination_style"]
-        creds = HashableDict({"paginated_tuple_store": slot})
+        creds = {"paginated_tuple_store": slot}
         assert PaginatedTupleStoreReader.is_valid_credentials(creds) is False
         with pytest.raises(MissingRequiredKeysError):
             PaginatedTupleStoreReader._validate_shape(slot)

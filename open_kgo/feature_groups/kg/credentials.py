@@ -19,7 +19,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING, Any
 
-from mloda.provider import HashableDict, PropertySpec
+from mloda.provider import PropertySpec
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
@@ -40,44 +40,21 @@ def extract_slot(cls: type[KgConnectorReaderBase], credentials: Any) -> dict[str
     misuse: the slot key is present but malformed, which would otherwise
     be indistinguishable from "this connector's slot is absent" and
     silently mismatch. Raise ``InvalidCredentialShape`` so the typo
-    surfaces loudly.
+    surfaces loudly. mloda hands readers plain dicts only (``Credential``
+    is unwrapped at registration), so a non-dict ``credentials`` is not ours.
     """
-    _ABSENT = object()
-    slot: Any = _ABSENT
-    if isinstance(credentials, HashableDict):
-        slot = credentials.data.get(cls.CONNECTOR_ID, _ABSENT)
-    elif isinstance(credentials, dict):
-        slot = credentials.get(cls.CONNECTOR_ID, _ABSENT)
-
-    if slot is _ABSENT or slot is None:
+    if not isinstance(credentials, dict):
         return None
-    if isinstance(slot, HashableDict):
-        return dict(slot.data)
+    slot = credentials.get(cls.CONNECTOR_ID)
+    if slot is None:
+        return None
     if isinstance(slot, dict):
         return dict(slot)
+    # Type name only: the value may carry a secret.
     raise InvalidCredentialShape(
-        f"{cls.CONNECTOR_ID}: credential slot must be a dict mapping property names to values, "
-        f"got {type(slot).__name__} ({slot!r})."
+        f"{cls.CONNECTOR_ID}: credential slot must be a plain dict mapping property names to values, "
+        f"got {type(slot).__name__}. Pass Credential({{{cls.CONNECTOR_ID!r}: {{...}}}})."
     )
-
-
-def wrap_credentials(cls: type[KgConnectorReaderBase], data_access: Any) -> HashableDict:
-    """Normalise the data_access mloda hands us into a HashableDict({CONNECTOR_ID: dict}).
-
-    mloda's BaseInputData passes the matched data_access through. Concrete
-    plugins receive either the full credentials dict (with our slot inside)
-    or just our slot. This helper unifies both shapes so concrete code can
-    always call ``cls._extract_slot(cls._wrap_credentials(data_access))``.
-    """
-    if isinstance(data_access, HashableDict):
-        if cls.CONNECTOR_ID in data_access.data:
-            return data_access
-        return HashableDict({cls.CONNECTOR_ID: dict(data_access.data)})
-    if isinstance(data_access, dict):
-        if cls.CONNECTOR_ID in data_access:
-            return HashableDict(dict(data_access))
-        return HashableDict({cls.CONNECTOR_ID: dict(data_access)})
-    raise TypeError(f"data_access must be a dict or HashableDict, got {type(data_access).__name__}")
 
 
 def validate_result_limit(cls: type[KgConnectorReaderBase], creds: dict[str, Any]) -> None:

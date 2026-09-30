@@ -9,7 +9,6 @@ from typing import Any, Callable
 import pytest
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import HashableDict
 from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.agent_memory.graph_walk_memory import GraphWalkMemoryReader
@@ -82,7 +81,7 @@ class TestGraphWalkMemoryReader(AgentMemoryContractTestBase):
     def test_unsupported_retrieval_modes_rejected_at_validate_time(self, mode: str) -> None:
         slot = dict(self.valid_credentials()["graph_walk_memory"])
         slot["retrieval_mode"] = mode
-        creds = HashableDict({"graph_walk_memory": slot})
+        creds = {"graph_walk_memory": slot}
         assert GraphWalkMemoryReader.is_valid_credentials(creds) is False
         with pytest.raises(InvalidCredentialShape):
             GraphWalkMemoryReader._validate_shape(slot)
@@ -98,7 +97,7 @@ class TestGraphWalkMemoryReader(AgentMemoryContractTestBase):
         """
         slot = dict(self.valid_credentials()["graph_walk_memory"])
         del slot["retrieval_mode"]
-        creds = HashableDict({"graph_walk_memory": slot})
+        creds = {"graph_walk_memory": slot}
         assert GraphWalkMemoryReader.is_valid_credentials(creds) is False
         with pytest.raises(MissingRequiredKeysError):
             GraphWalkMemoryReader._validate_shape(slot)
@@ -106,7 +105,7 @@ class TestGraphWalkMemoryReader(AgentMemoryContractTestBase):
     def test_unknown_user_id_raises_typed_error(self) -> None:
         slot = dict(self.valid_credentials()["graph_walk_memory"])
         slot["memory_scope_user_id"] = "user_does_not_exist"
-        creds = HashableDict({"graph_walk_memory": slot})
+        creds = {"graph_walk_memory": slot}
         with pytest.raises(UnknownMemoryScopeError):
             GraphWalkMemoryReader.connect(creds)
 
@@ -182,7 +181,7 @@ class TestGraphWalkMemoryReader(AgentMemoryContractTestBase):
         slot = dict(self.valid_credentials()["graph_walk_memory"])
         slot["locator"] = str(fixture)
         with pytest.raises(FixtureLoadError):
-            GraphWalkMemoryReader.connect(HashableDict({"graph_walk_memory": slot}))
+            GraphWalkMemoryReader.connect({"graph_walk_memory": slot})
 
     def _connect_with_user_data(self, tmp_path: Path, user_data: dict[str, Any]) -> None:
         """Write ``{"user_42": user_data}`` to a fixture and run ``connect`` against it."""
@@ -190,7 +189,7 @@ class TestGraphWalkMemoryReader(AgentMemoryContractTestBase):
         fixture.write_text(json.dumps({"user_42": user_data}), encoding="utf-8")
         slot = dict(self.valid_credentials()["graph_walk_memory"])
         slot["locator"] = str(fixture)
-        GraphWalkMemoryReader.connect(HashableDict({"graph_walk_memory": slot}))
+        GraphWalkMemoryReader.connect({"graph_walk_memory": slot})
 
     def test_dangling_edge_target_rejected(self, tmp_path: Path) -> None:
         """An edge whose target references no declared node raises ``FixtureLoadError``.

@@ -162,21 +162,17 @@ def test_in_process_tuple_store_load_data_engages_cross_layer_check() -> None:
     """
     from pathlib import Path
 
-    from mloda.provider import HashableDict
-
     from open_kgo.feature_groups.kg.saas_authz.in_process_tuple_store import InProcessTupleStoreReader
 
     fixture = Path(__file__).resolve().parent.parent / "saas_authz" / "tests" / "fixtures" / "tuples.json"
-    creds = HashableDict(
-        {
-            "in_process_tuple_store": {
-                "locator": str(fixture),
-                "tenant": "tenant_a",
-                # page-style is non-cursor; cursor_token below should trip the check.
-                "pagination_style": "page",
-            }
+    creds = {
+        "in_process_tuple_store": {
+            "locator": str(fixture),
+            "tenant": "tenant_a",
+            # page-style is non-cursor; cursor_token below should trip the check.
+            "pagination_style": "page",
         }
-    )
+    }
     fs = FeatureSet()
     fs.add(Feature("in_process_tuple_store__viewers", options=Options(context={"cursor_token": "tok-xyz"})))
 

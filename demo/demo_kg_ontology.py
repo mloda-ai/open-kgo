@@ -340,7 +340,7 @@ def section_connector(mo):
 
 @app.cell
 def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
-    from mloda.user import DataAccessCollection, Feature, Options, mloda
+    from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
 
     import open_kgo.feature_groups.kg.embedded.networkx_embedded  # noqa: F401
 
@@ -358,7 +358,7 @@ def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
         "networkx_embedded__neighbors",
         options=Options(context={"operation": "neighbors", "start_node": "Christopher Nolan"}),
     )
-    _dac = DataAccessCollection(credentials=[{"networkx_embedded": _creds}])
+    _dac = DataAccessCollection(credentials=Credential(networkx_embedded=_creds))
     _partitions = mloda.run_all(
         [_feat],
         compute_frameworks={PythonDictFramework},
@@ -404,6 +404,7 @@ def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
     import kuzu as _kuzu
 
     _importlib.import_module("open_kgo.feature_groups.kg.network_pg.kuzu_cypher")
+    from mloda.user import Credential as _Credential
     from mloda.user import DataAccessCollection as _DAC
     from mloda.user import Feature as _Feature
     from mloda.user import Options as _Options
@@ -443,7 +444,7 @@ def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
             }
         ),
     )
-    _dac = _DAC(credentials=[{"kuzu_cypher": _kuzu_creds}])
+    _dac = _DAC(credentials=_Credential(kuzu_cypher=_kuzu_creds))
     _partitions = _mloda.run_all(
         [_feat],
         compute_frameworks={_PdFW},

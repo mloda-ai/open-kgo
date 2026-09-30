@@ -33,7 +33,7 @@ pip install "open-kgo[kg-all]"
 ```python
 from pathlib import Path
 
-from mloda.user import DataAccessCollection, Feature, Options, PluginLoader, mloda
+from mloda.user import Credential, DataAccessCollection, Feature, Options, PluginLoader, mloda
 
 from open_kgo.feature_groups.kg.base import PythonDictFramework
 
@@ -62,7 +62,7 @@ partitions = mloda.run_all(
     [feature],
     compute_frameworks={PythonDictFramework},
     data_access_collection=DataAccessCollection(
-        credentials=[{"rdflib_sparql": {"locator": str(ttl), "result_limit": 100}}],
+        credentials=Credential(rdflib_sparql={"locator": str(ttl), "result_limit": 100}),
     ),
 )
 

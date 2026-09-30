@@ -63,6 +63,7 @@ def helpers():
     from typing import Any as _Any
 
     from mloda.user import (
+        Credential as _Credential,
         DataAccessCollection as _DataAccessCollection,
         Feature as _Feature,
         mloda as _mloda,
@@ -79,7 +80,7 @@ def helpers():
         rows into a `{feature_name: [row, ...]}` column, and we flat-concat
         that column across partitions for the per-cell rendering.
         """
-        dac = _DataAccessCollection(credentials=[{connector_id: slot_creds}])
+        dac = _DataAccessCollection(credentials=_Credential({connector_id: slot_creds}))
         partitions = _mloda.run_all(
             [feature],
             compute_frameworks={_PythonDictFramework},

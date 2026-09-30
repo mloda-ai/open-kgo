@@ -103,9 +103,12 @@ def test_extract_slot_returns_dict_for_dict_slot() -> None:
     assert _FakeReader._extract_slot(creds) == {"locator": "/tmp/x"}
 
 
-def test_extract_slot_returns_dict_for_hashabledict_slot() -> None:
-    creds = HashableDict({_FakeReader.CONNECTOR_ID: HashableDict({"locator": "/tmp/x"})})
-    assert _FakeReader._extract_slot(creds) == {"locator": "/tmp/x"}
+def test_extract_slot_raises_on_hashabledict_slot() -> None:
+    """mloda still lets a HashableDict through as a slot value; it is not a plain dict."""
+    creds = {_FakeReader.CONNECTOR_ID: HashableDict({"locator": "/tmp/x"})}
+    with pytest.raises(InvalidCredentialShape, match="Credential"):
+        _FakeReader._extract_slot(creds)
+    assert _FakeReader.is_valid_credentials(creds) is False
 
 
 def test_extract_slot_returns_none_when_slot_absent() -> None:
@@ -152,7 +155,7 @@ def test_is_valid_credentials_returns_false_on_malformed_slot() -> None:
     unrelated reader subclasses. ``_extract_slot`` still raises directly
     (covered above), preserving loud diagnostics for explicit callers.
     """
-    creds = HashableDict({_FakeReader.CONNECTOR_ID: "/bad/string"})
+    creds = {_FakeReader.CONNECTOR_ID: "/bad/string"}
     assert _FakeReader.is_valid_credentials(creds) is False
 
 
@@ -162,7 +165,7 @@ def test_is_valid_credentials_returns_false_on_validate_shape_error() -> None:
     failed enum checks all surface as ``False`` (not raise) from the
     matcher-facing API. ``_validate_shape`` still raises directly.
     """
-    creds = HashableDict({_FakeReader.CONNECTOR_ID: {"definitely_not_a_kg_key": "x"}})
+    creds = {_FakeReader.CONNECTOR_ID: {"definitely_not_a_kg_key": "x"}}
     assert _FakeReader.is_valid_credentials(creds) is False
 
 
@@ -171,12 +174,10 @@ def test_matcher_safe_iteration_with_one_malformed_and_one_valid_slot() -> None:
     for one reader must not block a sibling reader from matching its own
     valid slot. Before the fix, the malformed-slot raise aborted iteration.
     """
-    creds = HashableDict(
-        {
-            _FakeReader.CONNECTOR_ID: "/bad/string",
-            _OtherFakeReader.CONNECTOR_ID: {"locator": "/some/path"},
-        }
-    )
+    creds = {
+        _FakeReader.CONNECTOR_ID: "/bad/string",
+        _OtherFakeReader.CONNECTOR_ID: {"locator": "/some/path"},
+    }
     assert _FakeReader.is_valid_credentials(creds) is False
     assert _OtherFakeReader.is_valid_credentials(creds) is True
 
@@ -217,25 +218,6 @@ def test_is_valid_credentials_swallows_runtime_error_from_misbehaving_mapping() 
             raise RuntimeError("probe-time failure to prove matcher-safety")
 
     creds = _BrokenMapping()
-    assert _FakeReader.is_valid_credentials(creds) is False
-
-
-def test_is_valid_credentials_swallows_runtime_error_from_misbehaving_hashabledict() -> None:
-    """A4 second probe site: ``HashableDict.data`` is exercised via ``credentials.data.get(...)``.
-
-    ``_extract_slot`` has a separate branch for ``isinstance(credentials, HashableDict)``;
-    swapping a misbehaving ``dict`` subclass into ``HashableDict.data`` exercises that
-    second probe path (the plain-dict test above only covers the
-    ``isinstance(credentials, dict)`` branch). ``except Exception`` covers both,
-    but pinning both paths here means a future narrowing of either probe site
-    surfaces immediately.
-    """
-
-    class _BrokenMapping(dict[str, Any]):
-        def get(self, key: Any, default: Any = None) -> Any:
-            raise RuntimeError("probe-time failure from inside HashableDict.data")
-
-    creds = HashableDict(_BrokenMapping())
     assert _FakeReader.is_valid_credentials(creds) is False
 
 
@@ -296,7 +278,7 @@ def test_connect_raises_typed_when_required_key_missing() -> None:
     ``MissingRequiredKeysError`` from ``_validate_required_keys`` is the
     visible error.
     """
-    creds = HashableDict({_RequiredKeyReader.CONNECTOR_ID: {}})
+    creds: dict[str, Any] = {_RequiredKeyReader.CONNECTOR_ID: {}}
     with pytest.raises(MissingRequiredKeysError):
         _RequiredKeyReader.connect(creds)
 
@@ -327,6 +309,6 @@ def test_connect_raises_on_unknown_credential_key() -> None:
     surfaces as ``InvalidCredentialShape`` from the direct-call path, not
     only from the matcher-safe ``is_valid_credentials`` path.
     """
-    creds = HashableDict({_RequiredKeyReader.CONNECTOR_ID: {"locator": "/tmp/x", "definitely_not_a_kg_key": "bad"}})
+    creds = {_RequiredKeyReader.CONNECTOR_ID: {"locator": "/tmp/x", "definitely_not_a_kg_key": "bad"}}
     with pytest.raises(InvalidCredentialShape):
         _RequiredKeyReader.connect(creds)

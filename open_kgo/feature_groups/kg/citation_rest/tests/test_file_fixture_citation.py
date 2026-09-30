@@ -9,7 +9,6 @@ from mloda.user import Feature, Options
 
 import pytest
 
-from mloda.provider import HashableDict
 
 from open_kgo.feature_groups.kg.citation_rest.file_fixture_citation import (
     FileFixtureCitationReader,
@@ -104,7 +103,7 @@ class TestFileFixtureCitationReader(CitationRestContractTestBase):
     def test_stripped_keys_rejected_by_closed_world(self, key: str) -> None:
         slot = dict(self.valid_credentials()["file_fixture_citation"])
         slot[key] = "none" if key == "pagination_style" else 100
-        creds = HashableDict({"file_fixture_citation": slot})
+        creds = {"file_fixture_citation": slot}
         assert FileFixtureCitationReader.is_valid_credentials(creds) is False
         with pytest.raises(InvalidCredentialShape):
             FileFixtureCitationReader._validate_shape(slot)

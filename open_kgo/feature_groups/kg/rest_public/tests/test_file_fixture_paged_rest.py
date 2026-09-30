@@ -8,7 +8,6 @@ from typing import Any, Callable
 
 import pytest
 
-from mloda.provider import HashableDict
 from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.errors import InvalidCredentialShape, MissingRequiredKeysError
@@ -141,7 +140,7 @@ class TestFileFixturePagedRestReader(RestPublicContractTestBase):
     def test_unsupported_pagination_styles_rejected_at_validate_time(self, style: str) -> None:
         slot = dict(self.valid_credentials()["file_fixture_paged_rest"])
         slot["pagination_style"] = style
-        creds = HashableDict({"file_fixture_paged_rest": slot})
+        creds = {"file_fixture_paged_rest": slot}
         assert FileFixturePagedRestReader.is_valid_credentials(creds) is False
         with pytest.raises(InvalidCredentialShape):
             FileFixturePagedRestReader._validate_shape(slot)
@@ -157,7 +156,7 @@ class TestFileFixturePagedRestReader(RestPublicContractTestBase):
         """
         slot = dict(self.valid_credentials()["file_fixture_paged_rest"])
         del slot["pagination_style"]
-        creds = HashableDict({"file_fixture_paged_rest": slot})
+        creds = {"file_fixture_paged_rest": slot}
         assert FileFixturePagedRestReader.is_valid_credentials(creds) is False
         with pytest.raises(MissingRequiredKeysError):
             FileFixturePagedRestReader._validate_shape(slot)
@@ -174,7 +173,7 @@ class TestFileFixturePagedRestReader(RestPublicContractTestBase):
         """
         slot = dict(self.valid_credentials()["file_fixture_paged_rest"])
         del slot["page_size"]
-        creds = HashableDict({"file_fixture_paged_rest": slot})
+        creds = {"file_fixture_paged_rest": slot}
         assert FileFixturePagedRestReader.is_valid_credentials(creds) is False
         with pytest.raises(MissingRequiredKeysError):
             FileFixturePagedRestReader._validate_shape(slot)
@@ -183,7 +182,7 @@ class TestFileFixturePagedRestReader(RestPublicContractTestBase):
         """Unlike the cursor concrete, ``page_size`` is a valid credential key here."""
         slot = dict(self.valid_credentials()["file_fixture_paged_rest"])
         slot["page_size"] = 5
-        creds = HashableDict({"file_fixture_paged_rest": slot})
+        creds = {"file_fixture_paged_rest": slot}
         assert FileFixturePagedRestReader.is_valid_credentials(creds) is True
 
     @pytest.mark.parametrize("bad", [0, -1, "abc"])

@@ -9,7 +9,6 @@ from mloda.user import Feature, Options
 
 import pytest
 
-from mloda.provider import HashableDict
 
 from open_kgo.feature_groups.kg.errors import UnknownTenantError
 from open_kgo.feature_groups.kg.saas_authz.in_process_tuple_store import (
@@ -73,7 +72,7 @@ class TestInProcessTupleStoreReader(SaasAuthzContractTestBase):
         """
         slot = dict(self.valid_credentials()["in_process_tuple_store"])
         slot["tenant"] = "tenant_does_not_exist"
-        creds = HashableDict({"in_process_tuple_store": slot})
+        creds = {"in_process_tuple_store": slot}
         assert InProcessTupleStoreReader.is_valid_credentials(creds) is False
         with pytest.raises(UnknownTenantError):
             InProcessTupleStoreReader._connect_from_slot(slot)

@@ -71,6 +71,7 @@ def helpers():
 
     import rdflib as _rdflib
     from mloda.user import (
+        Credential as _Credential,
         DataAccessCollection as _DataAccessCollection,
         Feature as _Feature,
         Options as _Options,
@@ -206,16 +207,14 @@ def helpers():
 
     def run_sparql(ttl_path: _Path, query_text: str) -> list[dict]:
         dac = _DataAccessCollection(
-            credentials=[
-                {
-                    "rdflib_sparql": {
-                        "locator": str(ttl_path),
-                        "result_format": "application/sparql-results+json",
-                        "reasoning_profile": "none",
-                        "result_limit": 1000,
-                    }
+            credentials=_Credential(
+                rdflib_sparql={
+                    "locator": str(ttl_path),
+                    "result_format": "application/sparql-results+json",
+                    "reasoning_profile": "none",
+                    "result_limit": 1000,
                 }
-            ]
+            )
         )
         feat = _Feature(
             "rdflib_sparql__repo_query",

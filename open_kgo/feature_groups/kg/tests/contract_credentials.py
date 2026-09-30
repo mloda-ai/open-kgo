@@ -12,7 +12,6 @@ from typing import Any
 
 import pytest
 
-from mloda.provider import HashableDict
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
@@ -40,7 +39,7 @@ class CredentialContract(KgContractAdapterBase):
         cls = self.connector_reader_class()
         slot = dict(next(iter(self.valid_credentials().values())))
         slot[key] = invalid_value
-        creds = HashableDict({cls.CONNECTOR_ID: slot})
+        creds = {cls.CONNECTOR_ID: slot}
         try:
             ok = cls.is_valid_credentials(creds)
         except InvalidCredentialShape:
@@ -66,26 +65,26 @@ class CredentialContract(KgContractAdapterBase):
         assert "locator" in slot, f"{cls.__name__}: assert_remote_locator_rejected needs a locator-backed slot."
         slot["locator"] = url
         with pytest.raises(ValueError, match="scheme"):
-            cls.connect(HashableDict({cls.CONNECTOR_ID: slot}))
+            cls.connect({cls.CONNECTOR_ID: slot})
 
     def test_credentials_match_connector_id(self) -> None:
         """is_valid_credentials returns True when CONNECTOR_ID slot is present and valid."""
-        creds = HashableDict(self.valid_credentials())
+        creds = self.valid_credentials()
         assert self.connector_reader_class().is_valid_credentials(creds) is True
 
     def test_empty_credentials_do_not_match(self) -> None:
         """is_valid_credentials returns False when credential_dicts is empty."""
-        empty = HashableDict({})
+        empty: dict[str, Any] = {}
         assert self.connector_reader_class().is_valid_credentials(empty) is False
 
     def test_other_connector_id_does_not_match(self) -> None:
         """is_valid_credentials returns False when only an unrelated connector slot is present."""
-        unrelated = HashableDict({"some_other_connector_xyz": {"locator": "irrelevant"}})
+        unrelated = {"some_other_connector_xyz": {"locator": "irrelevant"}}
         assert self.connector_reader_class().is_valid_credentials(unrelated) is False
 
     def test_invalid_credentials_rejected(self) -> None:
         """invalid_credentials() should be rejected (False) or raise InvalidCredentialShape."""
-        creds = HashableDict(self.invalid_credentials())
+        creds = self.invalid_credentials()
         try:
             result = self.connector_reader_class().is_valid_credentials(creds)
         except InvalidCredentialShape:
@@ -173,16 +172,16 @@ class CredentialContract(KgContractAdapterBase):
             slot["result_limit"] = value
             with pytest.raises(InvalidCredentialShape):
                 cls._validate_shape(slot)
-            assert cls.is_valid_credentials(HashableDict({cls.CONNECTOR_ID: slot})) is False
+            assert cls.is_valid_credentials({cls.CONNECTOR_ID: slot}) is False
             # _prepare_load bypasses is_valid_credentials but must also reject.
             with pytest.raises(InvalidCredentialShape):
-                cls._prepare_load(HashableDict({cls.CONNECTOR_ID: slot}))
+                cls._prepare_load({cls.CONNECTOR_ID: slot})
         # Positive ints (including very large values) pass validation.
         for value in (1, 100, 10**9):
             slot = dict(canonical)
             slot["result_limit"] = value
             cls._validate_shape(slot)
-            assert cls.is_valid_credentials(HashableDict({cls.CONNECTOR_ID: slot})) is True
+            assert cls.is_valid_credentials({cls.CONNECTOR_ID: slot}) is True
 
     def test_result_limit_validation_order(self) -> None:
         """``_validate_required_keys`` fires before ``_validate_result_limit``.
@@ -219,13 +218,13 @@ class CredentialContract(KgContractAdapterBase):
         cls = self.connector_reader_class()
         slot = dict(next(iter(self.valid_credentials().values())))
         slot["definitely_not_a_kg_key_xyz"] = "x"
-        creds = HashableDict({cls.CONNECTOR_ID: slot})
+        creds = {cls.CONNECTOR_ID: slot}
         assert cls.is_valid_credentials(creds) is False, f"{cls.__name__}.is_valid_credentials accepted an unknown key."
         with pytest.raises(InvalidCredentialShape):
             cls._validate_shape(slot)
 
     def test_malformed_slot_rejected(self) -> None:
-        """A slot value that isn't a dict/HashableDict must raise from ``_extract_slot``.
+        """A slot value that isn't a plain dict must raise from ``_extract_slot``.
 
         ``is_valid_credentials`` is matcher-safe (catches and returns False so
         mloda's matcher loop can keep iterating). The loud-failure entry point
@@ -235,7 +234,7 @@ class CredentialContract(KgContractAdapterBase):
         masquerading as "no plugin matched".
         """
         cls = self.connector_reader_class()
-        creds = HashableDict({cls.CONNECTOR_ID: "this-should-be-a-dict-but-isnt"})
+        creds = {cls.CONNECTOR_ID: "this-should-be-a-dict-but-isnt"}
         assert cls.is_valid_credentials(creds) is False, (
             f"{cls.__name__}.is_valid_credentials should swallow the malformed-slot error and return False."
         )
@@ -249,12 +248,8 @@ class CredentialContract(KgContractAdapterBase):
         ``NotImplementedError`` from the matcher loop. Any other propagating
         exception from a misbehaving credentials object aborts iteration over
         unrelated readers sharing the same ``DataAccessCollection``.
-        ``_extract_slot`` has two probe sites (``credentials.data.get(...)``
-        for ``HashableDict`` and ``credentials.get(...)`` for plain dicts), so
-        both are exercised here against a dict subclass whose ``.get`` raises
-        ``RuntimeError``. The fix broadens the matcher-safety guard to
-        ``Exception``; this test pins that contract so a future narrowing
-        surfaces immediately.
+        A dict subclass whose ``.get`` raises ``RuntimeError`` pins the broad
+        ``except Exception`` guard so a future narrowing surfaces immediately.
         """
 
         class _MisbehavingDict(dict[str, Any]):
@@ -262,19 +257,9 @@ class CredentialContract(KgContractAdapterBase):
                 raise RuntimeError("synthetic probe failure to prove matcher-safety")
 
         cls = self.connector_reader_class()
-        # Plain dict branch: ``_extract_slot`` calls ``credentials.get`` directly.
-        bogus_plain = _MisbehavingDict()
-        assert cls.is_valid_credentials(bogus_plain) is False, (
+        assert cls.is_valid_credentials(_MisbehavingDict()) is False, (
             f"{cls.__name__}.is_valid_credentials must swallow probe-time exceptions "
-            f"raised by a misbehaving plain-dict Mapping and return False (matcher-safety)."
-        )
-        # HashableDict branch: ``_extract_slot`` calls ``credentials.data.get``. A
-        # plain ``HashableDict`` with the bogus dict as its ``data`` exercises the
-        # second probe path that the plain-dict case never reaches.
-        bogus_wrapped = HashableDict(_MisbehavingDict())
-        assert cls.is_valid_credentials(bogus_wrapped) is False, (
-            f"{cls.__name__}.is_valid_credentials must swallow probe-time exceptions "
-            f"raised by a misbehaving HashableDict.data and return False (matcher-safety)."
+            f"raised by a misbehaving Mapping and return False (matcher-safety)."
         )
 
     def test_env_var_resolution_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -317,13 +302,13 @@ class CredentialContract(KgContractAdapterBase):
         cls = self.connector_reader_class()
         canonical = dict(next(iter(self.valid_credentials().values())))
         if not cls.REQUIRED_KEYS:
-            assert cls.is_valid_credentials(HashableDict({cls.CONNECTOR_ID: canonical})) is True
+            assert cls.is_valid_credentials({cls.CONNECTOR_ID: canonical}) is True
             return
         for group_idx, group in enumerate(cls.REQUIRED_KEYS):
             slot = dict(canonical)
             for k in group:
                 slot.pop(k, None)
-            creds = HashableDict({cls.CONNECTOR_ID: slot})
+            creds = {cls.CONNECTOR_ID: slot}
             assert cls.is_valid_credentials(creds) is False, (
                 f"{cls.__name__}: dropping REQUIRED_KEYS group {group_idx} ({group}) did not "
                 f"flip is_valid_credentials to False."
@@ -371,7 +356,7 @@ class CredentialContract(KgContractAdapterBase):
         cls = self.connector_reader_class()
         canonical = dict(next(iter(self.valid_credentials().values())))
         if not cls.REQUIRED_KEYS:
-            assert cls.is_valid_credentials(HashableDict({cls.CONNECTOR_ID: canonical})) is True, (
+            assert cls.is_valid_credentials({cls.CONNECTOR_ID: canonical}) is True, (
                 f"{cls.__name__}: REQUIRED_KEYS is empty but the canonical valid_credentials() slot "
                 f"does not validate; one of the two is wrong."
             )
@@ -387,7 +372,7 @@ class CredentialContract(KgContractAdapterBase):
                 for other in group:
                     if other != alt:
                         slot.pop(other, None)
-                creds = HashableDict({cls.CONNECTOR_ID: slot})
+                creds = {cls.CONNECTOR_ID: slot}
                 assert cls.is_valid_credentials(creds) is True, (
                     f"{cls.__name__}: slot using only REQUIRED_KEYS alt {alt!r} (group {group_idx}) "
                     f"failed is_valid_credentials."
@@ -414,6 +399,6 @@ class CredentialContract(KgContractAdapterBase):
         cls = self.connector_reader_class()
         if not cls.REQUIRED_KEYS:
             pytest.skip(f"{cls.__name__} declares no REQUIRED_KEYS; nothing to enforce.")
-        creds = HashableDict({cls.CONNECTOR_ID: {}})
+        creds: dict[str, Any] = {cls.CONNECTOR_ID: {}}
         with pytest.raises(MissingRequiredKeysError):
             cls.connect(creds)

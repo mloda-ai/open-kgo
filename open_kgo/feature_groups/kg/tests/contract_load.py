@@ -15,7 +15,7 @@ import os
 import pytest
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import BaseInputData, HashableDict
+from mloda.provider import BaseInputData
 from mloda.user import Feature
 
 from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
@@ -78,8 +78,8 @@ class LoadBehaviorContract(KgContractAdapterBase):
 
         Asserts a pipeline-level contract: nothing along ``run_query`` ->
         ``DataAccessCollection`` -> ``mloda.run_all`` -> reader may mutate the
-        slot dict the caller supplied. Today ``DataAccessCollection`` wraps the
-        dict in a ``HashableDict`` by reference (no deepcopy), so a regression
+        slot dict the caller supplied. Today ``Credential`` copies only the outer
+        dict, so the reader sees the caller's slot by reference and a regression
         in the reader surfaces here directly; if a future mloda release starts
         deepcopying credentials, this test still guards the documented "slot
         is read-only" contract at the pipeline boundary even though the
@@ -147,7 +147,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
         cls = self.connector_reader_class()
         creds_dict = self.valid_credentials()
         connector_id = cls.CONNECTOR_ID
-        assert cls.is_valid_credentials(HashableDict(creds_dict)) is True, (
+        assert cls.is_valid_credentials(creds_dict) is True, (
             f"{cls.__name__}.valid_credentials() returned a slot that fails is_valid_credentials; "
             f"the adapter's canonical credentials are not contract-conformant. creds={creds_dict!r}"
         )
