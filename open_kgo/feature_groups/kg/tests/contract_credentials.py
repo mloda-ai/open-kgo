@@ -12,6 +12,7 @@ from typing import Any
 
 import pytest
 
+from mloda.user import Credential
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
@@ -240,6 +241,9 @@ class CredentialContract(KgContractAdapterBase):
         )
         with pytest.raises(InvalidCredentialShape):
             cls._extract_slot(creds)
+        # Credential belongs in DataAccessCollection; a direct call takes the plain dict.
+        with pytest.raises(InvalidCredentialShape, match="got Credential"):
+            cls.connect(Credential(self.valid_credentials()))
 
     def test_is_valid_credentials_is_matcher_safe_against_misbehaving_mapping(self) -> None:
         """``is_valid_credentials`` must not propagate non-``InvalidCredentialShape`` exceptions.

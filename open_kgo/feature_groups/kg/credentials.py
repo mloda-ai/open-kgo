@@ -53,7 +53,8 @@ def extract_slot(cls: type[KgConnectorReaderBase], credentials: Any) -> dict[str
     # Type name only: the value may carry a secret.
     raise InvalidCredentialShape(
         f"{cls.CONNECTOR_ID}: credential slot must be a plain dict mapping property names to values, "
-        f"got {type(slot).__name__}. Pass Credential({{{cls.CONNECTOR_ID!r}: {{...}}}})."
+        f"got {type(slot).__name__}. Register it as "
+        f"DataAccessCollection(credentials=Credential({{{cls.CONNECTOR_ID!r}: {{...}}}}))."
     )
 
 
