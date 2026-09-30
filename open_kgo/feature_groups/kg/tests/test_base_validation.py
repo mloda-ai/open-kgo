@@ -196,7 +196,6 @@ _OWN = _FakeReader.CONNECTOR_ID
     ],
 )
 def test_check_feature_in_data_access_claims_only_own_single_level_names(feature_name: str, claimed: bool) -> None:
-    """A reader claims ``<CONNECTOR_ID>__<name>`` only, leaving chained and unrelated names to other groups."""
     assert _FakeReader.check_feature_in_data_access(feature_name, {}) is claimed
 
 
