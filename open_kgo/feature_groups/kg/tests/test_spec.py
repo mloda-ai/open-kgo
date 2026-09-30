@@ -61,7 +61,7 @@ class TestPropertySpecInvariants:
         assert emitted.default is None
 
     def test_iterable_allowed_values_accepted(self) -> None:
-        """Plain iterables mirror ``spec_allowed_values``; the default check still applies."""
+        """Plain iterables mirror ``_spec_allowed_values``; the default check still applies."""
         emitted = property_spec("Tuple enum.", strict=True, allowed_values=("a", "b"), default="b")
         assert emitted.allowed_values == ("a", "b")
         with pytest.raises(ValueError, match="not within the declared allowed_values"):

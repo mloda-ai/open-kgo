@@ -9,9 +9,9 @@ extends ``KgConnectorReaderBase`` (which extends ``ReadDB``) and a
 Module layout: this module owns ``LoadContext`` and ``KgConnectorReaderBase``;
 the two per-call reader flavors (``QueryReader`` / ``ParamReader``) live in
 ``kg.readers`` and the FeatureGroup base in ``kg.feature_group``. All of it is
-re-exported through ``kg.base``, the documented front door. Validation and
-composition bodies live in ``kg.credentials``, ``kg.class_guards``, and
-``kg.composition``; the base keeps thin delegating classmethods.
+re-exported through ``kg.base``, the documented front door. Runtime credential
+rules come from the ``kg.credentials.CredentialRules`` mixin; class-definition
+guards and composition bodies live in ``kg.class_guards`` and ``kg.composition``.
 
 Concrete plugins set ``CONNECTOR_ID`` and implement ``connect``,
 ``build_query``, ``load_data``. mloda's ``BaseInputData.match_data_access``
@@ -69,16 +69,16 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import CHAIN_SEPARATOR, ComputeFramework, PropertySpec
+from mloda.provider import CHAIN_SEPARATOR, ComputeFramework
 from mloda.user import DataAccessCollection, Options
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
-from open_kgo.feature_groups.kg import class_guards, composition, credentials as credential_rules
+from open_kgo.feature_groups.kg import class_guards, composition
 from open_kgo.feature_groups.kg.composition import (  # noqa: F401 -- back-compat re-export, moved to composition.py
     compose_property_mapping,
     narrow_property_mapping,
 )
-from open_kgo.feature_groups.kg.errors import InvalidCredentialShape
+from open_kgo.feature_groups.kg.credentials import CredentialRules
 from open_kgo.feature_groups.kg.spec import property_spec
 
 
@@ -101,23 +101,6 @@ class LoadContext:
     slot: Mapping[str, Any]
     result_limit: int
     ontology_namespace: str | None = None
-
-
-# History: the universal property mapping previously declared
-# ``auth_method`` + the three ``auth_*_env`` companion keys, and a paired
-# ``_UNIVERSAL_CONDITIONAL_REQUIRED_KEYS`` tuple tied them together. No
-# concrete plugin in the shipped 9 families ever called ``_resolve_env`` from
-# ``_connect_from_slot``; every concrete narrowed ``auth_method`` to
-# ``frozenset({"none"})`` via ``SUPPORTED_VALUES`` because none of them
-# actually opens a network socket. The auth surface was therefore decorative:
-# the framework loudly validated a credential surface no concrete read.
-#
-# The fix follows the same narrowing approach used elsewhere in this base:
-# drop the surface from the universal base until at least one networked
-# concrete honors it, and re-introduce per-concrete (or per-family) when that
-# lands. The ``_resolve_env`` helper below is kept as opt-in infrastructure so
-# a future networked concrete has something to call without re-implementing the
-# env-var-resolution contract.
 
 
 _UNIVERSAL_PROPERTY_MAPPING: dict[str, Any] = {
@@ -174,7 +157,7 @@ def _collect_kg_known_keys() -> set[str]:
     return known
 
 
-class KgConnectorReaderBase(ReadDB):
+class KgConnectorReaderBase(CredentialRules, ReadDB):
     """Universal base for KG connector readers.
 
     Subclasses (per family) extend this and add family-specific properties to
@@ -207,15 +190,6 @@ class KgConnectorReaderBase(ReadDB):
     # True when the credential slot alone decides the rows (no query or per-call params), so
     # ``count_rows`` can answer before a run. Counting runs the load through the shared parse cache.
     ROWS_FROM_SLOT: ClassVar[bool] = False
-
-    # Per-property "requires" rules resolved against sibling values. Each entry
-    # is ``(prop_name, prop_value, OR-groups)``: when ``creds.get(prop_name) ==
-    # prop_value``, the OR-groups are enforced just like ``REQUIRED_KEYS`` (each
-    # group needs one truthy member). Empty by default: the universal base no
-    # longer declares any conditional rule (the prior ``auth_method`` rules were
-    # paired with a credential surface no concrete honored). Subclasses that
-    # introduce conditional rules add them directly without an ``EXTEND`` step.
-    CONDITIONAL_REQUIRED_KEYS: ClassVar[tuple[tuple[str, Any, tuple[tuple[str, ...], ...]], ...]] = ()
 
     PROPERTY_MAPPING: ClassVar[dict[str, Any]] = dict(_UNIVERSAL_PROPERTY_MAPPING)
 
@@ -461,100 +435,6 @@ class KgConnectorReaderBase(ReadDB):
         return len(cls.load_data(data_access, FeatureSet()))
 
     @classmethod
-    def _extract_slot(cls, credentials: Any) -> dict[str, Any] | None:
-        """Return the dict at credentials[CONNECTOR_ID], or None if absent; see ``credentials.extract_slot``."""
-        return credential_rules.extract_slot(cls, credentials)
-
-    @classmethod
-    def _validate_shape(cls, creds: dict[str, Any]) -> None:
-        """Validate a single connector's credential dict against PROPERTY_MAPPING.
-
-        Order:
-        1. ``REQUIRED_KEYS`` — at least one key per OR-group must be set+truthy.
-           Reported first so missing keys surface a clear "you forgot X" error.
-        2. ``CONDITIONAL_REQUIRED_KEYS`` — for each ``(prop, value, groups)``
-           rule whose trigger matches ``creds.get(prop) == value``, enforce the
-           OR-groups. Reported before the closed-world / enum loop so semantic
-           "you picked X but didn't supply its companion keys" errors land
-           before incidental typos.
-        3. ``result_limit`` boundary check — must be a non-bool ``int >= 1``.
-           Pinned at the credential surface so the cross-reader divergence in
-           append-then-check vs slice-at-end behavior at ``result_limit ∈
-           {0, -1, False, ...}`` ceases to matter; every reader sees a
-           validated positive int by the time ``_prepare_load`` returns. Bool
-           is rejected explicitly: ``True``/``False`` are int subclasses in
-           Python, but a row count expressed as a truth-value almost always
-           reflects a caller mistake.
-        4. Closed-world key check + strict-validation enums via
-           ``_validate_mapping`` (the latter consults
-           ``SUPPORTED_VALUES`` for per-concrete narrowing, falling back
-           to the spec's ``allowed_values``).
-        """
-        cls._validate_required_keys(creds)
-        cls._validate_conditional_required_keys(creds)
-        cls._validate_result_limit(creds)
-        cls._validate_mapping(creds, cls.PROPERTY_MAPPING, kind="credential key", closed_world=True)
-
-    @classmethod
-    def _validate_result_limit(cls, creds: dict[str, Any]) -> None:
-        """Reject non-positive-int ``result_limit`` values; see ``credentials.validate_result_limit``."""
-        credential_rules.validate_result_limit(cls, creds)
-
-    @classmethod
-    def _validate_mapping(
-        cls,
-        values: dict[str, Any],
-        mapping: dict[str, Any],
-        *,
-        kind: str,
-        closed_world: bool,
-    ) -> None:
-        """Shared shape + strict-enum validation loop; see ``credentials.validate_mapping``."""
-        credential_rules.validate_mapping(cls, values, mapping, kind=kind, closed_world=closed_world)
-
-    @staticmethod
-    def _spec_allowed_values(key: str, spec: PropertySpec) -> set[Any]:
-        """Return a strict-validation spec's allowed set; see ``credentials.spec_allowed_values``."""
-        return credential_rules.spec_allowed_values(key, spec)
-
-    @classmethod
-    def _validate_required_keys(cls, creds: dict[str, Any]) -> None:
-        """Enforce ``REQUIRED_KEYS`` OR-groups; see ``credentials.validate_required_keys``."""
-        credential_rules.validate_required_keys(cls, creds)
-
-    @classmethod
-    def _validate_conditional_required_keys(cls, creds: dict[str, Any]) -> None:
-        """Enforce ``CONDITIONAL_REQUIRED_KEYS`` rules; see ``credentials.validate_conditional_required_keys``."""
-        credential_rules.validate_conditional_required_keys(cls, creds)
-
-    @classmethod
-    def _require_slot(cls, credentials: Any) -> dict[str, Any]:
-        """Extract the credential slot or raise. ``connect()`` and ``_prepare_load`` both call this.
-
-        By the time ``_connect_from_slot`` runs, the slot has been
-        shape-validated by one of two upstream gates: the matcher path
-        validates via ``is_valid_credentials`` (matcher-safe ``False`` on
-        error), and the direct-call path validates via ``connect()``
-        (loud ``InvalidCredentialShape`` / ``MissingRequiredKeysError`` on
-        error). This helper only unpacks the slot; concrete readers no longer
-        need to defensively re-check for ``None``.
-
-        ``_prepare_load`` calls this *without* running ``_validate_shape``
-        because the matcher already validated before dispatch; a direct call
-        to ``load_data`` that bypasses both gates relies on the slot being
-        well-formed, which is the documented contract for that direct path.
-        """
-        if not isinstance(credentials, dict):
-            raise InvalidCredentialShape(
-                f"{cls.CONNECTOR_ID}: credentials must be a plain dict {{{cls.CONNECTOR_ID!r}: {{...}}}}, "
-                f"got {type(credentials).__name__}."
-            )
-        slot = cls._extract_slot(credentials)
-        if slot is None:
-            raise InvalidCredentialShape(f"{cls.CONNECTOR_ID}: credentials missing the {cls.CONNECTOR_ID!r} slot.")
-        return slot
-
-    @classmethod
     def _prepare_load(cls, data_access: Any) -> LoadContext:
         """Extract the slot and parse the result_limit default.
 
@@ -725,8 +605,3 @@ class KgConnectorReaderBase(ReadDB):
         ``load_data`` sites can pass ``ctx.slot`` (a ``MappingProxyType``)
         directly without a defensive ``dict(...)`` round-trip.
         """
-
-    @classmethod
-    def _resolve_env(cls, creds: dict[str, Any], key: str) -> str | None:
-        """Resolve an env-var-named credential to its stripped value; see ``credentials.resolve_env``."""
-        return credential_rules.resolve_env(cls, creds, key)

@@ -123,7 +123,7 @@ def test_spec_allowed_values_raises_when_missing() -> None:
 
     ``PropertySpec`` only allows a strict spec with no ``allowed_values`` when
     an ``element_validator`` takes over as the value space; open-kgo's own
-    ``spec_allowed_values`` does not consult ``element_validator``, so such a
+    ``_spec_allowed_values`` does not consult ``element_validator``, so such a
     spec is still a shape error for the KG credential surface.
     """
     spec = _core_property_spec("Bad spec.", strict=True, element_validator=lambda value: True)

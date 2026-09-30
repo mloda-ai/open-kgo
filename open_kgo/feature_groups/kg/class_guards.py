@@ -10,8 +10,8 @@ surface (``PROPERTY_MAPPING``, ``PARAMS_MAPPING``, ``SUPPORTED_VALUES``,
 class keeps thin delegating classmethods with the same names (single leading
 underscore) so a subclass can still override an individual guard.
 
-The runtime credential validation lives in the sibling ``kg.credentials``
-module.
+The runtime credential validation lives in the ``kg.credentials.CredentialRules``
+mixin.
 """
 
 from __future__ import annotations
@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, Any, Mapping
 
 from mloda.provider import PropertySpec, is_no_default
 
-from open_kgo.feature_groups.kg.credentials import spec_allowed_values
 from open_kgo.feature_groups.kg.errors import NonDictSpecError
 
 if TYPE_CHECKING:
@@ -105,7 +104,7 @@ def validate_supported_values_invariant(cls: type[KgConnectorReaderBase]) -> Non
                 f"set rejects every value. Use ``del SUPPORTED_VALUES[key]`` and strip "
                 f"the key from the mapping instead if the concrete cannot honor any value."
             )
-        allowed = spec_allowed_values(key, spec)
+        allowed = cls._spec_allowed_values(key, spec)
         if not narrowed <= allowed:
             raise ValueError(
                 f"{cls.__name__}.SUPPORTED_VALUES[{key!r}]={sorted(narrowed)} is not a "
