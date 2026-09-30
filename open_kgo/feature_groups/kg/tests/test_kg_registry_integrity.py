@@ -117,6 +117,6 @@ def test_every_family_with_third_party_imports_declares_its_optional_roots() -> 
                     roots.update(alias.name.split(".")[0] for alias in node.names)
                 elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
                     roots.add(node.module.split(".")[0])
-        third_party = roots - set(sys.stdlib_module_names) - first_party - {"__future__"}
+        third_party = roots - set(sys.stdlib_module_names) - first_party
         undeclared = third_party - declared.get(ep.name, set())
         assert not undeclared, f"{ep.name}: undeclared optional roots {sorted(undeclared)}"

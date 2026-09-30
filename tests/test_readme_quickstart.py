@@ -94,7 +94,7 @@ def quickstart_run(snippet: str, tmp_path_factory: pytest.TempPathFactory) -> tu
     """Run the snippet in a tmp-dir subprocess, keeping ``PluginLoader.all()`` out of this pytest process."""
     workdir = tmp_path_factory.mktemp("quickstart")
     result = subprocess.run(
-        [sys.executable, "-c", snippet + _REPORT], cwd=workdir, capture_output=True, text=True, check=False
+        [sys.executable, "-c", snippet + _REPORT], cwd=workdir, capture_output=True, text=True, check=False, timeout=300
     )
     assert result.returncode == 0, (
         f"Quickstart snippet failed; it must bind 'feature' and 'partitions' for this guard to read.\n{result.stderr}"

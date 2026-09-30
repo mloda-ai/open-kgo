@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import Any
 
 from mloda.provider import PropertySpec
-from mloda.user import DataAccessCollection, Feature, mloda
+from mloda.user import DataAccessCollection, Feature, Options, mloda
 
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, PythonDictFramework
 
@@ -54,6 +54,17 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
         data_access_collection=dac,
     )
     return [row for partition in partitions for row in partition.get(feature.name, [])]
+
+
+def run_scoped_query(reader: type[KgConnectorReaderBase], slot_creds: dict[str, Any], feature: Feature) -> list[Any]:
+    """Like ``run_query``, but the credentials ride on the feature's options under the reader's name (no DAC)."""
+    options = Options(
+        group=dict(feature.options.group),
+        context={**feature.options.context, reader.data_access_name(): {reader.CONNECTOR_ID: slot_creds}},
+    )
+    scoped = Feature(feature.name, options=options)
+    partitions = mloda.run_all([scoped], compute_frameworks={PythonDictFramework})
+    return [row for partition in partitions for row in partition.get(scoped.name, [])]
 
 
 def make_valid_credentials(

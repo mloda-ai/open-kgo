@@ -93,5 +93,5 @@ def test_plugin_loader_all_skips_only_the_rdf_family_without_rdflib() -> None:
         assert rows, rows
         """
     )
-    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=300)
     assert result.returncode == 0, result.stderr

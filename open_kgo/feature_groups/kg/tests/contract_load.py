@@ -18,8 +18,8 @@ from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.provider import BaseInputData, HashableDict
 from mloda.user import Feature
 
-from open_kgo.feature_groups.kg.base import PythonDictFramework
-from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query
+from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
+from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query
 from open_kgo.feature_groups.kg.tests.contract_adapters import KgContractAdapterBase
 
 _SECRET = "s3cr3t-must-not-leak"
@@ -163,6 +163,17 @@ class LoadBehaviorContract(KgContractAdapterBase):
             f"adapters must seed at least one row so expected_row_shape asserts shape, not size."
         )
 
+    def test_feature_scoped_data_access_matches_the_global_path(self) -> None:
+        """Credentials on the feature's options under the reader's name select only this reader, same rows."""
+        cls = self.connector_reader_class()
+        slot = self.valid_credentials()[cls.CONNECTOR_ID]
+        feat = self.feature_under_test()
+        scoped = run_scoped_query(cls, slot, feat)
+        assert scoped, f"{cls.__name__}: feature-scoped access returned no rows."
+        assert sorted(scoped, key=canonical_row_key) == sorted(
+            run_query(cls.CONNECTOR_ID, slot, feat), key=canonical_row_key
+        )
+
     def test_data_access_identity_names_the_source_and_no_secret(self) -> None:
         """The identity extenders see on INPUT_DATA_LOAD is the source (or mloda's default), never a secret."""
         cls = self.connector_reader_class()
@@ -175,6 +186,8 @@ class LoadBehaviorContract(KgContractAdapterBase):
         source = slot.get(cls.SOURCE_SLOT) if cls.SOURCE_SLOT else None
         if source is not None and os.path.exists(str(source)):
             assert identity == str(source)
+            for alias in cls._source_keys()[1:]:
+                assert cls.data_access_identity({cls.CONNECTOR_ID: {alias: source}}) == str(source)
         else:
             assert identity == BaseInputData.data_access_identity(creds)
 
@@ -192,6 +205,9 @@ class LoadBehaviorContract(KgContractAdapterBase):
             assert count is None
             return
 
+        assert issubclass(cls, ParamReader) and not cls.PARAMS_MAPPING, (
+            f"{cls.__name__}: ROWS_FROM_SLOT needs a ParamReader without per-call params."
+        )
         rows = run_query(cls.CONNECTOR_ID, creds[cls.CONNECTOR_ID], self.feature_under_test())
         assert count == len(rows)
         assert len(rows) > 1, f"{cls.__name__}: the cap check below needs a fixture with more than one row."

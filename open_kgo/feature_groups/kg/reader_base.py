@@ -207,7 +207,7 @@ class KgConnectorReaderBase(ReadDB):
     SOURCE_SLOT: ClassVar[str | None] = "locator"
 
     # True when the credential slot alone decides the rows (no query or per-call params), so
-    # ``count_rows`` can answer before a run.
+    # ``count_rows`` can answer before a run. Counting runs the load through the shared parse cache.
     ROWS_FROM_SLOT: ClassVar[bool] = False
 
     # Per-property "requires" rules resolved against sibling values. Each entry
@@ -408,7 +408,23 @@ class KgConnectorReaderBase(ReadDB):
 
     @classmethod
     def is_final_reader(cls) -> bool:
-        # Hides KG readers from the stock ReadDBFeature's subclass walk; each KG FeatureGroup matches its own reader.
+        # Hides KG readers from the stock ReadDBFeature's subclass walk; each KG FeatureGroup matches its own reader
+        # in feature_scope_data_access and match_data_access below.
+        return False
+
+    @classmethod
+    def feature_scope_data_access(cls, options: Options, feature_name: str) -> bool:
+        """Options keyed by this reader's name carry its data access; only this reader is probed."""
+        for key in options.keys():
+            if cls.deal_with_base_input_data_name_as_cls_or_str(key) != cls.data_access_name():
+                continue
+            if not cls.CONNECTOR_ID or not cls._reader_options_admit(options, record_absence=True):
+                return False
+            matched = cls.match_subclass_data_access(options.get(key), [feature_name], options=options)
+            if matched:
+                cls.add_base_input_data_to_options(cls, matched, options)
+                return True
+            return False
         return False
 
     @classmethod
@@ -431,18 +447,28 @@ class KgConnectorReaderBase(ReadDB):
             slot = cls._extract_slot(data_access)
         except Exception:  # A malformed slot fails the load elsewhere; identity stays best-effort.
             slot = None
-        source = slot.get(cls.SOURCE_SLOT) if slot is not None and cls.SOURCE_SLOT else None
-        if isinstance(source, (str, PurePath)) and str(source):
-            projected = super().data_access_identity(str(source))
-            if projected != str.__name__:
-                return projected
+        for key in cls._source_keys():
+            source = slot.get(key) if slot is not None else None
+            if isinstance(source, (str, PurePath)) and str(source):
+                projected = super().data_access_identity(str(source))
+                if projected != str.__name__:
+                    return projected
         return super().data_access_identity(data_access)
+
+    @classmethod
+    def _source_keys(cls) -> tuple[str, ...]:
+        """``SOURCE_SLOT`` first, then its ``REQUIRED_KEYS`` alternatives (e.g. ``manifest_path`` or ``locator``)."""
+        if cls.SOURCE_SLOT is None:
+            return ()
+        group = next((g for g in cls.REQUIRED_KEYS if cls.SOURCE_SLOT in g), ())
+        return (cls.SOURCE_SLOT, *(key for key in group if key != cls.SOURCE_SLOT))
 
     @classmethod
     def count_rows(cls, data_access: Any, compute_framework: type[ComputeFramework]) -> int | None:
         """Rows a load returns for ``ROWS_FROM_SLOT`` readers; None for the rest."""
         if not cls.ROWS_FROM_SLOT:
             return None
+        cls._validate_shape(cls._require_slot(cls._wrap_credentials(data_access)))
         return len(cls.load_data(data_access, FeatureSet()))
 
     @classmethod
