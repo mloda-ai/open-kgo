@@ -380,6 +380,12 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         return bool(name) and not name.startswith("_") and CHAIN_SEPARATOR not in name
 
     @classmethod
+    def _in_namespace(cls, feature_names: list[str]) -> bool:
+        """True if a name starts with ``<CONNECTOR_ID>__``; other names never probe this reader's credentials."""
+        prefix = f"{cls.CONNECTOR_ID}{CHAIN_SEPARATOR}"
+        return bool(cls.CONNECTOR_ID) and any(str(name).startswith(prefix) for name in feature_names)
+
+    @classmethod
     def is_final_reader(cls) -> bool:
         # Hides KG readers from the stock ReadDBFeature's subclass walk; each KG FeatureGroup matches its own reader
         # in feature_scope_data_access and match_data_access below.
@@ -391,7 +397,7 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         for key in options.keys():
             if cls.deal_with_base_input_data_name_as_cls_or_str(key) != cls.data_access_name():
                 continue
-            if not cls.CONNECTOR_ID or not cls._reader_options_admit(options, record_absence=True):
+            if not cls._in_namespace([feature_name]) or not cls._reader_options_admit(options, record_absence=True):
                 return False
             matched = cls.match_subclass_data_access(options.get(key), [feature_name], options=options)
             if matched:
@@ -408,7 +414,7 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         options: Options | None = None,
     ) -> tuple[Any, Any]:
         """Match only this reader, never a sibling found by walking subclasses."""
-        if not cls.CONNECTOR_ID or not cls._reader_options_admit(options, record_absence=False):
+        if not cls._in_namespace(feature_names) or not cls._reader_options_admit(options, record_absence=False):
             return None, None
         matched = cls.match_subclass_data_access(data_access_collection, feature_names, options=options)  # type: ignore[arg-type]
         return (cls, matched) if matched else (None, None)
