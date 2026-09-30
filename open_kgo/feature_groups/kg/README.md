@@ -56,7 +56,8 @@ kg/
 
 A concrete plugin (e.g. `RdfLibSparqlReader`) is a `ReadDB` subclass with:
 - `CONNECTOR_ID: ClassVar[str]` — keys the credential dict in
-  `DataAccessCollection.credential_dicts`.
+  `DataAccessCollection.credential_dicts`, and prefixes the feature names the
+  reader claims (`<CONNECTOR_ID>__<name>`).
 - `REQUIRED_KEYS: ClassVar[tuple[tuple[str, ...], ...]]` — declares which
   credential keys are mandatory; tuple of OR-groups (all groups AND'ed,
   members within a group OR'ed). Empty tuple means no required keys.

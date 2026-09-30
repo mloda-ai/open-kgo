@@ -218,7 +218,7 @@ def helpers():
             ]
         )
         feat = _Feature(
-            "repo_kg_query",
+            "rdflib_sparql__repo_query",
             options=_Options(context={"query_text": query_text}),
         )
         partitions = _mloda.run_all(

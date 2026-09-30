@@ -69,7 +69,7 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import ComputeFramework, HashableDict, PropertySpec
+from mloda.provider import CHAIN_SEPARATOR, ComputeFramework, HashableDict, PropertySpec
 from mloda.user import DataAccessCollection, Options
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
@@ -389,12 +389,10 @@ class KgConnectorReaderBase(ReadDB):
 
     @classmethod
     def check_feature_in_data_access(cls, feature_name: str, data_access: Any) -> bool:
-        """Default: any feature name is acceptable once credentials match.
-
-        Concrete plugins may override (e.g. by parsing a query name prefix
-        against ``CONNECTOR_ID``).
-        """
-        return True
+        """Claim only ``<CONNECTOR_ID>__<name>``: chained (``...__sum_aggr``) and unrelated names go to other groups."""
+        prefix = f"{cls.CONNECTOR_ID}{CHAIN_SEPARATOR}"
+        name = feature_name.removeprefix(prefix)
+        return feature_name.startswith(prefix) and bool(name) and CHAIN_SEPARATOR not in name
 
     @classmethod
     def is_final_reader(cls) -> bool:
