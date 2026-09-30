@@ -51,24 +51,17 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
 
         PluginLoader.all()
 
-        from open_kgo.feature_groups.kg.base import KgConnectorReaderBase
-        from open_kgo.feature_groups.kg.tests._discovery import walk_subclasses
         from open_kgo.feature_groups.kg.tests._family_cases import CASES
-        from open_kgo.feature_groups.kg.tests._helpers import run_query, run_scoped_query
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
 
-        readers = {{reader.CONNECTOR_ID: reader for reader in walk_subclasses(KgConnectorReaderBase)}}
         failures = []
         for index, case in enumerate(CASES):
             case_dir = Path({str(tmp_path)!r}) / str(index)
             case_dir.mkdir()
-            slot = case.make_slot(case_dir)
             try:
-                for rows in (
-                    run_query(case.connector_id, slot, case.feature),
-                    run_scoped_query(readers[case.connector_id], slot, case.feature),
-                ):
-                    if not rows or not all(case.assert_row(row) for row in rows):
-                        failures.append((case.connector_id, rows[:1]))
+                rows = run_query(case.connector_id, case.make_slot(case_dir), case.feature)
+                if not rows or not all(case.assert_row(row) for row in rows):
+                    failures.append((case.connector_id, rows[:1]))
             except Exception as exc:
                 failures.append((case.connector_id, repr(exc)[:300]))
         sys.exit(repr(failures) if failures else 0)

@@ -357,16 +357,6 @@ class KgConnectorReaderBase(ReadDB):
             )
 
     @classmethod
-    def supports_scoped_data_access(cls) -> bool:
-        # Abstract bases (CONNECTOR_ID == "") are filtered out at discovery time
-        # so they never appear in the scoped-access subclass list. Concrete
-        # subclasses (non-empty CONNECTOR_ID) return True directly; this override
-        # replaces mloda's default load_data(None, None) probe path, which would
-        # otherwise hit _wrap_credentials(None), raise NotImplementedError, and
-        # be interpreted by the default as "not scoped" (wrong for our plugins).
-        return bool(cls.CONNECTOR_ID)
-
-    @classmethod
     def is_valid_credentials(cls, credentials: Any) -> bool:
         """Return True if credentials carry a valid dict slot for this CONNECTOR_ID.
 

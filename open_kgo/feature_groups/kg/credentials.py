@@ -68,17 +68,7 @@ def wrap_credentials(cls: type[KgConnectorReaderBase], data_access: Any) -> Hash
     plugins receive either the full credentials dict (with our slot inside)
     or just our slot. This helper unifies both shapes so concrete code can
     always call ``cls._extract_slot(cls._wrap_credentials(data_access))``.
-
-    ``data_access=None`` raises ``NotImplementedError``: mloda's
-    scoped-access discovery probes ``load_data(None, None)`` and expects
-    that error class (not ``TypeError``) to mean "this reader needs real
-    credentials". A real caller passing ``None`` by mistake also lands here.
     """
-    if data_access is None:
-        raise NotImplementedError(
-            f"{cls.__name__}.load_data requires a credentials dict; received None. "
-            "mloda's scoped-access discovery probe also reaches this path."
-        )
     if isinstance(data_access, HashableDict):
         if cls.CONNECTOR_ID in data_access.data:
             return data_access

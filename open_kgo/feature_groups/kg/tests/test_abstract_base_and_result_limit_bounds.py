@@ -1,9 +1,4 @@
-"""Regression tests for abstract-base probing and bounded ``result_limit`` cost.
-
-Abstract-base probe: abstract bases inherited ``supports_scoped_data_access=True``
-and a direct ``load_data(None, None)`` probe surfaced ``TypeError`` from the
-strict ``_wrap_credentials`` instead of ``NotImplementedError``. Both paths are
-covered here so a regression is loud rather than silent.
+"""Regression tests for bounded ``result_limit`` cost.
 
 Bounded cost: ``result_limit`` semantics are documented as *bound-output* on the
 base, but readers MUST short-circuit work to bound cost. The dbt manifest reader
@@ -24,86 +19,8 @@ import pytest
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.user import Feature, Options
 
-from open_kgo.feature_groups.kg.base import KgConnectorReaderBase
 from open_kgo.feature_groups.kg.errors import InvalidCredentialShape
 from open_kgo.feature_groups.kg.lineage.dbt_manifest import DbtManifestReader, _walk_with_node
-from open_kgo.feature_groups.kg.tests._discovery import (
-    family_subpackages,
-    import_all_kg_readers,
-    walk_subclasses,
-)
-
-
-# Populate ``KgConnectorReaderBase.__subclasses__`` for the parametrize sets
-# below; without this side-effect, only readers whose modules were already
-# loaded by collection order would appear.
-import_all_kg_readers()
-
-_ALL_READERS: list[type[KgConnectorReaderBase]] = sorted(
-    walk_subclasses(KgConnectorReaderBase), key=lambda c: c.__name__
-)
-_ABSTRACT_BASES: list[type[KgConnectorReaderBase]] = [KgConnectorReaderBase] + [
-    cls for cls in _ALL_READERS if cls.CONNECTOR_ID == ""
-]
-_CONCRETE_READERS: list[type[KgConnectorReaderBase]] = [cls for cls in _ALL_READERS if cls.CONNECTOR_ID]
-
-
-def test_discovery_covers_every_family() -> None:
-    """At least one concrete reader per kg subpackage must be discovered.
-
-    Guards against a regression where a family disappears from the subclass
-    tree (e.g. an import is moved out of a top-level module and the reader is
-    no longer registered). Without this floor, the parametrized sets below
-    could silently shrink to fewer cases and still pass.
-    """
-    families = family_subpackages()
-    assert len(_CONCRETE_READERS) >= len(families), (
-        f"discovery found {len(_CONCRETE_READERS)} concrete readers for "
-        f"{len(families)} families ({sorted(families)}); a family may have lost its reader"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Defect #11
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.parametrize("base_cls", _ABSTRACT_BASES, ids=lambda c: c.__name__)
-def test_abstract_bases_do_not_advertise_scoped_data_access(
-    base_cls: type[KgConnectorReaderBase],
-) -> None:
-    """Abstract bases (CONNECTOR_ID == "") must be filtered out at discovery time.
-
-    If they advertise truthy here they appear in mloda's scoped-access subclass
-    registry and the only thing keeping them from matching is the runtime
-    ``CONNECTOR_ID == ""`` guard inside ``is_valid_credentials`` (fragile).
-    """
-    assert base_cls.CONNECTOR_ID == ""
-    assert not base_cls.supports_scoped_data_access()
-
-
-@pytest.mark.parametrize("reader_cls", _CONCRETE_READERS, ids=lambda c: c.__name__)
-def test_concrete_readers_advertise_scoped_data_access(
-    reader_cls: type[KgConnectorReaderBase],
-) -> None:
-    """Concrete readers (non-empty CONNECTOR_ID) MUST be picked up by discovery."""
-    assert reader_cls.CONNECTOR_ID
-    assert reader_cls.supports_scoped_data_access()
-
-
-@pytest.mark.parametrize("reader_cls", _CONCRETE_READERS, ids=lambda c: c.__name__)
-def test_load_data_none_probe_raises_not_implemented(
-    reader_cls: type[KgConnectorReaderBase],
-) -> None:
-    """``load_data(None, None)`` must raise ``NotImplementedError``, not ``TypeError``.
-
-    ``BaseInputData.supports_scoped_data_access`` interprets ``TypeError`` as
-    "real failure, surface it"; only ``NotImplementedError`` / ``AttributeError``
-    are recognised as "this is a probe, not a real call". A leaked ``TypeError``
-    would crash mloda discovery on any attempt to enumerate scoped-access readers.
-    """
-    with pytest.raises(NotImplementedError):
-        reader_cls.load_data(None, None)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
