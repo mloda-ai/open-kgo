@@ -77,6 +77,7 @@ class FileFixturePagedRestReader(RestPublicReader):
     # cursor concrete which drops it). ``cursor_token`` and ``entity_type`` are
     # dropped from PARAMS_MAPPING and rejected per-call via ``_STRIPPED_PARAMS``.
     PARAMS_MAPPING: ClassVar[dict[str, Any]] = {}
+    ROWS_FROM_SLOT: ClassVar[bool] = True
 
     SUPPORTED_VALUES: ClassVar[Mapping[str, frozenset[Any]]] = {
         "pagination_style": frozenset({"page"}),

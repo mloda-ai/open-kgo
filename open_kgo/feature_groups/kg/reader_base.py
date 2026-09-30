@@ -64,11 +64,13 @@ the asymmetry catalog makes visible.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import PurePath
 from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.provider import HashableDict, PropertySpec
+from mloda.provider import ComputeFramework, HashableDict, PropertySpec
+from mloda.user import DataAccessCollection, Options
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
 from open_kgo.feature_groups.kg import class_guards, composition, credentials as credential_rules
@@ -203,6 +205,10 @@ class KgConnectorReaderBase(ReadDB):
     # drop without a matching declaration fails the import instead of becoming
     # a silent fourth spelling.
     SOURCE_SLOT: ClassVar[str | None] = "locator"
+
+    # True when the credential slot alone decides the rows (no query or per-call params), so
+    # ``count_rows`` can answer before a run.
+    ROWS_FROM_SLOT: ClassVar[bool] = False
 
     # Per-property "requires" rules resolved against sibling values. Each entry
     # is ``(prop_name, prop_value, OR-groups)``: when ``creds.get(prop_name) ==
@@ -399,6 +405,45 @@ class KgConnectorReaderBase(ReadDB):
         against ``CONNECTOR_ID``).
         """
         return True
+
+    @classmethod
+    def is_final_reader(cls) -> bool:
+        # Hides KG readers from the stock ReadDBFeature's subclass walk; each KG FeatureGroup matches its own reader.
+        return False
+
+    @classmethod
+    def match_data_access(
+        cls,
+        feature_names: list[str],
+        data_access_collection: DataAccessCollection,
+        options: Options | None = None,
+    ) -> tuple[Any, Any]:
+        """Match only this reader, never a sibling found by walking subclasses."""
+        if not cls.CONNECTOR_ID or not cls._reader_options_admit(options, record_absence=False):
+            return None, None
+        matched = cls.match_subclass_data_access(data_access_collection, feature_names, options=options)  # type: ignore[arg-type]
+        return (cls, matched) if matched else (None, None)
+
+    @classmethod
+    def data_access_identity(cls, data_access: Any) -> str:
+        """The ``SOURCE_SLOT`` value without userinfo, query or fragment; mloda's default if unusable. Never raises."""
+        try:
+            slot = cls._extract_slot(data_access)
+        except Exception:  # A malformed slot fails the load elsewhere; identity stays best-effort.
+            slot = None
+        source = slot.get(cls.SOURCE_SLOT) if slot is not None and cls.SOURCE_SLOT else None
+        if isinstance(source, (str, PurePath)) and str(source):
+            projected = super().data_access_identity(str(source))
+            if projected != str.__name__:
+                return projected
+        return super().data_access_identity(data_access)
+
+    @classmethod
+    def count_rows(cls, data_access: Any, compute_framework: type[ComputeFramework]) -> int | None:
+        """Rows a load returns for ``ROWS_FROM_SLOT`` readers; None for the rest."""
+        if not cls.ROWS_FROM_SLOT:
+            return None
+        return len(cls.load_data(data_access, FeatureSet()))
 
     @classmethod
     def _extract_slot(cls, credentials: Any) -> dict[str, Any] | None:

@@ -65,6 +65,23 @@ kg-all = [
 ]
 demo = ["marimo", "open-kgo[kg-all]"]
 
+[project.entry-points."mloda.feature_groups"]
+open-kgo-agent-memory = "open_kgo.feature_groups.kg.agent_memory.manifest:FEATURE_GROUPS"
+open-kgo-citation-rest = "open_kgo.feature_groups.kg.citation_rest.manifest:FEATURE_GROUPS"
+open-kgo-code-build = "open_kgo.feature_groups.kg.code_build.manifest:FEATURE_GROUPS"
+open-kgo-embedded = "open_kgo.feature_groups.kg.embedded.manifest:FEATURE_GROUPS"
+open-kgo-lineage = "open_kgo.feature_groups.kg.lineage.manifest:FEATURE_GROUPS"
+open-kgo-network-pg = "open_kgo.feature_groups.kg.network_pg.manifest:FEATURE_GROUPS"
+open-kgo-rdf = "open_kgo.feature_groups.kg.rdf.manifest:FEATURE_GROUPS"
+open-kgo-rest-public = "open_kgo.feature_groups.kg.rest_public.manifest:FEATURE_GROUPS"
+open-kgo-saas-authz = "open_kgo.feature_groups.kg.saas_authz.manifest:FEATURE_GROUPS"
+
+[project.entry-points."mloda.optional_dependencies"]
+open-kgo-agent-memory = "open_kgo.feature_groups.kg.optional_deps:AGENT_MEMORY"
+open-kgo-embedded = "open_kgo.feature_groups.kg.optional_deps:EMBEDDED"
+open-kgo-network-pg = "open_kgo.feature_groups.kg.optional_deps:NETWORK_PG"
+open-kgo-rdf = "open_kgo.feature_groups.kg.optional_deps:RDF"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["open_kgo*"]

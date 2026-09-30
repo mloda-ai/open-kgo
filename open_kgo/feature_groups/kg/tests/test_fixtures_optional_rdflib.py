@@ -63,3 +63,35 @@ def test_load_rdf_graph_still_works_with_rdflib_present(tmp_path: Path) -> None:
     path.write_text('<urn:s> <urn:p> "o" .\n', encoding="utf-8")
     graph = load_rdf_graph("test", path)
     assert len(graph) == 1
+
+
+def test_plugin_loader_all_skips_only_the_rdf_family_without_rdflib() -> None:
+    """``PluginLoader.all()`` skips the rdf entry point by name and still runs another family end to end."""
+    sbom = Path(__file__).resolve().parent.parent / "code_build" / "tests" / "fixtures" / "sample.cdx.json"
+    code = textwrap.dedent(
+        f"""
+        import sys
+
+        # A None entry raises ModuleNotFoundError(name="rdflib"), the shape mloda attributes to a declared root.
+        sys.modules["rdflib"] = None
+
+        from mloda.user import Feature, Options, PluginLoader
+
+        PluginLoader.all()
+        skipped = PluginLoader.skipped_plugins()
+        rdf = "open-kgo-rdf (open_kgo.feature_groups.kg.rdf.manifest:FEATURE_GROUPS)"
+        assert skipped.get(rdf) == "rdflib", skipped
+        assert [key for key in skipped if key.startswith("open-kgo-")] == [rdf], skipped
+
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
+
+        rows = run_query(
+            "cyclonedx_sbom",
+            {{"manifest_path": {str(sbom)!r}}},
+            Feature("cyclonedx_sbom__components", options=Options(context={{}})),
+        )
+        assert rows, rows
+        """
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr

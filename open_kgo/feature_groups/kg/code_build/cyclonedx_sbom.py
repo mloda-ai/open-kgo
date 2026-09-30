@@ -31,6 +31,7 @@ class CycloneDxSbomReader(CodeBuildReader):
     REQUIRED_KEYS: ClassVar[tuple[tuple[str, ...], ...]] = (("manifest_path", "locator"),)
 
     PARAMS_MAPPING: ClassVar[dict[str, Any]] = {}
+    ROWS_FROM_SLOT: ClassVar[bool] = True
 
     @classmethod
     def _connect_from_slot(cls, slot: Mapping[str, Any]) -> dict[str, Any]:

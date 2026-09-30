@@ -8,6 +8,9 @@ the single readable place that shows all 9 families' usage at once.
 
 from __future__ import annotations
 
+import subprocess
+import sys
+import textwrap
 from pathlib import Path
 
 import pytest
@@ -32,3 +35,37 @@ def test_family_usage_smoke(case: ConnectorCase, tmp_path: Path) -> None:
     )
     bad = [row for row in rows if not case.assert_row(row)]
     assert not bad, f"{case.connector_id}: {len(bad)} row(s) failed the shape predicate; first bad row: {bad[0]!r}"
+
+
+def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
+    """With every stock mloda plugin loaded (``ReadDBFeature`` included), each case still resolves to its own group.
+
+    Runs in a subprocess so ``PluginLoader.all()`` never changes matching for the rest of this pytest process.
+    """
+    code = textwrap.dedent(
+        f"""
+        import sys
+        from pathlib import Path
+
+        from mloda.user import PluginLoader
+
+        PluginLoader.all()
+
+        from open_kgo.feature_groups.kg.tests._family_cases import CASES
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
+
+        failures = []
+        for index, case in enumerate(CASES):
+            case_dir = Path({str(tmp_path)!r}) / str(index)
+            case_dir.mkdir()
+            try:
+                rows = run_query(case.connector_id, case.make_slot(case_dir), case.feature)
+                if not rows or not all(case.assert_row(row) for row in rows):
+                    failures.append((case.connector_id, rows[:1]))
+            except Exception as exc:
+                failures.append((case.connector_id, repr(exc)[:300]))
+        sys.exit(repr(failures) if failures else 0)
+        """
+    )
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr

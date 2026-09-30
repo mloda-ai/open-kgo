@@ -57,6 +57,7 @@ class FileFixtureRestReader(RestPublicReader):
 
     PROPERTY_MAPPING: ClassVar[dict[str, Any]] = narrow_property_mapping(RestPublicReader.PROPERTY_MAPPING, "page_size")
     PARAMS_MAPPING: ClassVar[dict[str, Any]] = {}
+    ROWS_FROM_SLOT: ClassVar[bool] = True
 
     SUPPORTED_VALUES: ClassVar[Mapping[str, frozenset[Any]]] = {
         "pagination_style": frozenset({"cursor"}),

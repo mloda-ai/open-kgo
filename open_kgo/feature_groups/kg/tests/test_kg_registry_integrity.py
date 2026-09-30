@@ -8,7 +8,11 @@ tag drawn from the documented vocabularies.
 
 from __future__ import annotations
 
+import ast
+import sys
 from collections import defaultdict
+from importlib.metadata import EntryPoint, entry_points
+from pathlib import Path
 
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase
 from open_kgo.feature_groups.kg.tests._discovery import family_of, family_subpackages, walk_subclasses
@@ -74,3 +78,45 @@ def test_registry_tags_use_known_vocabularies() -> None:
             f"{case.connector_id}: unknown fixture_scope {case.fixture_scope!r}"
         )
         assert case.setup in SETUPS, f"{case.connector_id}: unknown setup {case.setup!r}"
+
+
+def _open_kgo_entry_points(group: str) -> list[EntryPoint]:
+    eps = [ep for ep in entry_points(group=group) if ep.dist is not None and ep.dist.name == "open-kgo"]
+    assert eps, f"no open-kgo '{group}' entry points installed; run `uv sync` to refresh the package metadata."
+    return eps
+
+
+def _family(module: str) -> str:
+    return module.removeprefix("open_kgo.feature_groups.kg.").split(".")[0]
+
+
+def test_entry_points_register_every_connector_once_per_family() -> None:
+    """One ``mloda.feature_groups`` entry point per family, together covering exactly the discovered connectors."""
+    by_family: dict[str, set[str]] = {}
+    for ep in _open_kgo_entry_points("mloda.feature_groups"):
+        family = _family(ep.module)
+        assert family not in by_family, f"two entry points for family {family!r}"
+        classes = ep.load()
+        assert {_family(c.__module__) for c in classes} == {family}, f"{ep.name} mixes families: {classes}"
+        by_family[family] = {c.READER_CLASS.CONNECTOR_ID for c in classes}
+
+    assert set(by_family) == family_subpackages()
+    assert set().union(*by_family.values()) == discovered_connector_ids()
+
+
+def test_every_family_with_third_party_imports_declares_its_optional_roots() -> None:
+    """A family module's top-level third-party import must be a declared root, or a missing extra aborts all()."""
+    declared = {ep.name: set(ep.load()) for ep in _open_kgo_entry_points("mloda.optional_dependencies")}
+    first_party = {"open_kgo", "mloda", "mloda_plugins"}
+    for ep in _open_kgo_entry_points("mloda.feature_groups"):
+        family = _family(ep.module)
+        roots: set[str] = set()
+        for module in (Path(__file__).resolve().parent.parent / family).glob("*.py"):
+            for node in ast.parse(module.read_text(encoding="utf-8")).body:
+                if isinstance(node, ast.Import):
+                    roots.update(alias.name.split(".")[0] for alias in node.names)
+                elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+                    roots.add(node.module.split(".")[0])
+        third_party = roots - set(sys.stdlib_module_names) - first_party - {"__future__"}
+        undeclared = third_party - declared.get(ep.name, set())
+        assert not undeclared, f"{ep.name}: undeclared optional roots {sorted(undeclared)}"

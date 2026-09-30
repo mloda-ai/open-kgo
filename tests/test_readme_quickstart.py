@@ -11,7 +11,10 @@ of skipping the test, hence the explicit errors in _quickstart_snippet.
 
 from __future__ import annotations
 
+import json
 import re
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -73,9 +76,30 @@ def _quickstart_snippet() -> str:
     return "\n".join(body) + "\n"
 
 
+# Appended to the snippet so the subprocess reports what the guards below assert on.
+_REPORT = """
+import json as _json
+_rows = [_row for _partition in partitions for _row in _partition.get(feature.name, [])]
+print(_json.dumps({"feature": feature.name, "rows": len(_rows)}))
+"""
+
+
 @pytest.fixture(scope="module")
 def snippet() -> str:
     return _quickstart_snippet()
+
+
+@pytest.fixture(scope="module")
+def quickstart_run(snippet: str, tmp_path_factory: pytest.TempPathFactory) -> tuple[Path, dict[str, Any]]:
+    """Run the snippet in a tmp-dir subprocess, keeping ``PluginLoader.all()`` out of this pytest process."""
+    workdir = tmp_path_factory.mktemp("quickstart")
+    result = subprocess.run(
+        [sys.executable, "-c", snippet + _REPORT], cwd=workdir, capture_output=True, text=True, check=False
+    )
+    assert result.returncode == 0, (
+        f"Quickstart snippet failed; it must bind 'feature' and 'partitions' for this guard to read.\n{result.stderr}"
+    )
+    return workdir, json.loads(result.stdout.strip().splitlines()[-1])
 
 
 def test_the_quickstart_block_is_locatable(snippet: str) -> None:
@@ -83,37 +107,17 @@ def test_the_quickstart_block_is_locatable(snippet: str) -> None:
     assert "mloda.run_all" in snippet, f"Quickstart snippet no longer calls mloda.run_all:\n{snippet}"
 
 
-def test_the_quickstart_snippet_runs_and_returns_rows(
-    snippet: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_the_quickstart_snippet_runs_and_returns_rows(quickstart_run: tuple[Path, dict[str, Any]]) -> None:
     """Run the snippet verbatim and assert it produces signal, not just absence of errors."""
-    # The snippet writes sample.ttl into the current directory, so it must not run in the repo tree.
-    monkeypatch.chdir(tmp_path)
-
-    namespace: dict[str, Any] = {"__name__": "__readme_quickstart__"}
-    exec(compile(snippet, f"{README.name}:Quickstart", "exec"), namespace)
-
-    feature = namespace.get("feature")
-    assert feature is not None, "Quickstart snippet no longer binds a 'feature' name this guard can read."
-
-    partitions = namespace.get("partitions")
-    assert partitions is not None, "Quickstart snippet no longer binds a 'partitions' name this guard can read."
-
-    rows = [row for partition in partitions for row in partition.get(feature.name, [])]
-    assert rows, (
-        f"Quickstart ran but returned no rows for {feature.name}. "
+    _, report = quickstart_run
+    assert report["rows"], (
+        f"Quickstart ran but returned no rows for {report['feature']}. "
         "The snippet queries a three-triple graph with two foaf:knows statements, so it should match."
     )
 
 
-def test_the_quickstart_writes_nothing_into_the_repository(
-    snippet: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """sample.ttl belongs in the tmp dir; a chdir regression here would dirty the working tree."""
-    monkeypatch.chdir(tmp_path)
-
-    namespace: dict[str, Any] = {"__name__": "__readme_quickstart__"}
-    exec(compile(snippet, f"{README.name}:Quickstart", "exec"), namespace)
-
-    assert (tmp_path / "sample.ttl").is_file(), "Quickstart no longer writes sample.ttl where this guard expects it."
+def test_the_quickstart_writes_nothing_into_the_repository(quickstart_run: tuple[Path, dict[str, Any]]) -> None:
+    """sample.ttl belongs in the tmp dir; a cwd regression here would dirty the working tree."""
+    workdir, _ = quickstart_run
+    assert (workdir / "sample.ttl").is_file(), "Quickstart no longer writes sample.ttl where this guard expects it."
     assert not (REPO_ROOT / "sample.ttl").exists(), "Quickstart wrote sample.ttl into the repository working tree."

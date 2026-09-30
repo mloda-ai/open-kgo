@@ -33,11 +33,12 @@ pip install "open-kgo[kg-all]"
 ```python
 from pathlib import Path
 
-from mloda.user import DataAccessCollection, Feature, Options, mloda
+from mloda.user import DataAccessCollection, Feature, Options, PluginLoader, mloda
 
-# Importing the plugin module registers the rdflib_sparql feature group.
-import open_kgo.feature_groups.kg.rdf.rdflib_sparql  # noqa: F401
 from open_kgo.feature_groups.kg.base import PythonDictFramework
+
+# Discovers every installed open-kgo family through its entry point.
+PluginLoader.all()
 
 # Point at any RDF file. Here: a three-triple sample written on the spot.
 ttl = Path("sample.ttl")
@@ -71,6 +72,10 @@ for partition in partitions:
 ```
 
 Swap `rdflib_sparql` for any of the nine connector families below: same `Feature` to `mloda.run_all` shape, different reader.
+
+A family whose extra is not installed is skipped with a warning and listed by `PluginLoader.skipped_plugins()`. Importing a connector module (`import open_kgo.feature_groups.kg.rdf.rdflib_sparql`) registers just that connector.
+
+Lineage and tracing extenders see the connector's source path (credentials stripped) as `data_access_identity`. Readers whose rows depend on the credentials alone (`CycloneDxSbomReader`, `FileFixtureRestReader`, `FileFixturePagedRestReader`) answer `count_rows` before a run, e.g. on a `mloda.explain` step's `reader_data_access`; the others return `None`.
 
 ## The nine connector families
 
