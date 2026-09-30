@@ -18,7 +18,7 @@ mloda-testing = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 overrides = [
-    { name = "mloda", specifier = ">=0.12.0,<0.13.0" },
+    { name = "mloda", specifier = ">=0.14.0,<0.15.0" },
     { name = "pymdown-extensions", specifier = ">=11.0.1" },
 ]
 
@@ -722,15 +722,15 @@ wheels = [
 
 [[package]]
 name = "mloda"
-version = "0.12.0"
+version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/11/ab48cc710e3a3f31afc8fe20f657d809b4c6e71b154526e36076dc310201/mloda-0.12.0-py3-none-any.whl", hash = "sha256:9f9c99e481fc708430cd5e60ea118d329f9711c5ddb4469c397d3487fe9e93f8", size = 557501, upload-time = "2026-09-05T07:27:13.671Z" },
+    { url = "https://files.pythonhosted.org/packages/9a/c3/cf2567d0c4f78ad7d3ea6c30efe67e5eb1e14e63e12d8009c6baa136f3ef/mloda-0.14.0-py3-none-any.whl", hash = "sha256:783313ed9cda0c25619085f4ce9e34eb3eec78425895963a6328ddf5d1045eb7", size = 599228, upload-time = "2026-09-24T11:20:23.5Z" },
 ]
 
 [[package]]
 name = "mloda-testing"
-version = "0.4.6"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "mloda" },
@@ -738,7 +738,7 @@ dependencies = [
     { name = "pytest" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6d/61/0de3421279066f0f319832db7ea75a77cb8088c1608b7fa5d6c461664c5b/mloda_testing-0.4.6-py3-none-any.whl", hash = "sha256:5a3116740dd2af7f17130838c916621542c994830ee1c2a2016f57d346cff56e", size = 135030, upload-time = "2026-09-05T07:58:10.718Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/1e/150bdd3ecbb90e5c4f48dd6074a32e3c8362b0630c5a6fe9345466e8dcca/mloda_testing-0.5.0-py3-none-any.whl", hash = "sha256:6eb04ed39feb73bcb0ffac8e8d6b3b0b4e13b64b181306ccf3b35e8e3de02eb0", size = 179782, upload-time = "2026-09-29T09:37:56.561Z" },
 ]
 
 [[package]]
@@ -980,8 +980,8 @@ requires-dist = [
     { name = "igraph", marker = "extra == 'kg-embedded'", specifier = ">=0.11" },
     { name = "kuzu", marker = "extra == 'kg-network-pg'", specifier = ">=0.4" },
     { name = "marimo", marker = "extra == 'demo'" },
-    { name = "mloda", specifier = ">=0.12.0,<0.13.0" },
-    { name = "mloda-testing", marker = "extra == 'dev'", specifier = ">=0.4.6" },
+    { name = "mloda", specifier = ">=0.14.0,<0.15.0" },
+    { name = "mloda-testing", marker = "extra == 'dev'", specifier = ">=0.5.0" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "networkx", marker = "extra == 'kg-embedded'", specifier = ">=3.2" },
     { name = "networkx", marker = "extra == 'kg-memory'", specifier = ">=3.2" },
