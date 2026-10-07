@@ -123,7 +123,7 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
                 dac = DataAccessCollection(credentials=Credential({{case.connector_id: slot}}))
                 values = {{
                     str(value)
-                    for partition in mloda.run_all([maxed], data_access_collection=dac)
+                    for partition in mloda.run_all([maxed], data_access_collection=dac, output_framework="PyArrowTable")
                     for value in partition[maxed.name].to_pylist()
                 }}
                 if len(values) != 1 or not values <= {{str(row[key]) for row in rows}}:

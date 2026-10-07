@@ -17,7 +17,7 @@ import pytest
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.provider import BaseInputData
-from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
+from mloda.user import Credential, DataAccessCollection, Feature, mloda
 
 from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
 from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query, scoped_feature
@@ -55,11 +55,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
         rows = run_query(connector_id, creds, feat)
         assert rows, f"{self.connector_reader_class().__name__}: projection test needs >= 1 row."
         key = sorted(rows[0])[0]
-        # Fresh options per feature: mloda writes the matched reader into them.
-        pair = [
-            Feature(name, options=Options(group=dict(feat.options.group), context=dict(feat.options.context)))
-            for name in (feat.name, f"{feat.name}~{key}")
-        ]
+        pair = [Feature(name, options=feat.options) for name in (feat.name, f"{feat.name}~{key}")]
         dac = DataAccessCollection(credentials=Credential({connector_id: creds}))
         requested: list[Feature | str] = list(pair)
         partitions = mloda.run_all(requested, compute_frameworks=[PythonDictFramework], data_access_collection=dac)
@@ -198,12 +194,12 @@ class LoadBehaviorContract(KgContractAdapterBase):
             run_query(cls.CONNECTOR_ID, slot, feat), key=canonical_row_key
         )
 
-        def planned_access(features: list[Feature], **kwargs: Any) -> list[str]:
+        def planned_access(features: list[Feature | str], **kwargs: Any) -> list[str]:
             plan = mloda.explain(features, compute_frameworks=[PythonDictFramework], **kwargs)
             return [repr(step.reader_data_access[1]) for step in plan if step.reader_data_access is not None]
 
         pinned = planned_access([scoped_feature(cls, slot, feat)])
-        assert pinned, f"{cls.__name__}: the plan carries no reader data access."
+        assert pinned and all("***" in text for text in pinned), pinned
         dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
         assert pinned == planned_access([feat], data_access_collection=dac)
 

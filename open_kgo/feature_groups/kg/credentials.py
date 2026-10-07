@@ -37,7 +37,8 @@ class CredentialRules:
         be indistinguishable from "this connector's slot is absent" and
         silently mismatch. Raise ``InvalidCredentialShape`` so the typo
         surfaces loudly. mloda hands readers dicts only (``Credential`` and a
-        pinned slot become a redacting dict subclass), so a non-dict ``credentials`` is not ours.
+        pinned slot become a redacting dict subclass), so a non-dict
+        ``credentials`` is not ours.
         """
         if not isinstance(credentials, dict):
             return None
