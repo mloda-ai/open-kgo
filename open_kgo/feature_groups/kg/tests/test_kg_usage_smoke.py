@@ -32,7 +32,7 @@ class KgRowCount(FeatureGroup):
     @classmethod
     def input_features(cls, options: Options, feature_name: FeatureName) -> set[Feature] | None:
         source = _CASES_BY_CONNECTOR[options.get("kg_case")].feature
-        # A fresh copy: mloda writes the matched reader into the input feature's options.
+        # A fresh copy: mloda stamps the matched reader onto the input Feature.
         return {Feature(source.name, options=Options(context=dict(source.options.context)))}
 
     @classmethod

@@ -5,7 +5,7 @@
 ``PythonDictFramework``. This means contract tests verify the real reader
 matching, validation, and load chain, not a pre-bound shortcut. If
 ``CONNECTOR_ID`` matching, ``is_valid_credentials`` discovery, the
-subclass-walk wiring, or the load-side feature-name wrap regresses, the
+per-group reader wiring, or the load-side feature-name wrap regresses, the
 failure surfaces here rather than silently passing.
 
 Zero-result paths (citation ``stable_id=NOT_THERE``, an empty fixture dir,
@@ -30,8 +30,8 @@ from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, PythonDictFra
 def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -> list[Any]:
     """Run a feature through ``mloda.run_all`` against a single KG connector.
 
-    mloda walks ``KgConnectorReaderBase`` subclasses and selects the one whose
-    ``CONNECTOR_ID`` slot is present in ``credentials``. ``Credential`` marks
+    The KG FeatureGroup owning ``feature`` probes its own reader, which accepts
+    when its ``CONNECTOR_ID`` slot is in ``credentials``. ``Credential`` marks
     ``{CONNECTOR_ID: slot}`` as one credential (a bare dict would read as
     ``{handle: value}``). The selected reader's ``load`` wraps native KG rows into a single
     ``{feature_name: [row, ...]}`` column that the stock
@@ -53,13 +53,18 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     return [row for partition in partitions for row in partition.get(feature.name, [])]
 
 
-def run_scoped_query(reader: type[KgConnectorReaderBase], slot_creds: dict[str, Any], feature: Feature) -> list[Any]:
-    """Like ``run_query``, but the credentials ride on the feature's options under the reader's name (no DAC)."""
+def scoped_feature(reader: type[KgConnectorReaderBase], slot_creds: dict[str, Any], feature: Feature) -> Feature:
+    """A copy of ``feature`` whose credentials ride on its options under the reader's name (no DAC)."""
     options = Options(
         group=dict(feature.options.group),
         context={**feature.options.context, reader.data_access_name(): {reader.CONNECTOR_ID: slot_creds}},
     )
-    scoped = Feature(feature.name, options=options)
+    return Feature(feature.name, options=options)
+
+
+def run_scoped_query(reader: type[KgConnectorReaderBase], slot_creds: dict[str, Any], feature: Feature) -> list[Any]:
+    """Like ``run_query``, but via ``scoped_feature``."""
+    scoped = scoped_feature(reader, slot_creds, feature)
     partitions = mloda.run_all([scoped], compute_frameworks=[PythonDictFramework])
     return [row for partition in partitions for row in partition.get(scoped.name, [])]
 

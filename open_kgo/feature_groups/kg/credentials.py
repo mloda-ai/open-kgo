@@ -36,8 +36,8 @@ class CredentialRules:
         misuse: the slot key is present but malformed, which would otherwise
         be indistinguishable from "this connector's slot is absent" and
         silently mismatch. Raise ``InvalidCredentialShape`` so the typo
-        surfaces loudly. mloda hands readers plain dicts only (``Credential``
-        is unwrapped at registration), so a non-dict ``credentials`` is not ours.
+        surfaces loudly. mloda hands readers dicts only (``Credential`` and a
+        pinned slot become a redacting dict subclass), so a non-dict ``credentials`` is not ours.
         """
         if not isinstance(credentials, dict):
             return None

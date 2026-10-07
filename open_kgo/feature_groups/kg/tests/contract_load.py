@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import copy
 import os
+from typing import Any
 
 import pytest
 
@@ -19,7 +20,7 @@ from mloda.provider import BaseInputData
 from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
 
 from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
-from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query
+from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query, scoped_feature
 from open_kgo.feature_groups.kg.tests.contract_adapters import KgContractAdapterBase
 
 _SECRET = "s3cr3t-must-not-leak"
@@ -184,7 +185,10 @@ class LoadBehaviorContract(KgContractAdapterBase):
         )
 
     def test_feature_scoped_data_access_matches_the_global_path(self) -> None:
-        """Credentials on the feature's options under the reader's name select only this reader, same rows."""
+        """Credentials on the feature's options under the reader's name select only this reader, same rows.
+
+        The pinned slot reaches the plan redacted, like a ``DataAccessCollection`` credential.
+        """
         cls = self.connector_reader_class()
         slot = self.valid_credentials()[cls.CONNECTOR_ID]
         feat = self.feature_under_test()
@@ -193,6 +197,15 @@ class LoadBehaviorContract(KgContractAdapterBase):
         assert sorted(scoped, key=canonical_row_key) == sorted(
             run_query(cls.CONNECTOR_ID, slot, feat), key=canonical_row_key
         )
+
+        def planned_access(features: list[Feature], **kwargs: Any) -> list[str]:
+            plan = mloda.explain(features, compute_frameworks=[PythonDictFramework], **kwargs)
+            return [repr(step.reader_data_access[1]) for step in plan if step.reader_data_access is not None]
+
+        pinned = planned_access([scoped_feature(cls, slot, feat)])
+        assert pinned, f"{cls.__name__}: the plan carries no reader data access."
+        dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
+        assert pinned == planned_access([feat], data_access_collection=dac)
 
     def test_data_access_identity_names_the_source_and_no_secret(self) -> None:
         """The identity extenders see on INPUT_DATA_LOAD is the source (or mloda's default), never a secret."""
