@@ -186,19 +186,23 @@ _OWN = _FakeReader.CONNECTOR_ID
 
 
 @pytest.mark.parametrize(
-    ("feature_name", "claimed"),
+    ("feature_name", "claimed", "in_namespace"),
     [
-        (f"{_OWN}__knows", True),
-        (f"{_OWN}__knows__sum_aggr", False),
-        (f"{_OWN}__", False),
-        (f"{_OWN}___sum_aggr", False),
-        (_OWN, False),
-        ("unrelated_consumer", False),
-        (f"{_OtherFakeReader.CONNECTOR_ID}__knows", False),
+        (f"{_OWN}__knows", True, True),
+        (f"{_OWN}__knows__sum_aggr", False, True),
+        (f"{_OWN}__", False, True),
+        (f"{_OWN}___sum_aggr", False, True),
+        (_OWN, False, False),
+        ("unrelated_consumer", False, False),
+        (f"{_OtherFakeReader.CONNECTOR_ID}__knows", False, False),
     ],
 )
-def test_check_feature_in_data_access_claims_only_own_single_level_names(feature_name: str, claimed: bool) -> None:
+def test_check_feature_in_data_access_claims_only_own_single_level_names(
+    feature_name: str, claimed: bool, in_namespace: bool
+) -> None:
+    """``claims_feature_name`` gates the credential probe on the prefix; the full shape check comes after it."""
     assert _FakeReader.check_feature_in_data_access(feature_name, {}) is claimed
+    assert _FakeReader.claims_feature_name(feature_name) is in_namespace
 
 
 def test_is_valid_credentials_swallows_runtime_error_from_misbehaving_mapping() -> None:

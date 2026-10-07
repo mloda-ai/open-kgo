@@ -17,7 +17,7 @@ import pytest
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.provider import BaseInputData
-from mloda.user import Credential, DataAccessCollection, Feature, mloda
+from mloda.user import Credential, DataAccessCollection, Feature, FeatureResolutionError, Options, mloda
 
 from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
 from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query, scoped_feature
@@ -183,7 +183,8 @@ class LoadBehaviorContract(KgContractAdapterBase):
     def test_feature_scoped_data_access_matches_the_global_path(self) -> None:
         """Credentials on the feature's options under the reader's name select only this reader, same rows.
 
-        The pinned slot reaches the plan redacted, like a ``DataAccessCollection`` credential.
+        The pinned slot reaches the plan redacted, like a ``DataAccessCollection`` credential; a pin under another
+        slot key fails naming the pinned reader.
         """
         cls = self.connector_reader_class()
         slot = self.valid_credentials()[cls.CONNECTOR_ID]
@@ -202,6 +203,11 @@ class LoadBehaviorContract(KgContractAdapterBase):
         assert pinned and all("***" in text for text in pinned), pinned
         dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
         assert pinned == planned_access([feat], data_access_collection=dac)
+
+        context = {**feat.options.context, cls.data_access_name(): {"wrong_key": slot}}
+        mispinned = Feature(feat.name, options=Options(group=dict(feat.options.group), context=context))
+        with pytest.raises(FeatureResolutionError, match=f"{cls.__name__} is pinned for feature"):
+            mloda.run_all([mispinned], compute_frameworks=[PythonDictFramework])
 
     def test_data_access_identity_names_the_source_and_no_secret(self) -> None:
         """The identity extenders see on INPUT_DATA_LOAD is the source (or mloda's default), never a secret."""
