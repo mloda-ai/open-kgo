@@ -312,3 +312,31 @@ def test_connect_raises_on_unknown_credential_key() -> None:
     creds = {_RequiredKeyReader.CONNECTOR_ID: {"locator": "/tmp/x", "definitely_not_a_kg_key": "bad"}}
     with pytest.raises(InvalidCredentialShape):
         _RequiredKeyReader.connect(creds)
+
+
+# --- strict-enum membership with unhashable values ---------------------------
+
+
+@pytest.mark.parametrize("bad_value", [["a"], {"a": 1}, {"a"}, [["nested"]]])
+def test_validate_shape_raises_typed_for_unhashable_value_on_narrowed_strict_key(bad_value: Any) -> None:
+    """A list/dict/set on a strict key narrowed via ``SUPPORTED_VALUES`` raises the typed error.
+
+    The membership check used to raise a raw ``TypeError`` ("unhashable type")
+    instead of ``InvalidCredentialShape``. The message names the key and the
+    value's type but never echoes the container contents.
+    """
+    from open_kgo.feature_groups.kg.rdf.rdflib_sparql import RdfLibSparqlReader
+
+    with pytest.raises(InvalidCredentialShape, match="result_format") as exc_info:
+        RdfLibSparqlReader._validate_shape({"locator": "x", "result_format": bad_value})
+    assert type(bad_value).__name__ in str(exc_info.value)
+    assert repr(bad_value) not in str(exc_info.value)
+
+
+@pytest.mark.parametrize("bad_value", [["tenant_a"], {"tenant_a": 1}])
+def test_validate_shape_raises_typed_for_unhashable_value_on_allowed_values_strict_key(bad_value: Any) -> None:
+    """Same guarantee for a strict key checked against the spec's ``allowed_values`` (non-narrowed path)."""
+    from open_kgo.feature_groups.kg.saas_authz.in_process_tuple_store import InProcessTupleStoreReader
+
+    with pytest.raises(InvalidCredentialShape, match="tenant"):
+        InProcessTupleStoreReader._validate_shape({"tenant": bad_value})

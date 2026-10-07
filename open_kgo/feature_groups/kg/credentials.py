@@ -151,17 +151,46 @@ class CredentialRules:
             if spec.strict_validation is True:
                 narrowed = cls.SUPPORTED_VALUES.get(key)
                 if narrowed is not None:
-                    if value not in narrowed:
+                    if not cls._is_member(value, narrowed):
                         raise InvalidCredentialShape(
-                            f"{cls.CONNECTOR_ID}.{key}={value!r} is not supported by this connector "
-                            f"(supported: {sorted(narrowed)})"
+                            f"{cls.CONNECTOR_ID}.{key}={cls._describe_value(value)} is not supported by this "
+                            f"connector (supported: {sorted(narrowed)})"
                         )
                 else:
                     allowed = cls._spec_allowed_values(key, spec)
-                    if value not in allowed:
+                    if not cls._is_member(value, allowed):
                         raise InvalidCredentialShape(
-                            f"{cls.CONNECTOR_ID}: {kind} {key!r}={value!r} is not in allowed set {sorted(allowed)}"
+                            f"{cls.CONNECTOR_ID}: {kind} {key!r}={cls._describe_value(value)} "
+                            f"is not in allowed set {sorted(allowed)}"
                         )
+
+    @staticmethod
+    def _is_member(value: Any, allowed: Any) -> bool:
+        """Membership test that treats an unhashable value as "not in the allowed set".
+
+        ``value in <set>`` raises a raw ``TypeError`` for a list, dict, or other
+        unhashable value. The allowed sets only ever hold hashable members, so an
+        unhashable value can never match and must surface as the typed
+        ``InvalidCredentialShape`` rather than a ``TypeError``.
+        """
+        try:
+            return value in allowed
+        except TypeError:
+            return False
+
+    @staticmethod
+    def _describe_value(value: Any) -> str:
+        """Render a rejected value for an error message.
+
+        Hashable values are echoed with ``repr``. An unhashable value is described
+        by its type name only, so the message never echoes arbitrary container
+        contents (which may carry secrets).
+        """
+        try:
+            hash(value)
+        except TypeError:
+            return f"<unhashable {type(value).__name__}>"
+        return repr(value)
 
     @staticmethod
     def _spec_allowed_values(key: str, spec: PropertySpec) -> set[Any]:
