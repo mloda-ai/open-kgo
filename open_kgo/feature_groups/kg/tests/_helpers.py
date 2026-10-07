@@ -47,7 +47,7 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     dac = DataAccessCollection(credentials=Credential({connector_id: slot_creds}))
     partitions = mloda.run_all(
         [feature],
-        compute_frameworks={PythonDictFramework},
+        compute_frameworks=[PythonDictFramework],
         data_access_collection=dac,
     )
     return [row for partition in partitions for row in partition.get(feature.name, [])]
@@ -60,7 +60,7 @@ def run_scoped_query(reader: type[KgConnectorReaderBase], slot_creds: dict[str, 
         context={**feature.options.context, reader.data_access_name(): {reader.CONNECTOR_ID: slot_creds}},
     )
     scoped = Feature(feature.name, options=options)
-    partitions = mloda.run_all([scoped], compute_frameworks={PythonDictFramework})
+    partitions = mloda.run_all([scoped], compute_frameworks=[PythonDictFramework])
     return [row for partition in partitions for row in partition.get(scoped.name, [])]
 
 

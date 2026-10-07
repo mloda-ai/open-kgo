@@ -361,7 +361,7 @@ def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
     _dac = DataAccessCollection(credentials=Credential(networkx_embedded=_creds))
     _partitions = mloda.run_all(
         [_feat],
-        compute_frameworks={PythonDictFramework},
+        compute_frameworks=[PythonDictFramework],
         data_access_collection=_dac,
     )
     _rows = [row for part in _partitions for row in part.get(_feat.name, [])]
@@ -447,7 +447,7 @@ def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
     _dac = _DAC(credentials=_Credential(kuzu_cypher=_kuzu_creds))
     _partitions = _mloda.run_all(
         [_feat],
-        compute_frameworks={_PdFW},
+        compute_frameworks=[_PdFW],
         data_access_collection=_dac,
     )
     _kuzu_rows = [row for part in _partitions for row in part.get(_feat.name, [])]

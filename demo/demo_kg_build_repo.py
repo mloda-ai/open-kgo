@@ -222,7 +222,7 @@ def helpers():
         )
         partitions = _mloda.run_all(
             [feat],
-            compute_frameworks={_PythonDictFramework},
+            compute_frameworks=[_PythonDictFramework],
             data_access_collection=dac,
         )
         return [row for partition in partitions for row in partition.get(feat.name, [])]

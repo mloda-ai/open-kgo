@@ -69,7 +69,7 @@ def test_consumer_takes_kg_feature_as_input_in_one_run(case: ConnectorCase, tmp_
     """With the connector's credentials present, the KG reader leaves the consumer's unrelated name alone."""
     dac = DataAccessCollection(credentials=Credential({case.connector_id: case.make_slot(tmp_path)}))
     consumer = Feature("KgRowCount", options=Options(context={"kg_case": case.connector_id}))
-    partitions = mloda.run_all([consumer], compute_frameworks={PythonDictFramework}, data_access_collection=dac)
+    partitions = mloda.run_all([consumer], compute_frameworks=[PythonDictFramework], data_access_collection=dac)
     counts = [count for partition in partitions for count in partition.get(consumer.name, [])]
     assert counts and set(counts) == {len(counts)}, f"{case.connector_id}: got {counts!r}"
 

@@ -61,7 +61,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
         ]
         dac = DataAccessCollection(credentials=Credential({connector_id: creds}))
         requested: list[Feature | str] = list(pair)
-        partitions = mloda.run_all(requested, compute_frameworks={PythonDictFramework}, data_access_collection=dac)
+        partitions = mloda.run_all(requested, compute_frameworks=[PythonDictFramework], data_access_collection=dac)
         for feature, expected in zip(pair, (rows, [row.get(key) for row in rows])):
             got = [value for partition in partitions for value in partition.get(feature.name, [])]
             assert sorted(got, key=canonical_row_key) == sorted(expected, key=canonical_row_key), feature.name

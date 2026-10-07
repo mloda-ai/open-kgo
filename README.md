@@ -60,7 +60,7 @@ feature = Feature(
 
 partitions = mloda.run_all(
     [feature],
-    compute_frameworks={PythonDictFramework},
+    compute_frameworks=[PythonDictFramework],
     data_access_collection=DataAccessCollection(
         credentials=Credential(rdflib_sparql={"locator": str(ttl), "result_limit": 100}),
     ),

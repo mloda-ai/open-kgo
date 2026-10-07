@@ -45,13 +45,15 @@ class _WrapFakeReader(KgConnectorReaderBase):
         super().__init__()
         self._rows = rows
 
-    def init_reader(self, options: Any) -> tuple[Any, Any]:
+    def init_reader(self, reader_data_access: Any) -> tuple[Any, Any]:
         return _StubRowSource(self._rows), None
 
 
 def _feature_set(*features: Feature) -> FeatureSet:
+    """Stamps the reader match mloda sets during matching, which ``BaseInputData.load`` requires."""
     fs = FeatureSet()
     for feature in features:
+        feature.input_data_match = (_WrapFakeReader, None)
         fs.add(feature)
     return fs
 
