@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 import pytest
-from rdflib import XSD, BNode, Literal, URIRef
+from rdflib import RDF, XSD, BNode, Literal, URIRef
 
 from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
 
@@ -117,11 +117,14 @@ class TestRdfLibSparqlReader(RdfContractTestBase):
             (Literal("abc", datatype=XSD.integer), "abc"),
             (Literal("x", lang="en"), "x"),
             (BNode("b1"), "b1"),
+            (Literal(str(2**70), datatype=XSD.integer), str(2**70)),
+            (Literal("P1Y", datatype=XSD.duration), "P1Y"),
+            (Literal("<a/>", datatype=RDF.XMLLiteral), "<a/>"),
             (None, None),
         ],
     )
     def test_project_value_falls_back_to_str(self, term: Any, expected: Any) -> None:
-        """Ill-typed literals and blank nodes project as ``str``; an unbound OPTIONAL stays ``None``."""
+        """Terms with no Arrow-readable Python value project as ``str``; an unbound OPTIONAL stays ``None``."""
         projected = RdfLibSparqlReader._project_value(term)
         assert projected == expected and type(projected) is type(expected)
 

@@ -15,6 +15,10 @@ from typing import Any
 
 import pytest
 
+from mloda.core.abstract_plugins.components.declared_attributes import (
+    DeclarationRequirement,
+    declaration_requirement_scope,
+)
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.provider import BaseInputData
 from mloda.user import Credential, DataAccessCollection, Feature, FeatureResolutionError, Options, mloda
@@ -205,10 +209,29 @@ class LoadBehaviorContract(KgContractAdapterBase):
         dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
         assert pinned == planned_access([feat], data_access_collection=dac)
 
-        context = {**feat.options.context, cls.data_access_name(): {"wrong_key": slot}}
-        mispinned = Feature(feat.name, options=Options(group=dict(feat.options.group), context=context))
-        with pytest.raises(FeatureResolutionError, match=f"{cls.__name__} is pinned for feature"):
-            mloda.run_all([mispinned], compute_frameworks=[PythonDictFramework])
+        wrong_slot = {**feat.options.context, cls.data_access_name(): {"wrong_key": slot}}
+        for mispinned in (
+            Feature(feat.name, options=Options(group=dict(feat.options.group), context=wrong_slot)),
+            Feature("unclaimed__feature", options=Options(context={cls.data_access_name(): {cls.CONNECTOR_ID: slot}})),
+        ):
+            with pytest.raises(FeatureResolutionError, match=f"{cls.__name__} is pinned for feature"):
+                mloda.run_all([mispinned], compute_frameworks=[PythonDictFramework])
+
+    def test_unmet_declaration_requirement_declines_both_paths(self) -> None:
+        """A consumer requirement this reader's declarations miss declines the pinned and the collection match."""
+        cls = self.connector_reader_class()
+        slot = self.valid_credentials()[cls.CONNECTOR_ID]
+        feat = self.feature_under_test()
+        dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
+        requirement = DeclarationRequirement("consumer", {"no_such_key": None}, cls, {})
+
+        def pinned_options() -> Options:
+            return scoped_feature(cls, slot, feat).options
+
+        for scope, matched in ((None, True), (requirement, False)):
+            with declaration_requirement_scope(scope):
+                assert cls.feature_scope_data_access(pinned_options(), feat.name) is matched
+                assert (cls.match_data_access([feat.name], dac, feat.options)[0] is cls) is matched
 
     def test_data_access_identity_names_the_source_and_no_secret(self) -> None:
         """The identity extenders see on INPUT_DATA_LOAD is the source (or mloda's default), never a secret."""

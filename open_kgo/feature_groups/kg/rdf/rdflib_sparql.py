@@ -12,6 +12,8 @@ implemented in this prototype.
 
 from __future__ import annotations
 
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 from typing import Any, ClassVar, Mapping
 
 import rdflib
@@ -22,6 +24,10 @@ from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from open_kgo.feature_groups.kg.base import LoadContext
 from open_kgo.feature_groups.kg.fixtures import _rejected_scheme, load_rdf_graph
 from open_kgo.feature_groups.kg.rdf.base import RdfSparqlFeatureGroup, RdfSparqlReader
+
+
+# toPython() results a projected column keeps; anything else (XML documents, year-month durations) projects as str.
+_SCALARS = (bool, int, float, Decimal, str, bytes, date, datetime, time, timedelta)
 
 
 class RdfLibSparqlReader(RdfSparqlReader):
@@ -100,10 +106,13 @@ class RdfLibSparqlReader(RdfSparqlReader):
 
     @classmethod
     def _project_value(cls, value: Any) -> Any:
-        """Literals become Python values; IRIs, blank nodes and ill-typed literals become ``str``."""
-        if isinstance(value, (IdentifiedNode, Literal)):
-            value = value.toPython()
-        return str(value) if isinstance(value, Identifier) else value
+        """Literals become Python scalars; IRIs, blank nodes and any other term become ``str``."""
+        if not isinstance(value, Identifier):
+            return value
+        converted = value.toPython() if isinstance(value, (IdentifiedNode, Literal)) else value
+        if isinstance(converted, int) and not isinstance(converted, bool) and not -(2**63) <= converted < 2**63:
+            return str(value)
+        return converted if isinstance(converted, _SCALARS) and not isinstance(converted, Identifier) else str(value)
 
 
 class RdfLibSparqlFeatureGroup(RdfSparqlFeatureGroup):

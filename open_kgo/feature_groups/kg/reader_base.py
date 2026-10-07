@@ -70,6 +70,7 @@ from typing import Any, ClassVar, Mapping
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.core.abstract_plugins.components.match_rejection import (
     INPUT_DATA_OWNED_STAGE,
+    drop_match_rejections_since,
     match_rejection_owners,
     restamp_match_rejections_since,
 )
@@ -429,8 +430,6 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         for key in options.keys():
             if cls.deal_with_base_input_data_name_as_cls_or_str(key) != cls.data_access_name():
                 continue
-            if not cls.claims_feature_name(feature_name):
-                return False
             before_checks = match_rejection_owners()
             if cls._reader_options_admit(options, record_absence=True):
                 # As core does: the pinned slot reaches the plan as a redacting credential, not a plain dict.
@@ -443,6 +442,8 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
                 if matched:
                     unmet = cls._unmet_current_declaration()
                     if unmet is None:
+                        # Declines recorded on the way to this match must not mask a later failure reason.
+                        drop_match_rejections_since(before_checks)
                         cls.add_base_input_data_to_options(cls, matched, options)
                         return True
                     record_match_rejection(cls.get_class_name(), unmet, stage=INPUT_DATA_OWNED_STAGE)

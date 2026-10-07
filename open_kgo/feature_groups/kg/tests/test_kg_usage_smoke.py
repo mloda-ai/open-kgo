@@ -79,7 +79,8 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
 
     ``<case feature>__sum_aggr`` must resolve to the stock aggregation groups, never to the KG group, and
     ``<case feature>~<row_key>__max_aggr`` runs end to end with the case's context propagated to the input, as
-    does ``__sum_aggr`` over an rdflib ``xsd:integer`` projection. Runs in a subprocess so ``PluginLoader.all()`` never changes matching for the rest of this pytest process.
+    does ``__sum_aggr`` over an rdflib ``xsd:integer`` projection. Runs in a subprocess so ``PluginLoader.all()``
+    never changes matching for the rest of this pytest process.
     """
     code = textwrap.dedent(
         f"""
