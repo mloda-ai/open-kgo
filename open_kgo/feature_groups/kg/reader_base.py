@@ -68,6 +68,12 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+from mloda.core.abstract_plugins.components.match_rejection import (
+    INPUT_DATA_OWNED_STAGE,
+    drop_match_rejections_since,
+    match_rejection_owners,
+    restamp_match_rejections_since,
+)
 from mloda.provider import CHAIN_SEPARATOR, COLUMN_SEPARATOR, INPUT_DATA_STAGE, ComputeFramework, record_match_rejection
 from mloda.user import DataAccessCollection, Options
 from mloda_plugins.feature_group.input_data.read_db import ReadDB
@@ -325,7 +331,12 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
                 f"{cls.__name__}: no row carries key {key!r} requested by {feature_name!r}; "
                 f"row keys: {sorted({k for row in rows for k in row})}."
             )
-        return [row.get(key) for row in rows]
+        return [cls._project_value(row.get(key)) for row in rows]
+
+    @classmethod
+    def _project_value(cls, value: Any) -> Any:
+        """Hook for a projected cell; whole rows never pass through it. Identity by default."""
+        return value
 
     @classmethod
     def _assert_single_feature(cls, features: FeatureSet) -> None:
@@ -403,34 +414,48 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         return bool(name) and not name.startswith("_") and CHAIN_SEPARATOR not in name
 
     @classmethod
-    def _in_namespace(cls, feature_names: list[str]) -> bool:
-        """True if a name starts with ``<CONNECTOR_ID>__``; other names never probe this reader's credentials."""
-        prefix = f"{cls.CONNECTOR_ID}{CHAIN_SEPARATOR}"
-        return bool(cls.CONNECTOR_ID) and any(str(name).startswith(prefix) for name in feature_names)
+    def claims_feature_name(cls, feature_name: str) -> bool:
+        """Only ``<CONNECTOR_ID>__...`` names probe this reader's credentials."""
+        return bool(cls.CONNECTOR_ID) and str(feature_name).startswith(f"{cls.CONNECTOR_ID}{CHAIN_SEPARATOR}")
 
     @classmethod
     def is_final_reader(cls) -> bool:
-        # Hides KG readers from the stock ReadDBFeature's subclass walk; each KG FeatureGroup matches its own reader
-        # in feature_scope_data_access and match_data_access below.
+        # Hides KG readers from the stock ReadDBFeature's subclass walk (a final ReadDB would also match it and stop
+        # the stock read_dbs auto-load); each KG FeatureGroup matches its own reader in the two overrides below.
         return False
 
     @classmethod
     def feature_scope_data_access(cls, options: Options, feature_name: str) -> bool:
-        """Options keyed by this reader's name carry its data access; only this reader is probed."""
+        """Core's pinned-reader path for this reader alone: options keyed by its name carry its data access."""
         for key in options.keys():
             if cls.deal_with_base_input_data_name_as_cls_or_str(key) != cls.data_access_name():
                 continue
-            if not cls._in_namespace([feature_name]) or not cls._reader_options_admit(options, record_absence=True):
-                return False
-            # As core does: the pinned slot reaches the plan as a redacting credential, not a plain dict.
-            value = options.get(key)
-            wrapped = cls.wrap_feature_scoped_access(value)
-            if wrapped is not value:
-                options.set(key, wrapped)
-            matched = cls.match_subclass_data_access(wrapped, [feature_name], options=options)
-            if matched:
-                cls.add_base_input_data_to_options(cls, matched, options)
-                return True
+            before_checks = match_rejection_owners()
+            if cls._reader_options_admit(options, record_absence=True):
+                # As core does: the pinned slot reaches the plan as a redacting credential, not a plain dict.
+                value = options.get(key)
+                wrapped = cls.wrap_feature_scoped_access(value)
+                if wrapped is not value:
+                    options.set(key, wrapped)
+                known_owners = match_rejection_owners()
+                matched = cls.match_subclass_data_access(wrapped, [feature_name], options=options)
+                if matched:
+                    unmet = cls._unmet_current_declaration()
+                    if unmet is None:
+                        # Declines recorded on the way to this match must not mask a later failure reason.
+                        drop_match_rejections_since(before_checks)
+                        cls.add_base_input_data_to_options(cls, matched, options)
+                        return True
+                    record_match_rejection(cls.get_class_name(), unmet, stage=INPUT_DATA_OWNED_STAGE)
+                else:
+                    restamp_match_rejections_since(known_owners, INPUT_DATA_STAGE, INPUT_DATA_OWNED_STAGE)
+            if match_rejection_owners() <= before_checks:
+                name = cls.get_class_name()
+                record_match_rejection(
+                    name,
+                    f"{name} is pinned for feature '{feature_name}' but matched nothing; a pinned reader is final",
+                    stage=INPUT_DATA_OWNED_STAGE,
+                )
             return False
         return False
 
@@ -442,10 +467,18 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         options: Options | None = None,
     ) -> tuple[Any, Any]:
         """Match only this reader, never a sibling found by walking subclasses."""
-        if not cls._in_namespace(feature_names) or not cls._reader_options_admit(options, record_absence=False):
+        if not all(cls.claims_feature_name(name) for name in feature_names):
+            return None, None
+        if not cls._reader_options_admit(options, record_absence=False):
             return None, None
         matched = cls.match_subclass_data_access(data_access_collection, feature_names, options=options)  # type: ignore[arg-type]
-        return (cls, matched) if matched else (None, None)
+        if not matched:
+            return None, None
+        unmet = cls._unmet_current_declaration()
+        if unmet is not None:
+            record_match_rejection(cls.get_class_name(), unmet, stage=INPUT_DATA_OWNED_STAGE)
+            return None, None
+        return cls, matched
 
     @classmethod
     def data_access_identity(cls, data_access: Any) -> str:

@@ -78,8 +78,9 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
     """With every stock mloda plugin loaded (``ReadDBFeature`` included), each case still resolves to its own group.
 
     ``<case feature>__sum_aggr`` must resolve to the stock aggregation groups, never to the KG group, and
-    ``<case feature>~<row_key>__max_aggr`` runs end to end with the case's context propagated to the input.
-    Runs in a subprocess so ``PluginLoader.all()`` never changes matching for the rest of this pytest process.
+    ``<case feature>~<row_key>__max_aggr`` runs end to end with the case's context propagated to the input, as
+    does ``__sum_aggr`` over an rdflib ``xsd:integer`` projection. Runs in a subprocess so ``PluginLoader.all()``
+    never changes matching for the rest of this pytest process.
     """
     code = textwrap.dedent(
         f"""
@@ -130,6 +131,28 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
                     failures.append((case.connector_id, "max_aggr", sorted(values)[:3]))
             except Exception as exc:
                 failures.append((case.connector_id, repr(exc)[:300]))
+
+        # rdflib projects an xsd:integer COUNT as int, so a numeric chain runs on it.
+        rdf_case = next(case for case in CASES if case.connector_id == "rdflib_sparql")
+        query = (
+            "PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+            "SELECT ?s (COUNT(?o) AS ?n) WHERE {{ ?s foaf:knows ?o }} GROUP BY ?s"
+        )
+        summed = Feature(
+            "rdflib_sparql__counts~n__sum_aggr",
+            options=Options(context={{"query_text": query}}, propagate_context_keys=frozenset({{"query_text"}})),
+        )
+        dac = DataAccessCollection(credentials=Credential({{"rdflib_sparql": rdf_case.make_slot(Path({str(tmp_path)!r}))}}))
+        try:
+            totals = {{
+                value
+                for partition in mloda.run_all([summed], data_access_collection=dac, output_framework="PyArrowTable")
+                for value in partition[summed.name].to_pylist()
+            }}
+            if totals != {{3}}:
+                failures.append(("rdflib_sparql", "sum_aggr", sorted(totals)))
+        except Exception as exc:
+            failures.append(("rdflib_sparql", "sum_aggr", repr(exc)[:300]))
         sys.exit(repr(failures) if failures else 0)
         """
     )

@@ -10,9 +10,11 @@ from pathlib import Path
 from typing import Any, Callable
 
 import pytest
+from rdflib import RDF, XSD, BNode, Literal, URIRef
 
-from mloda.user import Feature, Options
+from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
 
+from open_kgo.feature_groups.kg.base import PythonDictFramework
 from open_kgo.feature_groups.kg.errors import FixtureLoadError
 from open_kgo.feature_groups.kg.rdf.rdflib_sparql import RdfLibSparqlReader
 from open_kgo.feature_groups.kg.rdf.tests.kg_rdf_contract import RdfContractTestBase
@@ -90,6 +92,41 @@ class TestRdfLibSparqlReader(RdfContractTestBase):
         feat = self.feature_under_test()
         rows = run_query("rdflib_sparql", slot, feat)
         assert len(rows) == 2
+
+    def test_projection_converts_rdf_terms_to_python_values(self) -> None:
+        """``~<row_key>`` cells are Python values (an ``xsd:integer`` COUNT is ``int``); whole rows keep rdflib terms."""
+        query = (
+            "PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
+            "SELECT ?s (COUNT(?o) AS ?n) WHERE { ?s foaf:knows ?o } GROUP BY ?s"
+        )
+        names = ["rdflib_sparql__counts", "rdflib_sparql__counts~n", "rdflib_sparql__counts~s"]
+        dac = DataAccessCollection(credentials=Credential(self.valid_credentials()))
+        partitions = mloda.run_all(
+            [Feature(name, options=Options(context={"query_text": query})) for name in names],
+            compute_frameworks=[PythonDictFramework],
+            data_access_collection=dac,
+        )
+        rows, counts, subjects = ([v for p in partitions for v in p.get(name, [])] for name in names)
+        assert rows and all(isinstance(row["n"], Literal) and isinstance(row["s"], URIRef) for row in rows)
+        assert sorted(counts) == [1, 1, 1] and all(type(count) is int for count in counts)
+        assert sorted(subjects) == sorted(str(row["s"]) for row in rows) and all(type(s) is str for s in subjects)
+
+    @pytest.mark.parametrize(
+        ("term", "expected"),
+        [
+            (Literal("abc", datatype=XSD.integer), "abc"),
+            (Literal("x", lang="en"), "x"),
+            (BNode("b1"), "b1"),
+            (Literal(str(2**70), datatype=XSD.integer), str(2**70)),
+            (Literal("P1Y", datatype=XSD.duration), "P1Y"),
+            (Literal("<a/>", datatype=RDF.XMLLiteral), "<a/>"),
+            (None, None),
+        ],
+    )
+    def test_project_value_falls_back_to_str(self, term: Any, expected: Any) -> None:
+        """Terms with no Arrow-readable Python value project as ``str``; an unbound OPTIONAL stays ``None``."""
+        projected = RdfLibSparqlReader._project_value(term)
+        assert projected == expected and type(projected) is type(expected)
 
     def test_windows_drive_locator_passes_scheme_guard(self) -> None:
         """Windows-style drive letter prefixes must not be flagged as remote schemes.
