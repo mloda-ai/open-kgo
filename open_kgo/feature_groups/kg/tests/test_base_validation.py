@@ -13,11 +13,15 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from collections.abc import Mapping
+
 import pytest
 
 from mloda.provider import HashableDict
 
 from open_kgo.feature_groups.kg.base import KgConnectorReaderBase
+from open_kgo.feature_groups.kg.spec import property_spec
+
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
     MissingEnvVarError,
@@ -316,3 +320,75 @@ def test_connect_raises_on_unknown_credential_key() -> None:
     creds = {_RequiredKeyReader.CONNECTOR_ID: {"locator": "/tmp/x", "definitely_not_a_kg_key": "bad"}}
     with pytest.raises(InvalidCredentialShape):
         _RequiredKeyReader.connect(creds)
+
+_RESULT_FORMATS = {
+    "application/sparql-results+json": "SPARQL JSON results format (SELECT/ASK).",
+    "text/csv": "Not honored by the narrowed reader, but present on the spec.",
+}
+
+
+class _StrictEnumReader(KgConnectorReaderBase):
+    """Synthetic reader that narrows a strict enum, matching connector SUPPORTED_VALUES."""
+
+    CONNECTOR_ID: ClassVar[str] = "fake_strict_enum_reader"
+    REQUIRED_KEYS: ClassVar[tuple[tuple[str, ...], ...]] = ()
+    PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
+        **KgConnectorReaderBase.PROPERTY_MAPPING,
+        "result_format": property_spec(
+            "MIME type the endpoint should return results in.",
+            strict=True,
+            allowed_values=_RESULT_FORMATS,
+            default="application/sparql-results+json",
+        ),
+    }
+    SUPPORTED_VALUES: ClassVar[Mapping[str, frozenset[Any]]] = {
+        "result_format": frozenset({"application/sparql-results+json"}),
+    }
+
+
+class _StrictAllowedReader(KgConnectorReaderBase):
+    """Synthetic reader whose strict key is enforced via spec allowed_values only."""
+
+    CONNECTOR_ID: ClassVar[str] = "fake_strict_allowed_reader"
+    REQUIRED_KEYS: ClassVar[tuple[tuple[str, ...], ...]] = ()
+    PROPERTY_MAPPING: ClassVar[dict[str, Any]] = {
+        **KgConnectorReaderBase.PROPERTY_MAPPING,
+        "result_format": property_spec(
+            "MIME type the endpoint should return results in.",
+            strict=True,
+            allowed_values=_RESULT_FORMATS,
+            default="application/sparql-results+json",
+        ),
+    }
+
+
+@pytest.mark.parametrize(
+    ("reader", "bad_value"),
+    [
+        (_StrictEnumReader, ["a"]),
+        (_StrictEnumReader, {"a": 1}),
+        (_StrictEnumReader, {"a"}),
+        (_StrictAllowedReader, ["a"]),
+        (_StrictAllowedReader, {"a": 1}),
+    ],
+)
+def test_validate_shape_raises_typed_error_for_unhashable_strict_value(
+    reader: type[KgConnectorReaderBase], bad_value: Any
+) -> None:
+    """Unhashable values on a strict key are not members, not a raw TypeError.
+
+    ``value not in frozenset`` / ``value not in set`` raises TypeError for lists,
+    dicts, and sets. Callers need InvalidCredentialShape. The message names the
+    type and does not echo the value.
+    """
+    with pytest.raises(InvalidCredentialShape, match="not supported|not in allowed set") as exc_info:
+        reader._validate_shape({"locator": "x", "result_format": bad_value})
+    message = str(exc_info.value)
+    assert type(bad_value).__name__ in message
+    assert repr(bad_value) not in message
+
+
+def test_validate_shape_still_rejects_unsupported_hashable_enum_value() -> None:
+    """A hashable value outside the narrowed set keeps the existing diagnostic."""
+    with pytest.raises(InvalidCredentialShape, match="result_format='text/csv'"):
+        _StrictEnumReader._validate_shape({"locator": "x", "result_format": "text/csv"})

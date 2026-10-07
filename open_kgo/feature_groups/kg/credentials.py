@@ -6,7 +6,7 @@ The class-definition-time guards live in the sibling ``kg.class_guards`` module.
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from typing import Any, ClassVar
 
 from mloda.provider import PropertySpec
@@ -17,6 +17,39 @@ from open_kgo.feature_groups.kg.errors import (
     MissingRequiredKeysError,
 )
 from open_kgo.feature_groups.kg.validation import parse_bounded_int
+
+
+
+def _is_hashable(value: Any) -> bool:
+    """Return whether ``value`` can be tested for membership in a set.
+
+    Strict enums are stored as sets/frozensets. An unhashable value (a list,
+    dict, or set) cannot be a member; ``value in allowed`` would raise
+    ``TypeError`` instead of the typed credential error.
+    """
+    try:
+        hash(value)
+    except TypeError:
+        return False
+    return True
+
+
+def _is_member(value: Any, allowed: Collection[Any]) -> bool:
+    """Return whether ``value`` is in ``allowed``, treating unhashable values as absent."""
+    if not _is_hashable(value):
+        return False
+    return value in allowed
+
+
+def _value_for_message(value: Any) -> str:
+    """Render a rejected enum value without echoing unhashable payloads.
+
+    Hashable mismatches keep the existing ``repr`` so diagnostics stay stable.
+    Unhashable values may be large or incidental; the type name is enough.
+    """
+    if _is_hashable(value):
+        return repr(value)
+    return f"<{type(value).__name__}>"
 
 
 class CredentialRules:
@@ -152,16 +185,16 @@ class CredentialRules:
             if spec.strict_validation is True:
                 narrowed = cls.SUPPORTED_VALUES.get(key)
                 if narrowed is not None:
-                    if value not in narrowed:
+                    if not _is_member(value, narrowed):
                         raise InvalidCredentialShape(
-                            f"{cls.CONNECTOR_ID}.{key}={value!r} is not supported by this connector "
+                            f"{cls.CONNECTOR_ID}.{key}={_value_for_message(value)} is not supported by this connector "
                             f"(supported: {sorted(narrowed)})"
                         )
                 else:
                     allowed = cls._spec_allowed_values(key, spec)
-                    if value not in allowed:
+                    if not _is_member(value, allowed):
                         raise InvalidCredentialShape(
-                            f"{cls.CONNECTOR_ID}: {kind} {key!r}={value!r} is not in allowed set {sorted(allowed)}"
+                            f"{cls.CONNECTOR_ID}: {kind} {key!r}={_value_for_message(value)} is not in allowed set {sorted(allowed)}"
                         )
 
     @staticmethod
