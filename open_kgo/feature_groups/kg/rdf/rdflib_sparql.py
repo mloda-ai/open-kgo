@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any, ClassVar, Mapping
 
 import rdflib
+from rdflib.term import IdentifiedNode, Identifier, Literal
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 
@@ -96,6 +97,13 @@ class RdfLibSparqlReader(RdfSparqlReader):
             if len(rows) >= ctx.result_limit:
                 break
         return rows
+
+    @classmethod
+    def _project_value(cls, value: Any) -> Any:
+        """Literals become Python values (``xsd:integer`` -> ``int``); IRIs, blank nodes and ill-typed literals ``str``."""
+        if isinstance(value, (IdentifiedNode, Literal)):
+            value = value.toPython()
+        return str(value) if isinstance(value, Identifier) else value
 
 
 class RdfLibSparqlFeatureGroup(RdfSparqlFeatureGroup):

@@ -84,7 +84,7 @@ Feature(
 )
 ```
 
-Projected cells keep the connector's native value types (rdflib returns rdflib terms, which PyArrow reads as strings). `~` in a KG feature name always means a projection, and a row key containing `__` cannot be projected, since the name would read as a chain.
+Projected cells keep the connector's native value types, except that rdflib terms become Python values: an `xsd:integer` binding projects as `int`, so numeric chains such as `~n__sum_aggr` work, while IRIs, blank nodes and unconvertible literals project as `str`. A binding that mixes IRIs and typed literals therefore yields a mixed-type column; wrap it in `STR(...)` in the query to keep it a string column. oxigraph returns lexical strings, so its projections stay strings. `~` in a KG feature name always means a projection, and a row key containing `__` cannot be projected, since the name would read as a chain.
 
 A family whose extra is not installed is skipped with a warning and listed by `PluginLoader.skipped_plugins()`. Importing a connector module (`import open_kgo.feature_groups.kg.rdf.rdflib_sparql`) registers just that connector.
 

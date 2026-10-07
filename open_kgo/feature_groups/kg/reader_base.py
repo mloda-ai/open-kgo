@@ -330,7 +330,12 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
                 f"{cls.__name__}: no row carries key {key!r} requested by {feature_name!r}; "
                 f"row keys: {sorted({k for row in rows for k in row})}."
             )
-        return [row.get(key) for row in rows]
+        return [cls._project_value(row.get(key)) for row in rows]
+
+    @classmethod
+    def _project_value(cls, value: Any) -> Any:
+        """Hook for a projected cell; whole rows never pass through it. Identity by default."""
+        return value
 
     @classmethod
     def _assert_single_feature(cls, features: FeatureSet) -> None:

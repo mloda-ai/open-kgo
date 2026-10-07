@@ -48,8 +48,9 @@ class LoadBehaviorContract(KgContractAdapterBase):
             cls().load(fs)
 
     def test_row_key_projection_matches_whole_rows_in_one_run(self) -> None:
-        """``<feature>`` and ``<feature>~<row_key>`` in one run: whole rows, and that key's values from the same rows."""
-        connector_id = self.connector_reader_class().CONNECTOR_ID
+        """``<feature>`` and ``<feature>~<row_key>`` in one run: whole rows, and that key's projected values."""
+        cls = self.connector_reader_class()
+        connector_id = cls.CONNECTOR_ID
         creds = self.valid_credentials()[connector_id]
         feat = self.feature_under_test()
         rows = run_query(connector_id, creds, feat)
@@ -59,7 +60,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
         dac = DataAccessCollection(credentials=Credential({connector_id: creds}))
         requested: list[Feature | str] = list(pair)
         partitions = mloda.run_all(requested, compute_frameworks=[PythonDictFramework], data_access_collection=dac)
-        for feature, expected in zip(pair, (rows, [row.get(key) for row in rows])):
+        for feature, expected in zip(pair, (rows, [cls._project_value(row.get(key)) for row in rows])):
             got = [value for partition in partitions for value in partition.get(feature.name, [])]
             assert sorted(got, key=canonical_row_key) == sorted(expected, key=canonical_row_key), feature.name
 
