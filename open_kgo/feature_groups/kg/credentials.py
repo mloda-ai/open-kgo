@@ -19,7 +19,6 @@ from open_kgo.feature_groups.kg.errors import (
 from open_kgo.feature_groups.kg.validation import parse_bounded_int
 
 
-
 def _is_hashable(value: Any) -> bool:
     """Return whether ``value`` can be tested for membership in a set.
 

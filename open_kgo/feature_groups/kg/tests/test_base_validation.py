@@ -321,6 +321,7 @@ def test_connect_raises_on_unknown_credential_key() -> None:
     with pytest.raises(InvalidCredentialShape):
         _RequiredKeyReader.connect(creds)
 
+
 _RESULT_FORMATS = {
     "application/sparql-results+json": "SPARQL JSON results format (SELECT/ASK).",
     "text/csv": "Not honored by the narrowed reader, but present on the spec.",
