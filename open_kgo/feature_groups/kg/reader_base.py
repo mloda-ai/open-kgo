@@ -14,10 +14,9 @@ rules come from the ``kg.credentials.CredentialRules`` mixin; class-definition
 guards and composition bodies live in ``kg.class_guards`` and ``kg.composition``.
 
 Concrete plugins set ``CONNECTOR_ID`` and implement ``connect``,
-``build_query``, ``load_data``. mloda's ``BaseInputData.match_data_access``
-walks the ``ReadDB`` subclass tree and finds the right reader by calling
-``is_valid_credentials`` on each candidate, which the universal base
-implements once against ``CONNECTOR_ID``.
+``build_query``, ``load_data``. Each KG FeatureGroup probes only its own
+reader, which accepts the credentials via ``is_valid_credentials``,
+implemented once in the universal base against ``CONNECTOR_ID``.
 
 Honest credential surface
 -------------------------
@@ -423,7 +422,12 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
                 continue
             if not cls._in_namespace([feature_name]) or not cls._reader_options_admit(options, record_absence=True):
                 return False
-            matched = cls.match_subclass_data_access(options.get(key), [feature_name], options=options)
+            # As core does: the pinned slot reaches the plan as a redacting credential, not a plain dict.
+            value = options.get(key)
+            wrapped = cls.wrap_feature_scoped_access(value)
+            if wrapped is not value:
+                options.set(key, wrapped)
+            matched = cls.match_subclass_data_access(wrapped, [feature_name], options=options)
             if matched:
                 cls.add_base_input_data_to_options(cls, matched, options)
                 return True
@@ -520,7 +524,7 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         ``cls._connect_from_slot(ctx.slot)``); the prologue now lives here
         once and concretes implement ``_load_rows`` only. ``ReadDB.load``
         dispatches into this hook unchanged, so direct callers and the
-        matcher path see identical behavior. ``data_access`` must be the plain
+        matcher path see identical behavior. ``data_access`` must be the
         ``{CONNECTOR_ID: slot}`` dict mloda matched; anything else raises
         ``InvalidCredentialShape``.
         """

@@ -11,15 +11,16 @@ from __future__ import annotations
 
 import copy
 import os
+from typing import Any
 
 import pytest
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 from mloda.provider import BaseInputData
-from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
+from mloda.user import Credential, DataAccessCollection, Feature, mloda
 
 from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
-from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query
+from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query, scoped_feature
 from open_kgo.feature_groups.kg.tests.contract_adapters import KgContractAdapterBase
 
 _SECRET = "s3cr3t-must-not-leak"
@@ -54,14 +55,10 @@ class LoadBehaviorContract(KgContractAdapterBase):
         rows = run_query(connector_id, creds, feat)
         assert rows, f"{self.connector_reader_class().__name__}: projection test needs >= 1 row."
         key = sorted(rows[0])[0]
-        # Fresh options per feature: mloda writes the matched reader into them.
-        pair = [
-            Feature(name, options=Options(group=dict(feat.options.group), context=dict(feat.options.context)))
-            for name in (feat.name, f"{feat.name}~{key}")
-        ]
+        pair = [Feature(name, options=feat.options) for name in (feat.name, f"{feat.name}~{key}")]
         dac = DataAccessCollection(credentials=Credential({connector_id: creds}))
         requested: list[Feature | str] = list(pair)
-        partitions = mloda.run_all(requested, compute_frameworks={PythonDictFramework}, data_access_collection=dac)
+        partitions = mloda.run_all(requested, compute_frameworks=[PythonDictFramework], data_access_collection=dac)
         for feature, expected in zip(pair, (rows, [row.get(key) for row in rows])):
             got = [value for partition in partitions for value in partition.get(feature.name, [])]
             assert sorted(got, key=canonical_row_key) == sorted(expected, key=canonical_row_key), feature.name
@@ -184,7 +181,10 @@ class LoadBehaviorContract(KgContractAdapterBase):
         )
 
     def test_feature_scoped_data_access_matches_the_global_path(self) -> None:
-        """Credentials on the feature's options under the reader's name select only this reader, same rows."""
+        """Credentials on the feature's options under the reader's name select only this reader, same rows.
+
+        The pinned slot reaches the plan redacted, like a ``DataAccessCollection`` credential.
+        """
         cls = self.connector_reader_class()
         slot = self.valid_credentials()[cls.CONNECTOR_ID]
         feat = self.feature_under_test()
@@ -193,6 +193,15 @@ class LoadBehaviorContract(KgContractAdapterBase):
         assert sorted(scoped, key=canonical_row_key) == sorted(
             run_query(cls.CONNECTOR_ID, slot, feat), key=canonical_row_key
         )
+
+        def planned_access(features: list[Feature | str], **kwargs: Any) -> list[str]:
+            plan = mloda.explain(features, compute_frameworks=[PythonDictFramework], **kwargs)
+            return [repr(step.reader_data_access[1]) for step in plan if step.reader_data_access is not None]
+
+        pinned = planned_access([scoped_feature(cls, slot, feat)])
+        assert pinned and all("***" in text for text in pinned), pinned
+        dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
+        assert pinned == planned_access([feat], data_access_collection=dac)
 
     def test_data_access_identity_names_the_source_and_no_secret(self) -> None:
         """The identity extenders see on INPUT_DATA_LOAD is the source (or mloda's default), never a secret."""

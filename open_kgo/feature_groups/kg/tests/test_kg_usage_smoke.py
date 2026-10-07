@@ -32,7 +32,7 @@ class KgRowCount(FeatureGroup):
     @classmethod
     def input_features(cls, options: Options, feature_name: FeatureName) -> set[Feature] | None:
         source = _CASES_BY_CONNECTOR[options.get("kg_case")].feature
-        # A fresh copy: mloda writes the matched reader into the input feature's options.
+        # A fresh copy: mloda stamps the matched reader onto the input Feature.
         return {Feature(source.name, options=Options(context=dict(source.options.context)))}
 
     @classmethod
@@ -69,7 +69,7 @@ def test_consumer_takes_kg_feature_as_input_in_one_run(case: ConnectorCase, tmp_
     """With the connector's credentials present, the KG reader leaves the consumer's unrelated name alone."""
     dac = DataAccessCollection(credentials=Credential({case.connector_id: case.make_slot(tmp_path)}))
     consumer = Feature("KgRowCount", options=Options(context={"kg_case": case.connector_id}))
-    partitions = mloda.run_all([consumer], compute_frameworks={PythonDictFramework}, data_access_collection=dac)
+    partitions = mloda.run_all([consumer], compute_frameworks=[PythonDictFramework], data_access_collection=dac)
     counts = [count for partition in partitions for count in partition.get(consumer.name, [])]
     assert counts and set(counts) == {len(counts)}, f"{case.connector_id}: got {counts!r}"
 
@@ -123,7 +123,7 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
                 dac = DataAccessCollection(credentials=Credential({{case.connector_id: slot}}))
                 values = {{
                     str(value)
-                    for partition in mloda.run_all([maxed], data_access_collection=dac)
+                    for partition in mloda.run_all([maxed], data_access_collection=dac, output_framework="PyArrowTable")
                     for value in partition[maxed.name].to_pylist()
                 }}
                 if len(values) != 1 or not values <= {{str(row[key]) for row in rows}}:

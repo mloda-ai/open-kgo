@@ -83,7 +83,7 @@ def helpers():
         dac = _DataAccessCollection(credentials=_Credential({connector_id: slot_creds}))
         partitions = _mloda.run_all(
             [feature],
-            compute_frameworks={_PythonDictFramework},
+            compute_frameworks=[_PythonDictFramework],
             data_access_collection=dac,
         )
         return [row for partition in partitions for row in partition.get(feature.name, [])]
