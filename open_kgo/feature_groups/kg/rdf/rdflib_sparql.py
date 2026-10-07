@@ -100,7 +100,7 @@ class RdfLibSparqlReader(RdfSparqlReader):
 
     @classmethod
     def _project_value(cls, value: Any) -> Any:
-        """Literals become Python values (``xsd:integer`` -> ``int``); IRIs, blank nodes and ill-typed literals ``str``."""
+        """Literals become Python values; IRIs, blank nodes and ill-typed literals become ``str``."""
         if isinstance(value, (IdentifiedNode, Literal)):
             value = value.toPython()
         return str(value) if isinstance(value, Identifier) else value
