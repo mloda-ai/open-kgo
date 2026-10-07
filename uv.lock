@@ -12,7 +12,6 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
-mloda-testing = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mloda = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mloda-registry = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
@@ -729,19 +728,6 @@ wheels = [
 ]
 
 [[package]]
-name = "mloda-testing"
-version = "0.9.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "mloda" },
-    { name = "pyarrow" },
-    { name = "pytest" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/b1/7879c2133fedd0354fc1bc38e98cc639801e242684e74bf5200e66a18933/mloda_testing-0.9.0-py3-none-any.whl", hash = "sha256:a61e079939d2c2ee701486e419aa109de0f5ad40ddf465c11addfb509c925c4c", size = 232875, upload-time = "2026-10-06T11:53:09.335Z" },
-]
-
-[[package]]
 name = "msgspec"
 version = "0.21.1"
 source = { registry = "https://pypi.org/simple" }
@@ -929,8 +915,8 @@ demo = [
 ]
 dev = [
     { name = "bandit" },
-    { name = "mloda-testing" },
     { name = "mypy" },
+    { name = "pyarrow" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "tox" },
@@ -981,13 +967,13 @@ requires-dist = [
     { name = "kuzu", marker = "extra == 'kg-network-pg'", specifier = ">=0.4" },
     { name = "marimo", marker = "extra == 'demo'" },
     { name = "mloda", specifier = ">=0.15.1,<0.16.0" },
-    { name = "mloda-testing", marker = "extra == 'dev'", specifier = ">=0.9.0" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "networkx", marker = "extra == 'kg-embedded'", specifier = ">=3.2" },
     { name = "networkx", marker = "extra == 'kg-memory'", specifier = ">=3.2" },
     { name = "networkx", marker = "extra == 'kg-network-pg'", specifier = ">=3.2" },
     { name = "open-kgo", extras = ["kg-all"], marker = "extra == 'demo'" },
     { name = "open-kgo", extras = ["kg-rdf", "kg-embedded", "kg-network-pg", "kg-memory", "kg-rest", "kg-lineage", "kg-codebuild", "kg-saas", "kg-citation", "kg-ontology", "kg-semantic-field"], marker = "extra == 'kg-all'" },
+    { name = "pyarrow", marker = "extra == 'dev'" },
     { name = "pyoxigraph", marker = "extra == 'kg-rdf'", specifier = ">=0.5.9" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pyyaml", marker = "extra == 'kg-ontology'", specifier = ">=6.0" },

@@ -35,8 +35,6 @@ Repository = "https://github.com/mloda-ai/open-kgo"
 Issues = "https://github.com/mloda-ai/open-kgo/issues"
 
 [project.optional-dependencies]
-# mloda-testing is exercised only by tests/test_mloda_imports.py (import smoke);
-# the KG contract harness is in-repo. Dev-only: test trees are out of the wheel.
 dev = [
     "tox",
     "tox-uv",
@@ -45,7 +43,7 @@ dev = [
     "ruff",
     "mypy",
     "bandit",
-    "mloda-testing>=0.9.0",
+    "pyarrow",
 ]
 kg-rdf = ["rdflib>=7.0", "pyoxigraph>=0.5.9"]
 kg-embedded = ["networkx>=3.2", "igraph>=0.11"]
@@ -128,7 +126,7 @@ exclude-newer = "7 days"
 # First-party mloda packages are exempt (rolling "0 days"): we want their latest
 # releases immediately, accepting no quarantine window. Do NOT add third-party
 # packages here. Owner: tk.
-exclude-newer-package = { mloda = "0 days", "mloda-testing" = "0 days", "mloda-registry" = "0 days" }
+exclude-newer-package = { mloda = "0 days", "mloda-registry" = "0 days" }
 # Overrides, not constraints: marimo pins `pymdown-extensions<11`, and the fix for the
 # b64 path-traversal advisory only ships in 11.0. A constraint cannot beat that upper
 # pin, so the pin is overridden here. Drop this once marimo allows 11.x.
