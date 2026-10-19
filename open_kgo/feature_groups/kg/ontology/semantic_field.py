@@ -4,15 +4,12 @@ Models the knowledge graph as a resistor network; the Laplacian/Dirichlet
 solve live in the sibling ``dc_solver`` module (shared with
 ``discovery.DiscoveryEngine``, Layer 3).
 
-For a multi-constraint AND query (``compute_and``) each constraint specifies
-a relationship-type filter together with its anchor set.  Each constraint is
-solved on the subgraph that contains *only* edges of that relationship type.
-An entity that is not connected to a constraint's anchor in that subgraph
-receives potential 0.0 — it lies in a disconnected component.  The final
-score is the element-wise product of per-constraint potentials: if any
-single constraint gives 0.0 the overall score is 0.0.  This is the
-series-circuit AND semantics: current cannot flow when any segment of the
-series path is an open circuit.
+For an AND query (``compute_and``) the whole query is one circuit.  The
+``source`` entities are held at high voltage and the ``sink`` entities at low
+voltage, and the Dirichlet problem is solved once on the full graph, with no
+relation-type filtering.  Each entity is scored by the current it carries.
+An entity that does not lie on a conducting path between a source node and a
+sink node carries no current and scores 0.0.
 
 Ontology weights shape the potential when an entity sits between two anchors
 at different voltages.  A higher-conductance path (higher weight) pulls the
