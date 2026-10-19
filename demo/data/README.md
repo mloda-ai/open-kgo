@@ -66,8 +66,8 @@ the experiments at full scale, swap in the real MetaQA benchmark:
 
    This overwrites `metaqa_sample.gml` with the full 1-hop subgraph.
 
-4. **Point** the QA demo at the full split: in `demo/eval_qa_accuracy.py`, set
-   `QA_TEST = DATA_DIR / "metaqa" / "qa_test.txt"` instead of the sample file.
+4. **Point** the QA demo at the full split: in `demo/qa_eval_lib.py`, set
+   `QA_1HOP = DATA_DIR / "metaqa" / "qa_test.txt"` instead of the sample file.
 
 5. **Re-run** any notebook. The ontology, traversal, and eval code is unchanged;
    only the input graph is larger. Name-collision range violations
