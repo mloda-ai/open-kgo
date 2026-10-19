@@ -84,6 +84,14 @@ def test_build_sample_includes_only_qa_anchored_subgraph(tmp_path: Path) -> None
     assert "Actor2" not in labels
 
 
+def test_build_sample_accepts_str_paths(tmp_path: Path) -> None:
+    out = tmp_path / "sample.gml"
+    result = build_sample.build_sample(str(TINY_KB), [str(TINY_QA)], str(out))
+    assert result == out
+    g = nx.read_gml(str(out))
+    assert {"Movie1", "Movie2", "Director1"} <= set(g.nodes())
+
+
 def test_build_sample_assigns_types(tmp_path: Path) -> None:
     out = tmp_path / "sample.gml"
     build_sample.build_sample(TINY_KB, [TINY_QA], out)
