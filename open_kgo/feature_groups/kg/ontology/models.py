@@ -51,6 +51,10 @@ def parse_ontology(data: Any) -> NamespaceOntology:
     entity_valid_outgoing: dict[str, frozenset[str]] = {}
     for name, spec in (data.get("entities") or {}).items():
         valid_outgoing = spec.get("valid_outgoing") if isinstance(spec, dict) else None
+        if valid_outgoing is not None and not isinstance(valid_outgoing, list):
+            raise ValueError(
+                f"ontology entity {name!r} must declare 'valid_outgoing' as a list, got {type(valid_outgoing).__name__}."
+            )
         entity_valid_outgoing[str(name)] = frozenset(valid_outgoing or [])
 
     relationships: dict[str, RelationshipRule] = {}
