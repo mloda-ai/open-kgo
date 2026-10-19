@@ -51,6 +51,15 @@ class TestLoadFile:
         with pytest.raises(ValueError, match="must be a mapping declaring both 'domain' and 'range'"):
             OntologyRegistry.load_file(str(bad))
 
+    def test_scalar_valid_outgoing_raises(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad_outgoing.yaml"
+        bad.write_text(
+            "namespace: movie\nentities:\n  Movie:\n    valid_outgoing: directed_by\nrelationships: {}\n",
+            encoding="utf-8",
+        )
+        with pytest.raises(ValueError, match="entity 'Movie' must declare 'valid_outgoing' as a list"):
+            OntologyRegistry.load_file(str(bad))
+
     def test_empty_entities_and_relationships_loads_cleanly(self, tmp_path: Path) -> None:
         minimal = tmp_path / "minimal.yaml"
         minimal.write_text("namespace: empty_domain\nentities: {}\nrelationships: {}\n", encoding="utf-8")
