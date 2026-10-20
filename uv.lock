@@ -17,7 +17,7 @@ mloda-registry = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 overrides = [
-    { name = "mloda", specifier = ">=0.15.1,<0.16.0" },
+    { name = "mloda", specifier = ">=0.16.0,<0.17.0" },
     { name = "pymdown-extensions", specifier = ">=11.0.1" },
 ]
 
@@ -721,10 +721,10 @@ wheels = [
 
 [[package]]
 name = "mloda"
-version = "0.15.1"
+version = "0.16.0"
 source = { registry = "https://pypi.org/simple" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/fe/8b7c7f7e91a681096a03dca65358b6e66edc87e5205ab868d236a8b1db86/mloda-0.15.1-py3-none-any.whl", hash = "sha256:ac5b932ae5bd444a90ddfeb6239cded8cc7faf24a805610140710564d8a6bed8", size = 660768, upload-time = "2026-10-06T08:29:09.311Z" },
+    { url = "https://files.pythonhosted.org/packages/04/b5/2a601f6112181e4a6b21e0e554b551c1ade0f4b12b27177c4a01dc02aa92/mloda-0.16.0-py3-none-any.whl", hash = "sha256:0654fcfb718964c00b6d7f16ae98ff5b522b5019dd095467f343391e877199f5", size = 681222, upload-time = "2026-10-19T13:40:47.858Z" },
 ]
 
 [[package]]
@@ -966,7 +966,7 @@ requires-dist = [
     { name = "igraph", marker = "extra == 'kg-embedded'", specifier = ">=0.11" },
     { name = "kuzu", marker = "extra == 'kg-network-pg'", specifier = ">=0.4" },
     { name = "marimo", marker = "extra == 'demo'" },
-    { name = "mloda", specifier = ">=0.15.1,<0.16.0" },
+    { name = "mloda", specifier = ">=0.16.0,<0.17.0" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "networkx", marker = "extra == 'kg-embedded'", specifier = ">=3.2" },
     { name = "networkx", marker = "extra == 'kg-memory'", specifier = ">=3.2" },
