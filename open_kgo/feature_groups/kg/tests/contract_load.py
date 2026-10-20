@@ -11,16 +11,20 @@ from __future__ import annotations
 
 import copy
 import os
+from contextlib import AbstractContextManager
 from typing import Any
 
 import pytest
 
+from mloda.core.abstract_plugins.components.credential import RegisteredCredential
 from mloda.core.abstract_plugins.components.declared_attributes import (
     DeclarationRequirement,
     declaration_requirement_scope,
 )
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+from mloda.core.abstract_plugins.components.input_data.reader_probe import ReaderProbeScope, reader_probe_scope
 from mloda.provider import BaseInputData
+from mloda.steward import Extender, ExtenderHook, HookContext
 from mloda.user import Credential, DataAccessCollection, Feature, FeatureResolutionError, Options, mloda
 
 from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
@@ -28,6 +32,24 @@ from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_que
 from open_kgo.feature_groups.kg.tests.contract_adapters import KgContractAdapterBase
 
 _SECRET = "s3cr3t-must-not-leak"
+
+
+class _MatchHook(Extender):
+    """INPUT_DATA_MATCH extender recording each probed access; refuses ``reader`` before its probe when ``refuse``."""
+
+    def __init__(self, reader: type, refuse: bool) -> None:
+        self.reader, self.refuse = reader, refuse
+        self.accesses: list[Any] = []
+
+    def wraps(self) -> set[ExtenderHook]:
+        return {ExtenderHook.INPUT_DATA_MATCH}
+
+    def __call__(self, func: Any, *args: Any, **kwargs: Any) -> Any:
+        self.accesses.append(args[0])
+        context = HookContext.current()
+        if self.refuse and context is not None and context.reader_class is self.reader:
+            raise PermissionError("refused by the test gate")
+        return func(*args, **kwargs)
 
 
 class LoadBehaviorContract(KgContractAdapterBase):
@@ -217,21 +239,44 @@ class LoadBehaviorContract(KgContractAdapterBase):
             with pytest.raises(FeatureResolutionError, match=f"{cls.__name__} is pinned for feature"):
                 mloda.run_all([mispinned], compute_frameworks=[PythonDictFramework])
 
-    def test_unmet_declaration_requirement_declines_both_paths(self) -> None:
-        """A consumer requirement this reader's declarations miss declines the pinned and the collection match."""
+    def test_unmet_declaration_or_match_refusal_declines_both_paths(self) -> None:
+        """A missed declaration requirement or an INPUT_DATA_MATCH refusal declines the pinned and collection match."""
         cls = self.connector_reader_class()
         slot = self.valid_credentials()[cls.CONNECTOR_ID]
         feat = self.feature_under_test()
         dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
         requirement = DeclarationRequirement("consumer", {"no_such_key": None}, cls, {})
+        passing, refusing = _MatchHook(cls, refuse=False), _MatchHook(cls, refuse=True)
 
         def pinned_options() -> Options:
             return scoped_feature(cls, slot, feat).options
 
-        for scope, matched in ((None, True), (requirement, False)):
-            with declaration_requirement_scope(scope):
+        def probe_scope(extender: Extender) -> AbstractContextManager[None]:
+            return reader_probe_scope(
+                ReaderProbeScope(extender=extender, plan_id=None, tenant_id=None, project_id=None, principal=None)
+            )
+
+        for scope, matched in (
+            (declaration_requirement_scope(None), True),
+            (probe_scope(passing), True),
+            (declaration_requirement_scope(requirement), False),
+            (probe_scope(refusing), False),
+        ):
+            with scope:
                 assert cls.feature_scope_data_access(pinned_options(), feat.name) is matched
                 assert (cls.match_data_access([feat.name], dac, feat.options)[0] is cls) is matched
+        assert len(passing.accesses) == len(refusing.accesses) == 2
+        # The pinned slot reaches an extender redacted, as core hands its own readers' slots.
+        assert isinstance(passing.accesses[0], RegisteredCredential), type(passing.accesses[0])
+
+        for request, dac_or_none in ((scoped_feature(cls, slot, feat), None), (feat, dac)):
+            with pytest.raises(FeatureResolutionError, match="refused at INPUT_DATA_MATCH"):
+                mloda.run_all(
+                    [request],
+                    compute_frameworks=[PythonDictFramework],
+                    data_access_collection=dac_or_none,
+                    function_extender={_MatchHook(cls, refuse=True)},
+                )
 
     def test_data_access_identity_names_the_source_and_no_secret(self) -> None:
         """The identity extenders see on INPUT_DATA_LOAD is the source (or mloda's default), never a secret."""

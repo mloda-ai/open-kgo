@@ -68,6 +68,7 @@ from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
 from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+from mloda.core.abstract_plugins.components.input_data.reader_probe import probe_reader  # Not publicly exported.
 from mloda.core.abstract_plugins.components.match_rejection import (
     INPUT_DATA_OWNED_STAGE,
     drop_match_rejections_since,
@@ -432,13 +433,13 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
                 continue
             before_checks = match_rejection_owners()
             if cls._reader_options_admit(options, record_absence=True):
-                # As core does: the pinned slot reaches the plan as a redacting credential, not a plain dict.
+                # As core does: INPUT_DATA_MATCH extenders and the plan see a redacting credential, not a plain dict.
                 value = options.get(key)
                 wrapped = cls.wrap_feature_scoped_access(value)
                 if wrapped is not value:
                     options.set(key, wrapped)
                 known_owners = match_rejection_owners()
-                matched = cls.match_subclass_data_access(wrapped, [feature_name], options=options)
+                matched = probe_reader(cls, wrapped, [feature_name], options)
                 if matched:
                     unmet = cls._unmet_current_declaration()
                     if unmet is None:
@@ -471,7 +472,7 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
             return None, None
         if not cls._reader_options_admit(options, record_absence=False):
             return None, None
-        matched = cls.match_subclass_data_access(data_access_collection, feature_names, options=options)  # type: ignore[arg-type]
+        matched = probe_reader(cls, data_access_collection, feature_names, options)
         if not matched:
             return None, None
         unmet = cls._unmet_current_declaration()
