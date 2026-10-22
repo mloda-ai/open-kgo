@@ -26,6 +26,8 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
+        with:
+          version: ">=0.13.4,<0.14"
 
       - name: Install semantic release and plugins
         run: |
