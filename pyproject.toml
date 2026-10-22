@@ -42,7 +42,7 @@ Issues = "https://github.com/mloda-ai/open-kgo/issues"
 dev = [
     "tox",
     "tox-uv",
-    "uv>=0.11.6",
+    "uv>=0.13.4",
     "pytest",
     "ruff",
     "mypy",
@@ -130,7 +130,8 @@ exclude-newer = "7 days"
 # First-party mloda packages are exempt (rolling "0 days"): we want their latest
 # releases immediately, accepting no quarantine window. Do NOT add third-party
 # packages here. Owner: tk.
-exclude-newer-package = { mloda = "0 days", "mloda-registry" = "0 days" }
+# Exception: uv 0.13.4 (CA store security fix) is inside the cooldown; drop the uv entry on or after 2026-10-28.
+exclude-newer-package = { mloda = "0 days", "mloda-registry" = "0 days", uv = "2026-10-21T00:00:00Z" }
 # Overrides, not constraints: marimo pins `pymdown-extensions<11`, and the fix for the
 # b64 path-traversal advisory only ships in 11.0. A constraint cannot beat that upper
 # pin, so the pin is overridden here. Drop this once marimo allows 11.x.
