@@ -12,6 +12,7 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
+uv = "2026-10-21T00:00:00Z"
 mloda = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 mloda-registry = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
@@ -982,7 +983,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "tox", marker = "extra == 'dev'" },
     { name = "tox-uv", marker = "extra == 'dev'" },
-    { name = "uv", marker = "extra == 'dev'", specifier = ">=0.11.6" },
+    { name = "uv", marker = "extra == 'dev'", specifier = ">=0.13.4" },
 ]
 provides-extras = ["dev", "kg-rdf", "kg-embedded", "kg-network-pg", "kg-memory", "kg-ontology", "kg-semantic-field", "kg-rest", "kg-lineage", "kg-codebuild", "kg-saas", "kg-citation", "kg-all", "demo"]
 
