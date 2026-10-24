@@ -116,4 +116,4 @@ class RdfLibSparqlReader(RdfSparqlReader):
 
 
 class RdfLibSparqlFeatureGroup(RdfSparqlFeatureGroup):
-    READER_CLASS: ClassVar[type[RdfLibSparqlReader]] = RdfLibSparqlReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[RdfLibSparqlReader]] = RdfLibSparqlReader

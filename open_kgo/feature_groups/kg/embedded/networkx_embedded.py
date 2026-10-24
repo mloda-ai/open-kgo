@@ -101,4 +101,4 @@ class NetworkxEmbeddedReader(EmbeddedGraphReader):
 
 
 class NetworkxEmbeddedFeatureGroup(EmbeddedGraphFeatureGroup):
-    READER_CLASS: ClassVar[type[NetworkxEmbeddedReader]] = NetworkxEmbeddedReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[NetworkxEmbeddedReader]] = NetworkxEmbeddedReader

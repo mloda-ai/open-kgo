@@ -271,10 +271,9 @@ class CredentialContract(KgContractAdapterBase):
     def test_is_valid_credentials_is_matcher_safe_against_misbehaving_mapping(self) -> None:
         """``is_valid_credentials`` must not propagate non-``InvalidCredentialShape`` exceptions.
 
-        mloda's ``ReadDB.match_read_db_data_access`` only catches
-        ``NotImplementedError`` from the matcher loop. Any other propagating
-        exception from a misbehaving credentials object aborts iteration over
-        unrelated readers sharing the same ``DataAccessCollection``.
+        mloda's source matching must never raise to decline. A propagating
+        exception from a misbehaving credentials object would end matching for
+        the whole candidate instead of skipping one credential.
         A dict subclass whose ``.get`` raises ``RuntimeError`` pins the broad
         ``except Exception`` guard so a future narrowing surfaces immediately.
         """

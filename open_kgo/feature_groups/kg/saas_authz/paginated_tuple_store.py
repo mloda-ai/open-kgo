@@ -198,4 +198,4 @@ class PaginatedTupleStoreReader(SaasAuthzReader):
 
 
 class PaginatedTupleStoreFeatureGroup(SaasAuthzFeatureGroup):
-    READER_CLASS: ClassVar[type[PaginatedTupleStoreReader]] = PaginatedTupleStoreReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[PaginatedTupleStoreReader]] = PaginatedTupleStoreReader

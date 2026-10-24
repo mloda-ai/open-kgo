@@ -59,6 +59,4 @@ class RdfSparqlReader(InferenceMixin, QueryReader, family_properties=_FAMILY_PRO
 
 
 class RdfSparqlFeatureGroup(KgConnectorFeatureGroupBase):
-    """Family-base FG for RDF/SPARQL connectors. Concrete subclasses pin READER_CLASS."""
-
-    READER_CLASS = None
+    """Abstract family base for RDF/SPARQL connectors; each concrete pins ``READER_CLASS``."""

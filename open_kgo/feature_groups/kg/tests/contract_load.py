@@ -10,44 +10,39 @@ surface here rather than silently passing.
 from __future__ import annotations
 
 import copy
-import os
-from contextlib import AbstractContextManager
 from typing import Any
 
 import pytest
 
-from mloda.core.abstract_plugins.components.credential import RegisteredCredential
-from mloda.core.abstract_plugins.components.declared_attributes import (
-    DeclarationRequirement,
-    declaration_requirement_scope,
-)
-from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.core.abstract_plugins.components.input_data.reader_probe import ReaderProbeScope, reader_probe_scope
-from mloda.provider import BaseInputData
+from mloda.provider import FeatureSet
 from mloda.steward import Extender, ExtenderHook, HookContext
 from mloda.user import Credential, DataAccessCollection, Feature, FeatureResolutionError, Options, mloda
 
-from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework
-from open_kgo.feature_groups.kg.tests._helpers import canonical_row_key, run_query, run_scoped_query, scoped_feature
+from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework, QueryReader
+from open_kgo.feature_groups.kg.tests._helpers import (
+    canonical_row_key,
+    feature_group_of,
+    run_query,
+    run_scoped_query,
+    scoped_feature,
+)
 from open_kgo.feature_groups.kg.tests.contract_adapters import KgContractAdapterBase
 
 _SECRET = "s3cr3t-must-not-leak"
 
 
 class _MatchHook(Extender):
-    """INPUT_DATA_MATCH extender recording each probed access; refuses ``reader`` before its probe when ``refuse``."""
+    """INPUT_DATA_MATCH extender refusing ``group``'s source probe."""
 
-    def __init__(self, reader: type, refuse: bool) -> None:
-        self.reader, self.refuse = reader, refuse
-        self.accesses: list[Any] = []
+    def __init__(self, group: type) -> None:
+        self.group = group
 
     def wraps(self) -> set[ExtenderHook]:
         return {ExtenderHook.INPUT_DATA_MATCH}
 
     def __call__(self, func: Any, *args: Any, **kwargs: Any) -> Any:
-        self.accesses.append(args[0])
         context = HookContext.current()
-        if self.refuse and context is not None and context.reader_class is self.reader:
+        if context is not None and context.reader_class is self.group:
             raise PermissionError("refused by the test gate")
         return func(*args, **kwargs)
 
@@ -71,7 +66,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
         fs.add(feat_a)
         fs.add(feat_b)
         with pytest.raises(ValueError):
-            cls().load(fs)
+            cls.load(self.valid_credentials(), fs)
 
     def test_row_key_projection_matches_whole_rows_in_one_run(self) -> None:
         """``<feature>`` and ``<feature>~<row_key>`` in one run: whole rows, and that key's projected values."""
@@ -207,13 +202,19 @@ class LoadBehaviorContract(KgContractAdapterBase):
             f"adapters must seed at least one row so expected_row_shape asserts shape, not size."
         )
 
-    def test_feature_scoped_data_access_matches_the_global_path(self) -> None:
-        """Credentials on the feature's options under the reader's name select only this reader, same rows.
+    def _planned_identities(self, features: list[Feature | str], **kwargs: Any) -> list[str | None]:
+        """The plan's ``data_access_identity`` for each step served by this connector's FeatureGroup."""
+        group = feature_group_of(self.connector_reader_class())
+        plan = mloda.explain(features, compute_frameworks=[PythonDictFramework], **kwargs)
+        return [step.data_access_identity for step in plan if step.feature_group is group]
 
-        The pinned slot reaches the plan redacted, like a ``DataAccessCollection`` credential; a pin under another
-        slot key fails naming the pinned reader.
+    def test_feature_scoped_data_access_matches_the_global_path(self) -> None:
+        """A pointer under the FeatureGroup's name selects only this group: same rows, same plan identity.
+
+        A pointer with the wrong slot key, or on a name the group does not claim, fails naming the group.
         """
         cls = self.connector_reader_class()
+        group = feature_group_of(cls).get_class_name()
         slot = self.valid_credentials()[cls.CONNECTOR_ID]
         feat = self.feature_under_test()
         scoped = run_scoped_query(cls, slot, feat)
@@ -222,64 +223,74 @@ class LoadBehaviorContract(KgContractAdapterBase):
             run_query(cls.CONNECTOR_ID, slot, feat), key=canonical_row_key
         )
 
-        def planned_access(features: list[Feature | str], **kwargs: Any) -> list[str]:
-            plan = mloda.explain(features, compute_frameworks=[PythonDictFramework], **kwargs)
-            return [repr(step.reader_data_access[1]) for step in plan if step.reader_data_access is not None]
-
-        pinned = planned_access([scoped_feature(cls, slot, feat)])
-        assert pinned and all("***" in text for text in pinned), pinned
         dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
-        assert pinned == planned_access([feat], data_access_collection=dac)
+        pinned = self._planned_identities([scoped_feature(cls, slot, feat)])
+        assert pinned == self._planned_identities([feat], data_access_collection=dac)
+        assert pinned == [cls.data_access_identity({cls.CONNECTOR_ID: slot})]
 
-        wrong_slot = {**feat.options.context, cls.data_access_name(): {"wrong_key": slot}}
+        wrong_slot = {**feat.options.context, group: {"wrong_key": slot}}
         for mispinned in (
             Feature(feat.name, options=Options(group=dict(feat.options.group), context=wrong_slot)),
-            Feature("unclaimed__feature", options=Options(context={cls.data_access_name(): {cls.CONNECTOR_ID: slot}})),
+            Feature("unclaimed__feature", options=Options(context={group: {cls.CONNECTOR_ID: slot}})),
         ):
-            with pytest.raises(FeatureResolutionError, match=f"{cls.__name__} is pinned for feature"):
+            with pytest.raises(FeatureResolutionError, match=group):
                 mloda.run_all([mispinned], compute_frameworks=[PythonDictFramework])
 
-    def test_unmet_declaration_or_match_refusal_declines_both_paths(self) -> None:
-        """A missed declaration requirement or an INPUT_DATA_MATCH refusal declines the pinned and collection match."""
+    def test_match_refusal_declines_both_paths(self) -> None:
+        """An INPUT_DATA_MATCH refusal of the group's source probe declines the pointed and the collection path."""
         cls = self.connector_reader_class()
         slot = self.valid_credentials()[cls.CONNECTOR_ID]
         feat = self.feature_under_test()
         dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))
-        requirement = DeclarationRequirement("consumer", {"no_such_key": None}, cls, {})
-        passing, refusing = _MatchHook(cls, refuse=False), _MatchHook(cls, refuse=True)
-
-        def pinned_options() -> Options:
-            return scoped_feature(cls, slot, feat).options
-
-        def probe_scope(extender: Extender) -> AbstractContextManager[None]:
-            return reader_probe_scope(
-                ReaderProbeScope(extender=extender, plan_id=None, tenant_id=None, project_id=None, principal=None)
-            )
-
-        for scope, matched in (
-            (declaration_requirement_scope(None), True),
-            (probe_scope(passing), True),
-            (declaration_requirement_scope(requirement), False),
-            (probe_scope(refusing), False),
-        ):
-            with scope:
-                assert cls.feature_scope_data_access(pinned_options(), feat.name) is matched
-                assert (cls.match_data_access([feat.name], dac, feat.options)[0] is cls) is matched
-        assert len(passing.accesses) == len(refusing.accesses) == 2
-        # The pinned slot reaches an extender redacted, as core hands its own readers' slots.
-        assert isinstance(passing.accesses[0], RegisteredCredential), type(passing.accesses[0])
-
         for request, dac_or_none in ((scoped_feature(cls, slot, feat), None), (feat, dac)):
             with pytest.raises(FeatureResolutionError, match="refused at INPUT_DATA_MATCH"):
                 mloda.run_all(
                     [request],
                     compute_frameworks=[PythonDictFramework],
                     data_access_collection=dac_or_none,
-                    function_extender={_MatchHook(cls, refuse=True)},
+                    function_extender={_MatchHook(feature_group_of(cls))},
                 )
 
+    def test_two_credentials_for_one_connector_need_a_handle(self) -> None:
+        """Two different valid slots are ambiguous and ``data_access_handle`` picks one; an identical copy is one source."""
+        cls = self.connector_reader_class()
+        slot = self.valid_credentials()[cls.CONNECTOR_ID]
+        other = {**slot, "result_limit": slot.get("result_limit", 1000) + 1}
+        feat = self.feature_under_test()
+        expected = sorted(run_query(cls.CONNECTOR_ID, slot, feat), key=canonical_row_key)
+
+        def rows(handle: str | None, credentials: dict[str, Any]) -> list[Any]:
+            context = {**feat.options.context, **({"data_access_handle": handle} if handle else {})}
+            request = Feature(feat.name, options=Options(group=dict(feat.options.group), context=context))
+            dac = DataAccessCollection(credentials=credentials)
+            partitions = mloda.run_all([request], compute_frameworks=[PythonDictFramework], data_access_collection=dac)
+            return sorted(
+                (row for partition in partitions for row in partition.get(feat.name, [])), key=canonical_row_key
+            )
+
+        two = {"a": {cls.CONNECTOR_ID: slot}, "b": {cls.CONNECTOR_ID: other}}
+        with pytest.raises(ValueError, match="several sources"):
+            rows(None, two)
+        assert rows("a", two) == expected
+        assert rows(None, {"a": {cls.CONNECTOR_ID: slot}, "b": {cls.CONNECTOR_ID: dict(slot)}}) == expected
+        with pytest.raises(FeatureResolutionError, match="data_access_handle 'zzz' is unknown"):
+            rows("zzz", two)
+
+    def test_query_family_without_query_text_names_the_missing_option(self) -> None:
+        """A query family declines a request with a missing or blank ``query_text`` and says why."""
+        cls = self.connector_reader_class()
+        if not issubclass(cls, QueryReader):
+            pytest.skip("only query families claim through query_text")
+        feat = self.feature_under_test()
+        dac = DataAccessCollection(credentials=Credential(self.valid_credentials()))
+        context = {k: v for k, v in feat.options.context.items() if k != "query_text"}
+        for variant in (context, {**context, "query_text": "  "}):
+            bare = Feature(feat.name, options=Options(group=dict(feat.options.group), context=variant))
+            with pytest.raises(FeatureResolutionError, match=r"non-empty option \['query_text'\]"):
+                mloda.run_all([bare], compute_frameworks=[PythonDictFramework], data_access_collection=dac)
+
     def test_data_access_identity_names_the_source_and_no_secret(self) -> None:
-        """The identity extenders see on INPUT_DATA_LOAD is the source (or mloda's default), never a secret."""
+        """The identity extenders and the plan see is the source (or ``{CONNECTOR_ID}``), never a secret."""
         cls = self.connector_reader_class()
         creds = copy.deepcopy(self.valid_credentials())
         slot = creds[cls.CONNECTOR_ID]
@@ -287,13 +298,13 @@ class LoadBehaviorContract(KgContractAdapterBase):
         identity = cls.data_access_identity(creds)
         assert _SECRET not in identity, identity
 
-        source = slot.get(cls.SOURCE_SLOT) if cls.SOURCE_SLOT else None
-        if source is not None and os.path.exists(str(source)):
+        source = next((slot[key] for key in cls._source_keys() if slot.get(key) is not None), None)
+        if source is not None:
             assert identity == str(source)
             for alias in cls._source_keys()[1:]:
                 assert cls.data_access_identity({cls.CONNECTOR_ID: {alias: source}}) == str(source)
         else:
-            assert identity == BaseInputData.data_access_identity(creds)
+            assert identity == f"{{{cls.CONNECTOR_ID}}}"
 
         if cls.SOURCE_SLOT:
             slot[cls.SOURCE_SLOT] = f"file://user:{_SECRET}@host/graph.ttl?token={_SECRET}#{_SECRET}"
@@ -301,20 +312,28 @@ class LoadBehaviorContract(KgContractAdapterBase):
         assert isinstance(cls.data_access_identity({cls.CONNECTOR_ID: "not-a-slot"}), str)
 
     def test_count_rows_matches_the_load(self) -> None:
-        """``count_rows`` equals the load's row count, capped by ``result_limit``; None unless ``ROWS_FROM_SLOT``."""
+        """``session.count_rows(step)`` equals the load's row count, capped by ``result_limit``; None unless ``ROWS_FROM_SLOT``."""
         cls = self.connector_reader_class()
         creds = self.valid_credentials()
-        count = cls.count_rows(creds, PythonDictFramework)
+        group = feature_group_of(cls)
+        feat = self.feature_under_test()
+
+        def count(credentials: dict[str, Any]) -> int | None:
+            dac = DataAccessCollection(credentials=Credential(credentials))
+            session = mloda.prepare([feat], compute_frameworks=[PythonDictFramework], data_access_collection=dac)
+            (step,) = [step for step in session.resolved_plan() if step.feature_group is group]
+            return session.count_rows(step)
+
         if not cls.ROWS_FROM_SLOT:
-            assert count is None
+            assert count(creds) is None
             return
 
         assert issubclass(cls, ParamReader) and not cls.PARAMS_MAPPING, (
             f"{cls.__name__}: ROWS_FROM_SLOT needs a ParamReader without per-call params."
         )
-        rows = run_query(cls.CONNECTOR_ID, creds[cls.CONNECTOR_ID], self.feature_under_test())
-        assert count == len(rows)
+        rows = run_query(cls.CONNECTOR_ID, creds[cls.CONNECTOR_ID], feat)
+        assert count(creds) == len(rows)
         assert len(rows) > 1, f"{cls.__name__}: the cap check below needs a fixture with more than one row."
         capped = copy.deepcopy(creds)
         capped[cls.CONNECTOR_ID]["result_limit"] = 1
-        assert cls.count_rows(capped, PythonDictFramework) == 1
+        assert count(capped) == 1

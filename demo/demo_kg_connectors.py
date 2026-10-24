@@ -73,9 +73,8 @@ def helpers():
     def run_query(connector_id: str, slot_creds: dict, feature: _Feature) -> _Any:
         """Run a feature through `mloda.run_all` against a single KG connector.
 
-        mloda matches the reader by calling `is_valid_credentials` on each
-        `ReadDB` subclass and selecting the one whose `CONNECTOR_ID` slot is
-        present in `credentials`. The KG FG base pins `compute_framework_rule`
+        Each KG FeatureGroup claims the feature when its reader's `CONNECTOR_ID`
+        slot is present in `credentials`. The KG FG base pins `compute_framework_rule`
         to the stock `PythonDictFramework`; the reader's `load` wraps native
         rows into a `{feature_name: [row, ...]}` column, and we flat-concat
         that column across partitions for the per-cell rendering.

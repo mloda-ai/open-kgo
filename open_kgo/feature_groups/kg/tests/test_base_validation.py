@@ -154,9 +154,8 @@ class _OtherFakeReader(KgConnectorReaderBase):
 
 def test_is_valid_credentials_returns_false_on_malformed_slot() -> None:
     """Malformed wrapper (non-dict slot) must not propagate out of the
-    matcher-facing API. mloda's ``match_read_db_data_access`` only catches
-    ``NotImplementedError``; a raise here would abort iteration over
-    unrelated reader subclasses. ``_extract_slot`` still raises directly
+    matcher-facing API: mloda's source matching must never raise to decline.
+    ``_extract_slot`` still raises directly
     (covered above), preserving loud diagnostics for explicit callers.
     """
     creds = {_FakeReader.CONNECTOR_ID: "/bad/string"}
@@ -190,32 +189,28 @@ _OWN = _FakeReader.CONNECTOR_ID
 
 
 @pytest.mark.parametrize(
-    ("feature_name", "claimed", "in_namespace"),
+    ("feature_name", "claimed"),
     [
-        (f"{_OWN}__knows", True, True),
-        (f"{_OWN}__knows__sum_aggr", False, True),
-        (f"{_OWN}__", False, True),
-        (f"{_OWN}___sum_aggr", False, True),
-        (_OWN, False, False),
-        ("unrelated_consumer", False, False),
-        (f"{_OtherFakeReader.CONNECTOR_ID}__knows", False, False),
+        (f"{_OWN}__knows", True),
+        (f"{_OWN}__knows~s", True),
+        (f"{_OWN}__knows__sum_aggr", False),
+        (f"{_OWN}__", False),
+        (f"{_OWN}___sum_aggr", False),
+        (_OWN, False),
+        ("unrelated_consumer", False),
+        (f"{_OtherFakeReader.CONNECTOR_ID}__knows", False),
     ],
 )
-def test_check_feature_in_data_access_claims_only_own_single_level_names(
-    feature_name: str, claimed: bool, in_namespace: bool
-) -> None:
-    """``claims_feature_name`` gates the credential probe on the prefix; the full shape check comes after it."""
-    assert _FakeReader.check_feature_in_data_access(feature_name, {}) is claimed
-    assert _FakeReader.claims_feature_name(feature_name) is in_namespace
+def test_claims_feature_name_claims_only_own_single_level_names(feature_name: str, claimed: bool) -> None:
+    assert _FakeReader.claims_feature_name(feature_name) is claimed
 
 
 def test_is_valid_credentials_swallows_runtime_error_from_misbehaving_mapping() -> None:
     """``is_valid_credentials`` must catch non-``InvalidCredentialShape``
     exceptions raised while probing the credentials object.
 
-    The matcher (``ReadDB.match_read_db_data_access``) only catches
-    ``NotImplementedError``, so any other propagating exception aborts
-    iteration over unrelated readers. The reproducer is a plain ``dict``
+    mloda's source matching must never raise to decline, so any other
+    propagating exception ends matching for the whole candidate. The reproducer is a plain ``dict``
     subclass whose ``.get`` raises ``RuntimeError``: the previous
     narrow-``except InvalidCredentialShape`` let the ``RuntimeError`` escape
     out of ``is_valid_credentials`` and broke the matcher contract.

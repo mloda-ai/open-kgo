@@ -99,4 +99,4 @@ class AgentMemoryReader(PaginationMixin, QueryReader, family_properties=_FAMILY_
 
 
 class AgentMemoryFeatureGroup(KgConnectorFeatureGroupBase):
-    READER_CLASS = None
+    """Abstract family base; each concrete pins ``READER_CLASS``."""

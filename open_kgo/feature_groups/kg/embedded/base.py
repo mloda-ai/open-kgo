@@ -97,4 +97,4 @@ class EmbeddedGraphReader(ParamReader, family_properties=_FAMILY_PROPERTIES, fam
 
 
 class EmbeddedGraphFeatureGroup(KgConnectorFeatureGroupBase):
-    READER_CLASS = None
+    """Abstract family base; each concrete pins ``READER_CLASS``."""

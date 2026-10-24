@@ -192,4 +192,4 @@ class OpenLineageReader(LineageReader):
 
 
 class OpenLineageFeatureGroup(LineageFeatureGroup):
-    READER_CLASS: ClassVar[type[OpenLineageReader]] = OpenLineageReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[OpenLineageReader]] = OpenLineageReader

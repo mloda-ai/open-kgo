@@ -21,10 +21,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from mloda.provider import PropertySpec
+from mloda.provider import PropertySpec, get_all_subclasses
 from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
 
-from open_kgo.feature_groups.kg.base import KgConnectorReaderBase, PythonDictFramework
+from open_kgo.feature_groups.kg.base import KgConnectorFeatureGroupBase, KgConnectorReaderBase, PythonDictFramework
 
 
 def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -> list[Any]:
@@ -53,11 +53,17 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     return [row for partition in partitions for row in partition.get(feature.name, [])]
 
 
+def feature_group_of(reader: type[KgConnectorReaderBase]) -> type[KgConnectorFeatureGroupBase]:
+    """The concrete KG FeatureGroup that pins ``reader``."""
+    return next(fg for fg in get_all_subclasses(KgConnectorFeatureGroupBase) if fg.READER_CLASS is reader)
+
+
 def scoped_feature(reader: type[KgConnectorReaderBase], slot_creds: dict[str, Any], feature: Feature) -> Feature:
-    """A copy of ``feature`` whose credentials ride on its options under the reader's name (no DAC)."""
+    """A copy of ``feature`` whose credentials ride on its options under its FeatureGroup's name (no DAC)."""
+    pointer = feature_group_of(reader).get_class_name()
     options = Options(
         group=dict(feature.options.group),
-        context={**feature.options.context, reader.data_access_name(): {reader.CONNECTOR_ID: slot_creds}},
+        context={**feature.options.context, pointer: {reader.CONNECTOR_ID: slot_creds}},
     )
     return Feature(feature.name, options=options)
 

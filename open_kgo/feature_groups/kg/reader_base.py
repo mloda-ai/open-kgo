@@ -1,10 +1,9 @@
 """Universal reader base for KG connectors, plus the conceptual rules it enforces.
 
-The split mirrors mloda core's ``ReadDB`` + ``ReadDBFeature`` pattern (see
-``mloda_plugins/feature_group/input_data/read_db.py`` and
-``read_db_feature.py``). Each KG family supplies a ``<Family>Reader`` that
-extends ``KgConnectorReaderBase`` (which extends ``ReadDB``) and a
-``<Family>FeatureGroup`` that extends ``KgConnectorFeatureGroupBase``.
+Each KG family supplies a ``<Family>Reader`` that extends ``KgConnectorReaderBase``
+(a plain connector class, not an mloda input-data class) and a ``<Family>FeatureGroup``
+that extends ``KgConnectorFeatureGroupBase``, the mloda source FeatureGroup that finds
+and loads sources through the reader.
 
 Module layout: this module owns ``LoadContext`` and ``KgConnectorReaderBase``;
 the two per-call reader flavors (``QueryReader`` / ``ParamReader``) live in
@@ -67,17 +66,15 @@ from pathlib import PurePath
 from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
-from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.core.abstract_plugins.components.input_data.reader_probe import probe_reader  # Not publicly exported.
-from mloda.core.abstract_plugins.components.match_rejection import (
-    INPUT_DATA_OWNED_STAGE,
-    drop_match_rejections_since,
-    match_rejection_owners,
-    restamp_match_rejections_since,
+from mloda.provider import (
+    CHAIN_SEPARATOR,
+    COLUMN_SEPARATOR,
+    INPUT_DATA_STAGE,
+    ComputeFramework,
+    FeatureSet,
+    record_match_rejection,
+    scrub_credentials,
 )
-from mloda.provider import CHAIN_SEPARATOR, COLUMN_SEPARATOR, INPUT_DATA_STAGE, ComputeFramework, record_match_rejection
-from mloda.user import DataAccessCollection, Options
-from mloda_plugins.feature_group.input_data.read_db import ReadDB
 
 from open_kgo.feature_groups.kg import class_guards, composition
 from open_kgo.feature_groups.kg.composition import (  # noqa: F401 -- back-compat re-export, moved to composition.py
@@ -164,7 +161,7 @@ def _collect_kg_known_keys() -> set[str]:
     return known
 
 
-class KgConnectorReaderBase(CredentialRules, ReadDB):
+class KgConnectorReaderBase(CredentialRules):
     """Universal base for KG connector readers.
 
     Subclasses (per family) extend this and add family-specific properties to
@@ -278,7 +275,8 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         """Reject a contradictory ``SOURCE_SLOT`` declaration; see ``class_guards.validate_source_slot``."""
         class_guards.validate_source_slot(cls)
 
-    def load(self, features: FeatureSet) -> dict[str, list[Any]]:
+    @classmethod
+    def load(cls, data_access: Any, features: FeatureSet) -> dict[str, list[Any]]:
         """Reject multi-feature FeatureSets, then wrap native rows (or one row key's values) under each feature name.
 
         Concrete ``load_data`` implementations across every family read a single
@@ -307,9 +305,9 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         a generator) into a typed error here rather than an indirect failure
         downstream in ``PythonDictFramework.transform``.
         """
-        self._assert_single_feature(features)
-        result = super().load(features)
-        cls_name = type(self).__name__
+        cls._assert_single_feature(features)
+        result = cls.load_data(data_access, features)
+        cls_name = cls.__name__
         if not isinstance(result, list):
             raise TypeError(f"{cls_name}.load_data must return list[dict[str, Any]], got {type(result).__name__}.")
         for index, row in enumerate(result):
@@ -318,7 +316,7 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
                     f"{cls_name}.load_data must return list[dict[str, Any]]; "
                     f"row at index {index} is {type(row).__name__}."
                 )
-        return {str(feature.name): self._project(str(feature.name), result) for feature in features.features}
+        return {str(feature.name): cls._project(str(feature.name), result) for feature in features.features}
 
     @classmethod
     def _project(cls, feature_name: str, rows: list[dict[str, Any]]) -> list[Any]:
@@ -372,13 +370,12 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         or shape-checking the credentials object, not only ``InvalidCredentialShape``.
         (``BaseException`` subclasses such as ``KeyboardInterrupt``,
         ``SystemExit``, and ``GeneratorExit`` still propagate by design, so a
-        Ctrl-C inside the matcher loop is not swallowed.) mloda's
-        ``ReadDB.match_read_db_data_access`` only catches ``NotImplementedError``
-        from the matcher loop, so any other propagating ``Exception`` (e.g. a
+        Ctrl-C inside the matcher loop is not swallowed.) mloda's source matching
+        must never raise to decline, so any other propagating ``Exception`` (e.g. a
         misbehaving ``Mapping`` whose ``.get`` raises ``RuntimeError``, an
         ``AttributeError`` from a custom dict-alike, or a framework hiccup deep
-        inside ``_validate_shape``) would abort iteration over unrelated
-        readers in the same ``DataAccessCollection``. The broad ``except`` is
+        inside ``_validate_shape``) would end matching for the whole candidate
+        instead of skipping one credential. The broad ``except`` is
         therefore part of the matcher-safety contract, not a swallowed bug.
         Loud-failure diagnostics for malformed slots and content errors live
         in ``_extract_slot`` and ``_validate_shape``, which direct callers
@@ -394,9 +391,9 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
             cls._validate_shape(creds)
         except InvalidCredentialShape as exc:
             record_match_rejection(
-                cls.get_class_name(),
-                f"{cls.get_class_name()}: the {cls.CONNECTOR_ID!r} credential slot is present but invalid "
-                f"({type(exc).__name__}); call {cls.get_class_name()}.connect() with the same dict for details",
+                cls.__name__,
+                f"{cls.__name__}: the {cls.CONNECTOR_ID!r} credential slot is present but invalid "
+                f"({type(exc).__name__}); call {cls.__name__}.connect() with the same dict for details",
                 stage=INPUT_DATA_STAGE,
             )
             return False
@@ -405,85 +402,18 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         return True
 
     @classmethod
-    def check_feature_in_data_access(cls, feature_name: str, data_access: Any) -> bool:
+    def claims_feature_name(cls, feature_name: str) -> bool:
         """Claim only ``<CONNECTOR_ID>__<name>``: chained (``...__sum_aggr``) and unrelated names go to other groups."""
         prefix = f"{cls.CONNECTOR_ID}{CHAIN_SEPARATOR}"
-        if not feature_name.startswith(prefix):
+        if not cls.CONNECTOR_ID or not feature_name.startswith(prefix):
             return False
         name = feature_name[len(prefix) :]
         # A leading "_" would let "<id>___op" read as a chain on "<id>_".
         return bool(name) and not name.startswith("_") and CHAIN_SEPARATOR not in name
 
     @classmethod
-    def claims_feature_name(cls, feature_name: str) -> bool:
-        """Only ``<CONNECTOR_ID>__...`` names probe this reader's credentials."""
-        return bool(cls.CONNECTOR_ID) and str(feature_name).startswith(f"{cls.CONNECTOR_ID}{CHAIN_SEPARATOR}")
-
-    @classmethod
-    def is_final_reader(cls) -> bool:
-        # Hides KG readers from the stock ReadDBFeature's subclass walk (a final ReadDB would also match it and stop
-        # the stock read_dbs auto-load); each KG FeatureGroup matches its own reader in the two overrides below.
-        return False
-
-    @classmethod
-    def feature_scope_data_access(cls, options: Options, feature_name: str) -> bool:
-        """Core's pinned-reader path for this reader alone: options keyed by its name carry its data access."""
-        for key in options.keys():
-            if cls.deal_with_base_input_data_name_as_cls_or_str(key) != cls.data_access_name():
-                continue
-            before_checks = match_rejection_owners()
-            if cls._reader_options_admit(options, record_absence=True):
-                # As core does: INPUT_DATA_MATCH extenders and the plan see a redacting credential, not a plain dict.
-                value = options.get(key)
-                wrapped = cls.wrap_feature_scoped_access(value)
-                if wrapped is not value:
-                    options.set(key, wrapped)
-                known_owners = match_rejection_owners()
-                matched = probe_reader(cls, wrapped, [feature_name], options)
-                if matched:
-                    unmet = cls._unmet_current_declaration()
-                    if unmet is None:
-                        # Declines recorded on the way to this match must not mask a later failure reason.
-                        drop_match_rejections_since(before_checks)
-                        cls.add_base_input_data_to_options(cls, matched, options)
-                        return True
-                    record_match_rejection(cls.get_class_name(), unmet, stage=INPUT_DATA_OWNED_STAGE)
-                else:
-                    restamp_match_rejections_since(known_owners, INPUT_DATA_STAGE, INPUT_DATA_OWNED_STAGE)
-            if match_rejection_owners() <= before_checks:
-                name = cls.get_class_name()
-                record_match_rejection(
-                    name,
-                    f"{name} is pinned for feature '{feature_name}' but matched nothing; a pinned reader is final",
-                    stage=INPUT_DATA_OWNED_STAGE,
-                )
-            return False
-        return False
-
-    @classmethod
-    def match_data_access(
-        cls,
-        feature_names: list[str],
-        data_access_collection: DataAccessCollection,
-        options: Options | None = None,
-    ) -> tuple[Any, Any]:
-        """Match only this reader, never a sibling found by walking subclasses."""
-        if not all(cls.claims_feature_name(name) for name in feature_names):
-            return None, None
-        if not cls._reader_options_admit(options, record_absence=False):
-            return None, None
-        matched = probe_reader(cls, data_access_collection, feature_names, options)
-        if not matched:
-            return None, None
-        unmet = cls._unmet_current_declaration()
-        if unmet is not None:
-            record_match_rejection(cls.get_class_name(), unmet, stage=INPUT_DATA_OWNED_STAGE)
-            return None, None
-        return cls, matched
-
-    @classmethod
     def data_access_identity(cls, data_access: Any) -> str:
-        """The ``SOURCE_SLOT`` value without userinfo, query or fragment; mloda's default if unusable. Never raises."""
+        """The source slot value without userinfo, query or fragment, else ``{CONNECTOR_ID}``. Never raises."""
         try:
             slot = cls._extract_slot(data_access)
         except Exception:  # A malformed slot fails the load elsewhere; identity stays best-effort.
@@ -491,10 +421,8 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         for key in cls._source_keys():
             source = slot.get(key) if slot is not None else None
             if isinstance(source, (str, PurePath)) and str(source):
-                projected = super().data_access_identity(str(source))
-                if projected != str.__name__:
-                    return projected
-        return super().data_access_identity(data_access)
+                return scrub_credentials(str(source))
+        return f"{{{cls.CONNECTOR_ID}}}"
 
     @classmethod
     def _source_keys(cls) -> tuple[str, ...]:
@@ -556,9 +484,9 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         Every concrete used to open its ``load_data`` with the same two lines
         (``ctx = cls._prepare_load(data_access)`` then
         ``cls._connect_from_slot(ctx.slot)``); the prologue now lives here
-        once and concretes implement ``_load_rows`` only. ``ReadDB.load``
-        dispatches into this hook unchanged, so direct callers and the
-        matcher path see identical behavior. ``data_access`` must be the
+        once and concretes implement ``_load_rows`` only. ``load`` dispatches
+        into this hook unchanged, so direct callers and the FeatureGroup
+        path see identical behavior. ``data_access`` must be the
         ``{CONNECTOR_ID: slot}`` dict mloda matched; anything else raises
         ``InvalidCredentialShape``.
         """
@@ -577,19 +505,16 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         line. Per-call inputs are read here via ``build_query(features)``
         (QueryReader concretes) or ``build_params(features, ctx.slot)``
         (ParamReader concretes). Must return ``list[dict[str, Any]]``; the
-        base ``load`` enforces that shape after ``ReadDB.load`` returns.
+        base ``load`` enforces that shape after ``load_data`` returns.
         """
         raise NotImplementedError
 
     @classmethod
     def connect(cls, credentials: Any) -> Any:
-        """Public ReadDB hook: extract + validate the slot, then dispatch to ``_connect_from_slot``.
+        """Public hook: extract + validate the slot, then dispatch to ``_connect_from_slot``.
 
         Concrete plugins override ``_connect_from_slot(slot)``, not this
-        method. Keeping ``connect(credentials)`` aligned with ``ReadDB``'s
-        signature means ``ReadDB.read_db`` and ``ReadDB.get_connection`` still
-        work against KG readers without any further override; concrete plugin
-        code never sees the full credentials object.
+        method, so concrete plugin code never sees the full credentials object.
 
         Calls ``_validate_shape`` before dispatching so direct callers (tests,
         demos, programmatic users that bypass mloda's matcher) hit the same
@@ -601,15 +526,6 @@ class KgConnectorReaderBase(CredentialRules, ReadDB):
         produces. Concretes that want to bypass shape validation (e.g. to
         probe the typed-leaf error in ``_connect_from_slot``) call
         ``_connect_from_slot`` directly.
-
-        On the matcher path, ``_validate_shape`` runs twice for the same slot:
-        once inside ``is_valid_credentials`` during reader selection, and once
-        here when mloda dispatches into ``ReadDB.read_db`` /
-        ``ReadDB.get_connection``. The cost is negligible and the second run
-        is what gives direct callers parity with the matcher. A future refactor
-        that wants to dedupe must preserve the direct-call shape gate (e.g.
-        via a "validated" sentinel threaded through the call), not just remove
-        one of the two ``_validate_shape`` calls.
         """
         slot = cls._require_slot(credentials)
         cls._validate_shape(slot)

@@ -7,7 +7,7 @@ parameter keys); family bases merge these into their ``PROPERTY_MAPPING`` /
 
 Mixins are plain ``object`` subclasses so MRO stays trivial. A family base
 declared as ``class FooReader(SomeMixin, KgConnectorReaderBase)`` ends up with
-``[FooReader, SomeMixin, KgConnectorReaderBase, ReadDB, BaseInputData, object]``.
+``[FooReader, SomeMixin, KgConnectorReaderBase, CredentialRules, object]``.
 
 The Property/Param split mirrors the ``QueryReader`` / ``ParamReader`` split
 in ``base.py``: the same key may legitimately appear on either side depending

@@ -142,4 +142,4 @@ class IGraphEmbeddedReader(EmbeddedGraphReader):
 
 
 class IGraphEmbeddedFeatureGroup(EmbeddedGraphFeatureGroup):
-    READER_CLASS: ClassVar[type[IGraphEmbeddedReader]] = IGraphEmbeddedReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[IGraphEmbeddedReader]] = IGraphEmbeddedReader

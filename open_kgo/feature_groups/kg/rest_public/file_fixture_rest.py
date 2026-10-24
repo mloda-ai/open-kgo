@@ -110,4 +110,4 @@ class FileFixtureRestReader(RestPublicReader):
 
 
 class FileFixtureRestFeatureGroup(RestPublicFeatureGroup):
-    READER_CLASS: ClassVar[type[FileFixtureRestReader]] = FileFixtureRestReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[FileFixtureRestReader]] = FileFixtureRestReader

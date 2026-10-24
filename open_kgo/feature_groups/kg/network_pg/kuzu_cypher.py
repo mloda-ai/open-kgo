@@ -78,4 +78,4 @@ class KuzuCypherReader(NetworkPropertyGraphReader):
 
 
 class KuzuCypherFeatureGroup(NetworkPropertyGraphFeatureGroup):
-    READER_CLASS: ClassVar[type[KuzuCypherReader]] = KuzuCypherReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[KuzuCypherReader]] = KuzuCypherReader

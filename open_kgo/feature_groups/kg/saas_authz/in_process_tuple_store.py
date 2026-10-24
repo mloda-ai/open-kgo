@@ -173,7 +173,7 @@ class InProcessTupleStoreReader(SaasAuthzReader):
 
 
 class InProcessTupleStoreFeatureGroup(SaasAuthzFeatureGroup):
-    READER_CLASS: ClassVar[type[InProcessTupleStoreReader]] = InProcessTupleStoreReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[InProcessTupleStoreReader]] = InProcessTupleStoreReader
 
 
 # Regression guard: ``SUPPORTED_VALUES["tenant"]`` mirrors the spec-override's

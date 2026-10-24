@@ -58,4 +58,4 @@ class CycloneDxSbomReader(CodeBuildReader):
 
 
 class CycloneDxSbomFeatureGroup(CodeBuildFeatureGroup):
-    READER_CLASS: ClassVar[type[CycloneDxSbomReader]] = CycloneDxSbomReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[CycloneDxSbomReader]] = CycloneDxSbomReader

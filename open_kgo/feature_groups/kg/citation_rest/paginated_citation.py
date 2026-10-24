@@ -101,4 +101,4 @@ class PaginatedCitationReader(CitationRestReader):
 
 
 class PaginatedCitationFeatureGroup(CitationRestFeatureGroup):
-    READER_CLASS: ClassVar[type[PaginatedCitationReader]] = PaginatedCitationReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[PaginatedCitationReader]] = PaginatedCitationReader

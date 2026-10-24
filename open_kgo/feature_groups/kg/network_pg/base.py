@@ -48,4 +48,4 @@ class NetworkPropertyGraphReader(QueryReader, family_properties=_FAMILY_PROPERTI
 
 
 class NetworkPropertyGraphFeatureGroup(KgConnectorFeatureGroupBase):
-    READER_CLASS = None
+    """Abstract family base; each concrete pins ``READER_CLASS``."""

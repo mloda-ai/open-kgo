@@ -92,7 +92,7 @@ class ParamReader(KgConnectorReaderBase):
         # (furthest from ``cls``). The walk deliberately does NOT break on the
         # first qualifying ancestor (that would re-introduce the nearest-only
         # bug). The break on ``ParamReader`` bounds the walk; everything beyond
-        # it (``KgConnectorReaderBase``, ``ReadDB``, ``object``) cannot be a
+        # it (``KgConnectorReaderBase``, ``CredentialRules``, ``object``) cannot be a
         # ``ParamReader`` subclass anyway.
         for ancestor in cls.__mro__[1:]:
             if ancestor is ParamReader:
@@ -109,7 +109,8 @@ class ParamReader(KgConnectorReaderBase):
         """ParamReader has no query language; per-call inputs live in build_params."""
         return ""
 
-    def load(self, features: FeatureSet) -> dict[str, list[Any]]:
+    @classmethod
+    def load(cls, data_access: Any, features: FeatureSet) -> dict[str, list[Any]]:
         """Run the per-call ``_STRIPPED_PARAMS`` check before delegating to the framework.
 
         Concrete ``load_data`` implementations are not required to call
@@ -120,9 +121,9 @@ class ParamReader(KgConnectorReaderBase):
         first so a multi-feature FeatureSet does not silently feed the
         first-iterated feature into ``_reject_stripped_params``.
         """
-        self._assert_single_feature(features)
-        self._reject_stripped_params(features)
-        return super().load(features)
+        cls._assert_single_feature(features)
+        cls._reject_stripped_params(features)
+        return super().load(data_access, features)
 
     @classmethod
     def _reject_stripped_params(cls, features: FeatureSet) -> None:

@@ -108,4 +108,4 @@ class GraphWalkMemoryReader(AgentMemoryReader):
 
 
 class GraphWalkMemoryFeatureGroup(AgentMemoryFeatureGroup):
-    READER_CLASS: ClassVar[type[GraphWalkMemoryReader]] = GraphWalkMemoryReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[GraphWalkMemoryReader]] = GraphWalkMemoryReader

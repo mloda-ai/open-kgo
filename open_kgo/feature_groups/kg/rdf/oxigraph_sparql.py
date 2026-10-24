@@ -138,4 +138,4 @@ class OxigraphSparqlReader(RdfSparqlReader):
 
 
 class OxigraphSparqlFeatureGroup(RdfSparqlFeatureGroup):
-    READER_CLASS: ClassVar[type[OxigraphSparqlReader]] = OxigraphSparqlReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[OxigraphSparqlReader]] = OxigraphSparqlReader

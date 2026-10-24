@@ -31,7 +31,10 @@ class RdfContractTestBase(KgConnectorContractBase):
 
         from mloda.core.abstract_plugins.components.feature_set import FeatureSet
 
+        from open_kgo.feature_groups.kg.base import QueryReader
+
         cls = self.connector_reader_class()
+        assert issubclass(cls, QueryReader)
         feat = Feature("rdflib_sparql__missing_query", options=Options(context={}))
         fs = FeatureSet()
         fs.add(feat)

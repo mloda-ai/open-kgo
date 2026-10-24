@@ -103,4 +103,4 @@ class NetworkxMemoryReader(AgentMemoryReader):
 
 
 class NetworkxMemoryFeatureGroup(AgentMemoryFeatureGroup):
-    READER_CLASS: ClassVar[type[NetworkxMemoryReader]] = NetworkxMemoryReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[NetworkxMemoryReader]] = NetworkxMemoryReader

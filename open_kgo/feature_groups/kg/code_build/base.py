@@ -49,4 +49,4 @@ class CodeBuildReader(
 
 
 class CodeBuildFeatureGroup(KgConnectorFeatureGroupBase):
-    READER_CLASS = None
+    """Abstract family base; each concrete pins ``READER_CLASS``."""

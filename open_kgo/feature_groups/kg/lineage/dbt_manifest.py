@@ -113,4 +113,4 @@ def _walk_with_node(
 
 
 class DbtManifestFeatureGroup(LineageFeatureGroup):
-    READER_CLASS: ClassVar[type[DbtManifestReader]] = DbtManifestReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[DbtManifestReader]] = DbtManifestReader

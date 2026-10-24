@@ -167,4 +167,4 @@ class GrandCypherReader(NetworkPropertyGraphReader):
 
 
 class GrandCypherFeatureGroup(NetworkPropertyGraphFeatureGroup):
-    READER_CLASS: ClassVar[type[GrandCypherReader]] = GrandCypherReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[GrandCypherReader]] = GrandCypherReader

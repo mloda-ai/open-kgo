@@ -79,4 +79,4 @@ class FileFixtureCitationReader(CitationRestReader):
 
 
 class FileFixtureCitationFeatureGroup(CitationRestFeatureGroup):
-    READER_CLASS: ClassVar[type[FileFixtureCitationReader]] = FileFixtureCitationReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[FileFixtureCitationReader]] = FileFixtureCitationReader

@@ -54,7 +54,10 @@ kg/
 
 ## How a concrete plugin works
 
-A concrete plugin (e.g. `RdfLibSparqlReader`) is a `ReadDB` subclass with:
+A concrete plugin is a reader (e.g. `RdfLibSparqlReader`, a plain connector
+class) plus a FeatureGroup that pins it as `READER_CLASS`
+(`RdfLibSparqlFeatureGroup`, an mloda `SourceFeatureGroup` that finds the
+reader's credential slot and loads through it). The reader has:
 - `CONNECTOR_ID: ClassVar[str]` — keys the credential dict in
   `DataAccessCollection.credential_dicts`, and prefixes the feature names the
   reader claims (`<CONNECTOR_ID>__<name>`).
@@ -65,8 +68,8 @@ A concrete plugin (e.g. `RdfLibSparqlReader`) is a `ReadDB` subclass with:
   `ParamReader` (per-call input is a typed parameter dict declared on
   `PARAMS_MAPPING`).
 - `connect(creds)`, `build_query(features)` or `build_params(features)`,
-  `load_data(data_access, features)` — the methods mloda's
-  `BaseInputData.load` calls.
+  `load_data(data_access, features)`, the methods the FeatureGroup's
+  load path calls.
 
 Properties are declared in `PROPERTY_MAPPING` as `PropertySpec` values built
 via `kg/spec.py`'s `property_spec(explanation, strict=..., allowed_values=...,

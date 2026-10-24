@@ -192,4 +192,4 @@ class SpdxSbomReader(CodeBuildReader):
 
 
 class SpdxSbomFeatureGroup(CodeBuildFeatureGroup):
-    READER_CLASS: ClassVar[type[SpdxSbomReader]] = SpdxSbomReader  # type: ignore[assignment]
+    READER_CLASS: ClassVar[type[SpdxSbomReader]] = SpdxSbomReader

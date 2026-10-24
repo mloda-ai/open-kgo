@@ -75,15 +75,16 @@ def test_consumer_takes_kg_feature_as_input_in_one_run(case: ConnectorCase, tmp_
 
 
 def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
-    """With every stock mloda plugin loaded (``ReadDBFeature`` included), each case still resolves to its own group.
+    """With every stock mloda plugin loaded (``SqliteFG``'s query route included), each case resolves to its own group.
 
     ``<case feature>__sum_aggr`` must resolve to the stock aggregation groups, never to the KG group, and
     ``<case feature>~<row_key>__max_aggr`` runs end to end with the case's context propagated to the input, as
-    does ``__sum_aggr`` over an rdflib ``xsd:integer`` projection. Runs in a subprocess so ``PluginLoader.all()``
+    does ``__sum_aggr`` over an rdflib ``xsd:integer`` projection; the max_aggr run also holds a SQLite credential. Runs in a subprocess so ``PluginLoader.all()``
     never changes matching for the rest of this pytest process.
     """
     code = textwrap.dedent(
         f"""
+        import sqlite3
         import sys
         from pathlib import Path
 
@@ -95,6 +96,10 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
         from open_kgo.feature_groups.kg.base import KgConnectorFeatureGroupBase
         from open_kgo.feature_groups.kg.tests._family_cases import CASES
         from open_kgo.feature_groups.kg.tests._helpers import run_query
+
+        sqlite_db = str(Path({str(tmp_path)!r}) / "stock.sqlite")
+        with sqlite3.connect(sqlite_db) as connection:
+            connection.execute("CREATE TABLE t (x INTEGER)")
 
         failures = []
         for index, case in enumerate(CASES):
@@ -121,7 +126,7 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
                     f"{{case.feature.name}}~{{key}}__max_aggr",
                     options=Options(context=context, propagate_context_keys=frozenset(context)),
                 )
-                dac = DataAccessCollection(credentials=Credential({{case.connector_id: slot}}))
+                dac = DataAccessCollection(credentials=[{{case.connector_id: slot}}, {{"sqlite": sqlite_db}}])
                 values = {{
                     str(value)
                     for partition in mloda.run_all([maxed], data_access_collection=dac, output_framework="PyArrowTable")
