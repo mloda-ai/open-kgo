@@ -6,10 +6,11 @@ The class-definition-time guards live in the sibling ``kg.class_guards`` module.
 from __future__ import annotations
 
 import os
-from collections.abc import Collection, Mapping
+from collections.abc import Mapping
+from dataclasses import replace
 from typing import Any, ClassVar
 
-from mloda.provider import PropertySpec
+from mloda.provider import PropertySpec, PropertyValidationError, validate_property_values
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
@@ -19,36 +20,7 @@ from open_kgo.feature_groups.kg.errors import (
 from open_kgo.feature_groups.kg.validation import parse_bounded_int
 
 
-def _is_hashable(value: Any) -> bool:
-    """Return whether ``value`` can be tested for membership in a set.
-
-    Strict enums are stored as sets/frozensets. An unhashable value (a list,
-    dict, or set) cannot be a member; ``value in allowed`` would raise
-    ``TypeError`` instead of the typed credential error.
-    """
-    try:
-        hash(value)
-    except TypeError:
-        return False
-    return True
-
-
-def _is_member(value: Any, allowed: Collection[Any]) -> bool:
-    """Return whether ``value`` is in ``allowed``, treating unhashable values as absent."""
-    if not _is_hashable(value):
-        return False
-    return value in allowed
-
-
-def _value_for_message(value: Any) -> str:
-    """Render a rejected enum value without echoing unhashable payloads.
-
-    Hashable mismatches keep the existing ``repr`` so diagnostics stay stable.
-    Unhashable values may be large or incidental; the type name is enough.
-    """
-    if _is_hashable(value):
-        return repr(value)
-    return f"<{type(value).__name__}>"
+_CONTAINERS = (list, tuple, set, frozenset)
 
 
 class CredentialRules:
@@ -164,37 +136,40 @@ class CredentialRules:
         kind: str,
         closed_world: bool,
     ) -> None:
-        """Shared shape + strict-enum validation loop.
+        """Validate ``values`` with core's ``validate_property_values``, ``SUPPORTED_VALUES`` narrowing strict keys.
 
-        Used by ``_validate_shape`` (closed-world over PROPERTY_MAPPING) and
-        ``_validate_params`` (open-world over PARAMS_MAPPING; params share
-        ``feature.options.context`` with mloda core and other plugins, so
-        unknown keys must pass through). The ``kind`` label appears in the
-        error message ("credential key" vs "params") so the source of the
-        bad key is obvious in diagnostics.
+        Strict KG keys are scalar enums, so a container value and an explicit ``None`` are rejected. ``kind``
+        ("credential key" or "params") names the layer in the error, which never echoes the value.
         """
-        for key, value in values.items():
-            spec = mapping.get(key)
-            if spec is None:
-                if closed_world:
-                    raise InvalidCredentialShape(
-                        f"{cls.CONNECTOR_ID}: unknown {kind} {key!r}; allowed: {sorted(mapping.keys())}"
-                    )
-                continue
-            if spec.strict_validation is True:
+        effective: dict[str, PropertySpec] = {}
+        for key, spec in mapping.items():
+            if spec.strict_validation:
                 narrowed = cls.SUPPORTED_VALUES.get(key)
-                if narrowed is not None:
-                    if not _is_member(value, narrowed):
-                        raise InvalidCredentialShape(
-                            f"{cls.CONNECTOR_ID}.{key}={_value_for_message(value)} is not supported by this connector "
-                            f"(supported: {sorted(narrowed)})"
-                        )
-                else:
-                    allowed = cls._spec_allowed_values(key, spec)
-                    if not _is_member(value, allowed):
-                        raise InvalidCredentialShape(
-                            f"{cls.CONNECTOR_ID}: {kind} {key!r}={_value_for_message(value)} is not in allowed set {sorted(allowed)}"
-                        )
+                allowed = spec.allowed_values if narrowed is None else tuple(narrowed)
+                spec = replace(spec, allowed_values=allowed, default=None, allow_explicit_none=True)
+            effective[key] = spec
+        collection = next(
+            (
+                k
+                for k, v in values.items()
+                if k in effective and effective[k].strict_validation and isinstance(v, _CONTAINERS)
+            ),
+            None,
+        )
+        try:
+            if collection is not None:
+                raise PropertyValidationError(collection, "is a collection")
+            validate_property_values(values, effective, closed_world=closed_world)
+        except PropertyValidationError as exc:
+            spec = effective.get(exc.key)
+            if spec is None:
+                raise InvalidCredentialShape(
+                    f"{cls.CONNECTOR_ID}: unknown {kind} {exc.key!r}; allowed: {sorted(mapping)}"
+                ) from exc
+            raise InvalidCredentialShape(
+                f"{cls.CONNECTOR_ID}: {kind} {exc.key!r} ({type(values.get(exc.key)).__name__}) is not in allowed set "
+                f"{sorted(spec.allowed_values or ())}"
+            ) from exc
 
     @staticmethod
     def _spec_allowed_values(key: str, spec: PropertySpec) -> set[Any]:

@@ -8,8 +8,10 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
+from mloda.core.abstract_plugins.components.input_data.source_feature_group import HANDLE_SPEC  # not in mloda.provider
 from mloda.provider import (
     CHAIN_SEPARATOR,
+    COLUMN_SEPARATOR,
     HANDLE_OPTION,
     INPUT_DATA_STAGE,
     QUERY_OPTION,
@@ -17,22 +19,25 @@ from mloda.provider import (
     ComputeFramework,
     FeatureSet,
     NamePolicy,
+    PropertySpec,
     SourceFeatureGroup,
     SourceMatch,
     record_match_rejection,
 )
 from mloda.user import Credential, DataAccessCollection, FeatureName, Options
 
-from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
-    PythonDictFramework,
-)
+from mloda.user.python_dict import PythonDictFramework
 
 from open_kgo.feature_groups.kg.reader_base import KgConnectorReaderBase
 from open_kgo.feature_groups.kg.readers import QueryReader
 
 
-def _non_empty_str(value: Any) -> bool:
-    return isinstance(value, str) and bool(value.strip())
+_QUERY_SPEC = PropertySpec(
+    "Query text the reader runs.",
+    default=None,
+    match_guard=lambda value: isinstance(value, str) and bool(value.strip()),
+    expected="a non-empty query string",
+)
 
 
 class _UnpinnedReader:
@@ -44,16 +49,21 @@ class _UnpinnedReader:
 class KgConnectorFeatureGroupBase(SourceFeatureGroup):
     """Claims ``<CONNECTOR_ID>__<name>`` from the credential slot of its ``READER_CLASS``.
 
-    Query families claim only with ``query_text`` set. ``compute_framework_rule`` is pinned to
-    ``PythonDictFramework``, which takes the reader's columnar ``{feature_name: [row, ...]}`` frame as-is.
+    Query families claim only with ``query_text`` set. Whole rows load on ``PythonDictFramework``, which takes
+    the reader's ``{feature_name: [row, ...]}`` frame as-is; a ``~<row_key>`` projection loads on any framework.
     """
 
     READER_CLASS: ClassVar[type[KgConnectorReaderBase]] = _UnpinnedReader  # type: ignore[assignment]
+    PROPERTY_MAPPING: ClassVar[dict[str, PropertySpec]] = {HANDLE_OPTION: HANDLE_SPEC}
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
+        pinned = issubclass(cls.READER_CLASS, KgConnectorReaderBase)
+        query = pinned and issubclass(cls.READER_CLASS, QueryReader)
+        if query and QUERY_OPTION not in cls.PROPERTY_MAPPING:
+            cls.PROPERTY_MAPPING = {**cls.PROPERTY_MAPPING, QUERY_OPTION: _QUERY_SPEC}
         super().__init_subclass__(**kwargs)
-        if issubclass(cls.READER_CLASS, KgConnectorReaderBase):
-            required = (QUERY_OPTION,) if issubclass(cls.READER_CLASS, QueryReader) else ()
+        if pinned:
+            required = (QUERY_OPTION,) if query else ()
             cls.CLAIM_ROUTES = (ClaimRoute("credentials", NamePolicy.DECLARED, True, required),)
 
     @classmethod
@@ -67,7 +77,7 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
         options: Options,
         data_access_collection: DataAccessCollection | None = None,
     ) -> bool:
-        """Gate on the KG name shape first; record why a pointed or option-less request declines."""
+        """Gate on the KG name shape first; record why a pointed or ``query_text``-less request declines."""
         name, group, reader = str(feature_name), cls.get_class_name(), cls.READER_CLASS
         if issubclass(reader, KgConnectorReaderBase):
             if not reader.claims_feature_name(name):
@@ -75,11 +85,11 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
                     reason = f"{group} claims only '{reader.CONNECTOR_ID}__<name>' names, not '{name}'"
                     record_match_rejection(group, reason, stage=INPUT_DATA_STAGE)
                 return False
-            required = {key for route in cls.CLAIM_ROUTES for key in route.required_options}
-            missing = sorted(key for key in required if not _non_empty_str(options.get(key)))
-            if missing:
-                reason = f"{group} needs a non-empty option {missing} for '{name}'"
-                record_match_rejection(group, reason, stage=INPUT_DATA_STAGE)
+            # An absent required option skips the claim route without a reason; a blank one fails _QUERY_SPEC.
+            if cls.serves_query_text() and options.get(QUERY_OPTION) is None:
+                record_match_rejection(
+                    group, f"{group} needs the option '{QUERY_OPTION}' for '{name}'", stage=INPUT_DATA_STAGE
+                )
                 return False
         return super().match_feature_group_criteria(feature_name, options, data_access_collection)
 
@@ -138,5 +148,10 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
         )
 
     @classmethod
-    def compute_framework_rule(cls) -> set[type[ComputeFramework]] | None:
-        return {PythonDictFramework}
+    def supports_compute_framework(
+        cls, feature_name: FeatureName | str, options: Options, compute_framework: type[ComputeFramework]
+    ) -> bool:
+        """Whole rows hold native objects only PythonDict keeps; a ``~<row_key>`` projection is a plain column."""
+        if not issubclass(compute_framework, PythonDictFramework) and COLUMN_SEPARATOR not in str(feature_name):
+            return False
+        return super().supports_compute_framework(feature_name, options, compute_framework)

@@ -15,7 +15,7 @@ adds two open-kgo conventions:
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from typing import Any
+from typing import Any, cast
 
 from mloda.provider import PropertySpec, property_spec as _core_property_spec
 
@@ -28,29 +28,16 @@ def property_spec(
     default: Any = None,
     context: bool = True,
 ) -> PropertySpec:
-    """Build a PROPERTY_MAPPING ``PropertySpec`` via core, defaulting to optional.
-
-    ``allowed_values`` accepts any iterable (a generator included) for caller
-    convenience; anything that isn't already one of core's accepted concrete
-    shapes is materialized into a tuple before reaching core, whose own type
-    is narrower. A ``str``/``bytes`` value is passed through unmaterialized so
-    core's own guard rejects it (materializing it here would silently explode
-    it into a tuple of characters instead).
-    """
+    """Build a PROPERTY_MAPPING ``PropertySpec`` via core, defaulting to optional; core materializes iterables."""
     if allowed_values is not None and not strict:
         raise ValueError(
             f"property_spec({explanation!r}): allowed_values is never enforced without strict=True. "
             f"Pass strict=True, or drop allowed_values."
         )
-    materialized: Any
-    if allowed_values is None or isinstance(allowed_values, (Mapping, str, bytes)):
-        materialized = allowed_values
-    else:
-        materialized = tuple(allowed_values)
     return _core_property_spec(
         explanation,
         strict=strict,
-        allowed_values=materialized,
+        allowed_values=cast(Any, allowed_values),
         default=default,
         context=context,
     )

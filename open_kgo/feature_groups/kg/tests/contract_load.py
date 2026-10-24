@@ -17,6 +17,7 @@ import pytest
 from mloda.provider import FeatureSet
 from mloda.steward import Extender, ExtenderHook, HookContext
 from mloda.user import Credential, DataAccessCollection, Feature, FeatureResolutionError, Options, mloda
+from mloda.user.pyarrow import PyArrowTable
 
 from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework, QueryReader
 from open_kgo.feature_groups.kg.tests._helpers import (
@@ -84,6 +85,28 @@ class LoadBehaviorContract(KgContractAdapterBase):
         for feature, expected in zip(pair, (rows, [cls._project_value(row.get(key)) for row in rows])):
             got = [value for partition in partitions for value in partition.get(feature.name, [])]
             assert sorted(got, key=canonical_row_key) == sorted(expected, key=canonical_row_key), feature.name
+
+    def test_row_key_projection_loads_off_python_dict(self) -> None:
+        """Whole rows refuse PyArrow; a scalar ``~<row_key>`` projection loads there, or on PythonDict when listed first."""
+        cls = self.connector_reader_class()
+        creds = self.valid_credentials()[cls.CONNECTOR_ID]
+        feat = self.feature_under_test()
+        rows = run_query(cls.CONNECTOR_ID, creds, feat)
+        dac = DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: creds}))
+        whole = Feature(feat.name, options=feat.options)
+        with pytest.raises(FeatureResolutionError, match="supports_compute_framework rejected"):
+            mloda.run_all([whole], compute_frameworks=[PyArrowTable], data_access_collection=dac)
+        scalar = (str, int, float)
+        keys = sorted(k for k in rows[0] if all(isinstance(cls._project_value(row.get(k)), scalar) for row in rows))
+        if not keys:
+            pytest.skip(f"{cls.__name__}: no row key holds scalars in every row.")
+        projected = Feature(f"{feat.name}~{keys[0]}", options=feat.options)
+        tables = mloda.run_all([projected], compute_frameworks=[PyArrowTable], data_access_collection=dac)
+        got = [value for table in tables for value in table[projected.name].to_pylist()]
+        assert sorted(map(str, got)) == sorted(str(cls._project_value(row[keys[0]])) for row in rows)
+        both = [PythonDictFramework, PyArrowTable]
+        kept = mloda.run_all([projected], compute_frameworks=both, data_access_collection=dac)
+        assert kept and all(isinstance(partition, dict) for partition in kept), [type(p) for p in kept]
 
     def test_load_is_idempotent(self) -> None:
         """Running the canonical feature twice yields the same rows.
@@ -259,7 +282,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
         feat = self.feature_under_test()
         expected = sorted(run_query(cls.CONNECTOR_ID, slot, feat), key=canonical_row_key)
 
-        def rows(handle: str | None, credentials: dict[str, Any]) -> list[Any]:
+        def rows(handle: Any, credentials: dict[str, Any]) -> list[Any]:
             context = {**feat.options.context, **({"data_access_handle": handle} if handle else {})}
             request = Feature(feat.name, options=Options(group=dict(feat.options.group), context=context))
             dac = DataAccessCollection(credentials=credentials)
@@ -275,6 +298,8 @@ class LoadBehaviorContract(KgContractAdapterBase):
         assert rows(None, {"a": {cls.CONNECTOR_ID: slot}, "b": {cls.CONNECTOR_ID: dict(slot)}}) == expected
         with pytest.raises(FeatureResolutionError, match="data_access_handle 'zzz' is unknown"):
             rows("zzz", two)
+        with pytest.raises(FeatureResolutionError, match="failed validation for .data_access_handle."):
+            rows(1, {"a": {cls.CONNECTOR_ID: slot}})
 
     def test_query_family_without_query_text_names_the_missing_option(self) -> None:
         """A query family declines a request with a missing or blank ``query_text`` and says why."""
@@ -284,9 +309,12 @@ class LoadBehaviorContract(KgContractAdapterBase):
         feat = self.feature_under_test()
         dac = DataAccessCollection(credentials=Credential(self.valid_credentials()))
         context = {k: v for k, v in feat.options.context.items() if k != "query_text"}
-        for variant in (context, {**context, "query_text": "  "}):
+        for variant, reason in (
+            (context, "needs the option 'query_text'"),
+            ({**context, "query_text": "  "}, "query_text.*a non-empty query string"),
+        ):
             bare = Feature(feat.name, options=Options(group=dict(feat.options.group), context=variant))
-            with pytest.raises(FeatureResolutionError, match=r"non-empty option \['query_text'\]"):
+            with pytest.raises(FeatureResolutionError, match=reason):
                 mloda.run_all([bare], compute_frameworks=[PythonDictFramework], data_access_collection=dac)
 
     def test_data_access_identity_names_the_source_and_no_secret(self) -> None:

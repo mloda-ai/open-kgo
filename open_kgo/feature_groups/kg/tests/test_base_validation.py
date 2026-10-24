@@ -366,25 +366,32 @@ class _StrictAllowedReader(KgConnectorReaderBase):
         (_StrictEnumReader, {"a"}),
         (_StrictAllowedReader, ["a"]),
         (_StrictAllowedReader, {"a": 1}),
+        (_StrictAllowedReader, ["application/sparql-results+json"]),
+        (_StrictAllowedReader, ("application/sparql-results+json",)),
+        (_StrictAllowedReader, []),
+        (_StrictEnumReader, None),
+        (_StrictAllowedReader, None),
     ],
 )
 def test_validate_shape_raises_typed_error_for_unhashable_strict_value(
     reader: type[KgConnectorReaderBase], bad_value: Any
 ) -> None:
-    """Unhashable values on a strict key are not members, not a raw TypeError.
+    """A strict key is a scalar enum: a collection (even of allowed values) or an explicit None is rejected.
 
-    ``value not in frozenset`` / ``value not in set`` raises TypeError for lists,
-    dicts, and sets. Callers need InvalidCredentialShape. The message names the
-    type and does not echo the value.
+    The error is InvalidCredentialShape, names the type and does not echo the value.
     """
-    with pytest.raises(InvalidCredentialShape, match="not supported|not in allowed set") as exc_info:
+    with pytest.raises(InvalidCredentialShape, match="not in allowed set") as exc_info:
         reader._validate_shape({"locator": "x", "result_format": bad_value})
     message = str(exc_info.value)
-    assert type(bad_value).__name__ in message
-    assert repr(bad_value) not in message
+    assert f"({type(bad_value).__name__})" in message
+    assert bad_value is None or repr(bad_value) not in message
 
 
 def test_validate_shape_still_rejects_unsupported_hashable_enum_value() -> None:
-    """A hashable value outside the narrowed set keeps the existing diagnostic."""
-    with pytest.raises(InvalidCredentialShape, match="result_format='text/csv'"):
+    """A value outside the narrowed set names the key and the supported set, not the value."""
+    with pytest.raises(
+        InvalidCredentialShape,
+        match=r"'result_format' \(str\) is not in allowed set \[.application/sparql-results\+json.\]$",
+    ) as exc_info:
         _StrictEnumReader._validate_shape({"locator": "x", "result_format": "text/csv"})
+    assert "text/csv" not in str(exc_info.value)

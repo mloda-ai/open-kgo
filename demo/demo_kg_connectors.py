@@ -74,8 +74,8 @@ def helpers():
         """Run a feature through `mloda.run_all` against a single KG connector.
 
         Each KG FeatureGroup claims the feature when its reader's `CONNECTOR_ID`
-        slot is present in `credentials`. The KG FG base pins `compute_framework_rule`
-        to the stock `PythonDictFramework`; the reader's `load` wraps native
+        slot is present in `credentials`. Whole rows load on the stock
+        `PythonDictFramework` only; the reader's `load` wraps native
         rows into a `{feature_name: [row, ...]}` column, and we flat-concat
         that column across partitions for the per-cell rendering.
         """

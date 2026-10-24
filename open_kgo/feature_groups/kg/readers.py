@@ -117,11 +117,9 @@ class ParamReader(KgConnectorReaderBase):
         ``build_params`` (some only consume credentials), so the stripped-key
         rejection cannot live solely in ``build_params``. Hooking it into
         ``load`` ensures every ParamReader concrete enforces the contract
-        regardless of its ``load_data`` shape. The single-feature guard runs
-        first so a multi-feature FeatureSet does not silently feed the
-        first-iterated feature into ``_reject_stripped_params``.
+        regardless of its ``load_data`` shape. ``super().load`` runs the
+        single-feature guard; a stripped key on the first feature is an error either way.
         """
-        cls._assert_single_feature(features)
         cls._reject_stripped_params(features)
         return super().load(data_access, features)
 

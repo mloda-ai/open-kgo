@@ -86,6 +86,8 @@ Feature(
 
 Projected cells keep the connector's native value types, except that rdflib literals become Python values (an `xsd:integer` projects as `int`, so numeric chains such as `~n__sum_aggr` work) while IRIs, blank nodes and unconvertible literals project as `str`. A binding mixing IRIs and literals, or different numeric datatypes, yields a mixed column: wrap it in `STR(...)` or cast it (e.g. `xsd:double(?x)`) in the query. oxigraph returns lexical strings, so its projections stay strings. `~` in a KG feature name always means a projection, and a row key containing `__` cannot be projected, since the name would read as a chain.
 
+Whole rows load only on `PythonDictFramework`; a projection loads on any compute framework, so `compute_frameworks=[PyArrowTable]` returns it as a `pyarrow.Table`. When several frameworks are enabled, mloda picks the first listed one, and with no `compute_frameworks` it picks by class name, so `PyArrowTable` wins over `PythonDictFramework`. List `PythonDictFramework` first to keep projections as dicts.
+
 A family whose extra is not installed is skipped with a warning and listed by `PluginLoader.skipped_plugins()`. Importing a connector module (`import open_kgo.feature_groups.kg.rdf.rdflib_sparql`) registers just that connector.
 
 Each connector is an mloda source FeatureGroup. To pass credentials on one feature instead of the `DataAccessCollection`, key them by the FeatureGroup's class name: `options={"RdfLibSparqlFeatureGroup": Credential(rdflib_sparql={...})}`. With two credentials for one connector in the collection, pick one with the `data_access_handle` option.
@@ -116,7 +118,8 @@ Install all KG extras with: `pip install "open-kgo[kg-all]"` (from a clone: `uv 
 > reader rejects a multi-feature `FeatureSet` rather than silently labelling all
 > rows with one feature name. Request features individually (one `Feature` per
 > `mloda.run_all` slot) rather than batching `N` of them into a single reader call.
-> Sibling `~<row_key>` projections of one feature with equal options share a single load.
+> Sibling `~<row_key>` projections of one feature with equal options share a single load
+> when they run on the same compute framework.
 
 > **No-Docker testing policy.** Every connector test runs against rdflib, networkx, kuzu (embedded), or file fixtures. No Docker, no external services, no network calls.
 

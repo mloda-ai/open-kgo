@@ -18,15 +18,10 @@ now split by concern and re-exported here, so existing import sites
 - ``spec.py`` wraps mloda core's ``property_spec`` builder that spec dicts
   are authored through.
 
-``PythonDictFramework`` (the stock mloda compute framework every KG
-FeatureGroup pins) is re-exported here as well, so consumers avoid the deep
-``mloda_plugins.compute_framework.base_implementations...`` path; mloda
-offers no shorter public import for it.
+``PythonDictFramework`` (the stock framework whole KG rows load on) is re-exported here as well.
 """
 
-from mloda_plugins.compute_framework.base_implementations.python_dict.python_dict_framework import (
-    PythonDictFramework,
-)
+from mloda.user.python_dict import PythonDictFramework
 
 from open_kgo.feature_groups.kg.composition import compose_property_mapping, narrow_property_mapping
 from open_kgo.feature_groups.kg.feature_group import KgConnectorFeatureGroupBase

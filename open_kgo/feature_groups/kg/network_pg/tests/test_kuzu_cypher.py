@@ -43,7 +43,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 import kuzu
+import pytest
 
+from mloda.provider import FeatureSet
 from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.network_pg.kuzu_cypher import KuzuCypherReader
@@ -103,6 +105,28 @@ class TestKuzuCypherReader(NetworkPropertyGraphContractTestBase):
     @classmethod
     def expected_row_shape(cls) -> Callable[[Any], bool]:
         return lambda result: isinstance(result, list) and len(result) == 3
+
+    @pytest.mark.parametrize("query", ["MATCH (p:Person) RETURN p.name", "NOT CYPHER"])
+    def test_load_closes_its_connection(self, query: str, monkeypatch: pytest.MonkeyPatch) -> None:
+        """``load_data`` closes the Connection it opened, also when the query fails."""
+        closed: list[bool] = []
+        connect = KuzuCypherReader._connect_from_slot
+
+        def spy(slot: Any) -> kuzu.Connection:
+            conn = connect(slot)
+            close = conn.close
+            conn.close = lambda: closed.append(True) or close()  # type: ignore[method-assign, func-returns-value]
+            return conn
+
+        monkeypatch.setattr(KuzuCypherReader, "_connect_from_slot", spy)
+        features = FeatureSet()
+        features.add(Feature("kuzu_cypher__q", options=Options(context={"query_text": query})))
+        if query.startswith("MATCH"):
+            assert len(KuzuCypherReader.load_data(self.valid_credentials(), features)) == 3
+        else:
+            with pytest.raises(RuntimeError):
+                KuzuCypherReader.load_data(self.valid_credentials(), features)
+        assert closed == [True]
 
     def test_cypher_returns_three_persons(self) -> None:
         from open_kgo.feature_groups.kg.tests._helpers import run_query

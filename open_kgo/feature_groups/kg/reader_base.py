@@ -341,8 +341,8 @@ class KgConnectorReaderBase(CredentialRules):
     def _assert_single_feature(cls, features: FeatureSet) -> None:
         """Universal precondition: ``load_data`` dispatches one feature at a time.
 
-        Sibling ``~<row_key>`` projections of one feature with equal options share
-        that load. Extracted so subclasses (e.g. ``ParamReader``) can run the guard
+        Sibling ``~<row_key>`` projections of one feature with equal options on one
+        framework share that load. Extracted so subclasses (e.g. ``ParamReader``) can run the guard
         at the very top of their own ``load`` override, before any per-call
         validation that iterates ``features.features`` and would otherwise pick one
         feature silently.

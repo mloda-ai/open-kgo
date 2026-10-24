@@ -35,8 +35,7 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
     ``{CONNECTOR_ID: slot}`` as one credential (a bare dict would read as
     ``{handle: value}``). The selected reader's ``load`` wraps native KG rows into a single
     ``{feature_name: [row, ...]}`` column that the stock
-    ``PythonDictFramework`` (pinned by
-    ``KgConnectorFeatureGroupBase.compute_framework_rule``) passes through
+    ``PythonDictFramework`` (the only framework whole rows load on) passes through
     unchanged, so each partition is that columnar dict and this helper
     unwraps the feature's column and flattens the native rows across
     partitions.

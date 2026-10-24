@@ -62,18 +62,17 @@ class KuzuCypherReader(NetworkPropertyGraphReader):
     @classmethod
     def _load_rows(cls, ctx: LoadContext, connection: Any, features: FeatureSet) -> list[dict[str, Any]]:
         conn = connection
-
-        query_text = cls.build_query(features)
-        result_obj = conn.execute(query_text)
         rows: list[dict[str, Any]] = []
-        # kuzu returns either a single QueryResult or a list of QueryResult.
-        results = result_obj if isinstance(result_obj, list) else [result_obj]
-        for r in results:
-            columns = r.get_column_names()
-            while r.has_next():
-                rows.append(dict(zip(columns, r.get_next())))
-                if len(rows) >= ctx.result_limit:
-                    return rows
+        try:
+            result_obj = conn.execute(cls.build_query(features))
+            # kuzu returns either a single QueryResult or a list of QueryResult.
+            results = result_obj if isinstance(result_obj, list) else [result_obj]
+            for r in results:
+                columns = r.get_column_names()
+                while r.has_next() and len(rows) < ctx.result_limit:
+                    rows.append(dict(zip(columns, r.get_next())))
+        finally:
+            conn.close()
         return rows
 
 
