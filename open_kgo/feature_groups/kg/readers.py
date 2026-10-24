@@ -125,7 +125,7 @@ class ParamReader(KgConnectorReaderBase):
 
     @classmethod
     def _reject_stripped_params(cls, features: FeatureSet) -> None:
-        """Raise if any family-declared but concrete-stripped param is set on the feature.
+        """Raise if any family-declared but concrete-stripped param is set on a feature.
 
         This is the per-call enforcement of option 1 of the "Honest credential
         surface" rule (see the ``kg.reader_base`` module docstring): a param the concrete
@@ -138,8 +138,7 @@ class ParamReader(KgConnectorReaderBase):
         """
         if not cls._STRIPPED_PARAMS:
             return
-        feature = next(iter(features.features))
-        for stripped in cls._STRIPPED_PARAMS:
+        for feature, stripped in ((f, s) for f in features.features for s in cls._STRIPPED_PARAMS):
             if stripped in feature.options.context:
                 raise InvalidCredentialShape(
                     f"{cls.CONNECTOR_ID}.params.{stripped}: this concrete plugin does not honor the "

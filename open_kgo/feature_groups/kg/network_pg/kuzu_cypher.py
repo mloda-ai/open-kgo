@@ -14,8 +14,7 @@ process-wide by absolute path (see ``kg.fixtures.load_kuzu_database``)
 so a 100-feature ``mloda.run_all`` opens the DB once instead of 100x
 (repeated full re-parse of the same source, plus native FD leak). Each call
 builds a fresh ``kuzu.Connection(db)`` on top of the cached Database;
-the Connection is caller-owned and may be closed by direct callers
-without poisoning the cache.
+``_load_rows`` closes it, and a direct ``connect()`` caller owns and closes its own.
 """
 
 from __future__ import annotations
@@ -49,8 +48,7 @@ class KuzuCypherReader(NetworkPropertyGraphReader):
         """Return a fresh ``kuzu.Connection`` on top of the path-cached Database.
 
         Native FDs live on the cached ``kuzu.Database``; the Connection
-        layer is cheap and remains caller-owned (the matcher contract
-        test closes it). Two callers with the same ``locator`` share
+        layer is cheap and caller-owned. Two callers with the same ``locator`` share
         one Database; external mutations to the DB directory will NOT
         refresh the cache (Kuzu writes to its own directory during
         normal operation, so mtime keying is unsafe — see

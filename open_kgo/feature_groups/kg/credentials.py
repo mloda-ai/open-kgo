@@ -166,6 +166,7 @@ class CredentialRules:
                 raise InvalidCredentialShape(
                     f"{cls.CONNECTOR_ID}: unknown {kind} {exc.key!r}; allowed: {sorted(mapping)}"
                 ) from exc
+            # class_guards forbids NO_DEFAULT and required_when, so a declared key fails only on its value.
             raise InvalidCredentialShape(
                 f"{cls.CONNECTOR_ID}: {kind} {exc.key!r} ({type(values.get(exc.key)).__name__}) is not in allowed set "
                 f"{sorted(spec.allowed_values or ())}"
