@@ -162,6 +162,7 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
         part: str | None = None,
     ) -> bool:
         """Whole rows hold native objects only PythonDict keeps; a ``~<row_key>`` projection is a plain column."""
-        if not issubclass(compute_framework, PythonDictFramework) and COLUMN_SEPARATOR not in str(feature_name):
+        projection = part is not None or COLUMN_SEPARATOR in str(feature_name)
+        if not issubclass(compute_framework, PythonDictFramework) and not projection:
             return False
         return super().supports_compute_framework(feature_name, options, compute_framework, part=part)
