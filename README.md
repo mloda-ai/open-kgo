@@ -1,6 +1,6 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![mloda](https://img.shields.io/badge/built%20with-mloda-blue.svg)](https://github.com/mloda-ai/mloda)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 
 # open-kgo
 
@@ -86,7 +86,7 @@ Feature(
 
 Projected cells keep the connector's native value types, except that rdflib literals become Python values (an `xsd:integer` projects as `int`, so numeric chains such as `~n__sum_aggr` work) while IRIs, blank nodes and unconvertible literals project as `str`. A binding mixing IRIs and literals, or different numeric datatypes, yields a mixed column: wrap it in `STR(...)` or cast it (e.g. `xsd:double(?x)`) in the query. oxigraph returns lexical strings, so its projections stay strings. `~` in a KG feature name always means a projection, and a row key containing `__` cannot be projected, since the name would read as a chain.
 
-Whole rows load only on `PythonDictFramework`; a projection loads on any compute framework, so `compute_frameworks=[PyArrowTable]` returns it as a `pyarrow.Table`. With several frameworks enabled mloda picks the first listed; with no `compute_frameworks` it ranks the imported frameworks by connection requirement, then class name, so `PyArrowTable` (or `PandasDataFrame`, `PolarsDataFrame`) wins over `PythonDictFramework`. A mixed column (IRIs and literals) or nested cells then fail the conversion: list `PythonDictFramework` first to keep projections as dicts, or cast in the query.
+Whole rows load only on `PythonDictFramework`; a projection loads on any compute framework, so `compute_frameworks=[PyArrowTable]` returns it as a `pyarrow.Table`. With several frameworks enabled mloda picks the first listed; with no `compute_frameworks` KG features load on `PythonDictFramework`, since readers return a columnar dict. On another framework, including the one a chained operation moves the projection to, a mixed column (IRIs and literals) or nested cells fail the conversion: cast in the query.
 
 A family whose extra is not installed is skipped with a warning and listed by `PluginLoader.skipped_plugins()`. Importing a connector module (`import open_kgo.feature_groups.kg.rdf.rdflib_sparql`) registers just that connector.
 

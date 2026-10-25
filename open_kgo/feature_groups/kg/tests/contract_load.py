@@ -87,7 +87,8 @@ class LoadBehaviorContract(KgContractAdapterBase):
             assert sorted(got, key=canonical_row_key) == sorted(expected, key=canonical_row_key), feature.name
 
     def test_row_key_projection_loads_off_python_dict(self) -> None:
-        """Whole rows refuse PyArrow; a scalar ``~<row_key>`` projection loads there, or on PythonDict when listed first."""
+        """Whole rows refuse PyArrow; a scalar ``~<row_key>`` projection loads there, or on PythonDict when listed
+        first or when no ``compute_frameworks`` are passed."""
         cls = self.connector_reader_class()
         creds = self.valid_credentials()[cls.CONNECTOR_ID]
         feat = self.feature_under_test()
@@ -96,6 +97,13 @@ class LoadBehaviorContract(KgContractAdapterBase):
         whole = Feature(feat.name, options=feat.options)
         with pytest.raises(FeatureResolutionError, match="supports_compute_framework rejected"):
             mloda.run_all([whole], compute_frameworks=[PyArrowTable], data_access_collection=dac)
+        any_key = sorted(rows[0])[0]
+        default_projected = Feature(f"{feat.name}~{any_key}", options=feat.options)
+        default = mloda.run_all([default_projected], data_access_collection=dac)
+        assert default and all(isinstance(partition, dict) for partition in default), [type(p) for p in default]
+        got_default = [value for partition in default for value in partition[default_projected.name]]
+        expected_default = [cls._project_value(row.get(any_key)) for row in rows]
+        assert sorted(got_default, key=canonical_row_key) == sorted(expected_default, key=canonical_row_key)
         scalar = (str, int, float)
         keys = sorted(k for k in rows[0] if all(isinstance(cls._project_value(row.get(k)), scalar) for row in rows))
         if not keys:

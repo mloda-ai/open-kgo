@@ -12,7 +12,7 @@ Dependency CVE scanning is left to GitHub's native Dependabot security alerts (e
 - Push to any branch
 - Pull request to `main`
 
-**Jobs:** Two, each across the same Python matrix (3.10, 3.11, 3.12, 3.13, 3.14).
+**Jobs:** Two, each across the same Python matrix (3.11, 3.12, 3.13, 3.14).
 
 - **`test`** runs `tox`, the default env: pytest (excluding the `notebooks`
   marker), ruff formatting and linting, mypy type checking, and bandit security

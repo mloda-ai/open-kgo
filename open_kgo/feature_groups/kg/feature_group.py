@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from typing import Any, ClassVar
 
-from mloda.core.abstract_plugins.components.input_data.source_feature_group import HANDLE_SPEC  # not in mloda.provider
 from mloda.provider import (
     CHAIN_SEPARATOR,
     COLUMN_SEPARATOR,
     HANDLE_OPTION,
+    HANDLE_SPEC,
     INPUT_DATA_STAGE,
     QUERY_OPTION,
     ClaimRoute,
@@ -134,6 +134,11 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
         return cls.READER_CLASS.load(match.access, features)
 
     @classmethod
+    def neutral_type(cls, match: SourceMatch) -> type | None:
+        """Readers return a columnar dict, so a run without ``compute_frameworks`` stays on PythonDict."""
+        return dict
+
+    @classmethod
     def count_rows(cls, match: SourceMatch, compute_framework: type[ComputeFramework]) -> int | None:
         return cls.READER_CLASS.count_rows(match.access, compute_framework)
 
@@ -149,9 +154,14 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
 
     @classmethod
     def supports_compute_framework(
-        cls, feature_name: FeatureName | str, options: Options, compute_framework: type[ComputeFramework]
+        cls,
+        feature_name: FeatureName | str,
+        options: Options,
+        compute_framework: type[ComputeFramework],
+        *,
+        part: str | None = None,
     ) -> bool:
         """Whole rows hold native objects only PythonDict keeps; a ``~<row_key>`` projection is a plain column."""
         if not issubclass(compute_framework, PythonDictFramework) and COLUMN_SEPARATOR not in str(feature_name):
             return False
-        return super().supports_compute_framework(feature_name, options, compute_framework)
+        return super().supports_compute_framework(feature_name, options, compute_framework, part=part)
