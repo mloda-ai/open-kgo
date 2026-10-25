@@ -77,20 +77,13 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
         options: Options,
         data_access_collection: DataAccessCollection | None = None,
     ) -> bool:
-        """Gate on the KG name shape first; record why a pointed or ``query_text``-less request declines."""
+        """Gate on the KG name shape first, so a foreign name never probes this reader's credentials."""
         name, group, reader = str(feature_name), cls.get_class_name(), cls.READER_CLASS
-        if issubclass(reader, KgConnectorReaderBase):
-            if not reader.claims_feature_name(name):
-                if cls.is_pointed(name, options, data_access_collection):
-                    reason = f"{group} claims only '{reader.CONNECTOR_ID}__<name>' names, not '{name}'"
-                    record_match_rejection(group, reason, stage=INPUT_DATA_STAGE)
-                return False
-            # An absent required option skips the claim route without a reason; a blank one fails _QUERY_SPEC.
-            if cls.serves_query_text() and options.get(QUERY_OPTION) is None:
-                record_match_rejection(
-                    group, f"{group} needs the option '{QUERY_OPTION}' for '{name}'", stage=INPUT_DATA_STAGE
-                )
-                return False
+        if issubclass(reader, KgConnectorReaderBase) and not reader.claims_feature_name(name):
+            if cls.is_pointed(name, options, data_access_collection):
+                reason = f"{group} claims only '{reader.CONNECTOR_ID}__<name>' names, not '{name}'"
+                record_match_rejection(group, reason, stage=INPUT_DATA_STAGE)
+            return False
         return super().match_feature_group_criteria(feature_name, options, data_access_collection)
 
     @classmethod
