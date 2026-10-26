@@ -65,5 +65,5 @@ jobs:
           uv tool install tox --with tox-uv
 
       - name: Run notebook tests
-        run: tox -e notebooks -x testenv:notebooks.base_python=python${{ matrix.python-version }}
+        run: tox -e notebooks -x testenv:notebooks.base_python=py${{ matrix.python-version }}
         timeout-minutes: 5

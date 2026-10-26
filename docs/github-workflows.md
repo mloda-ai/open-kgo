@@ -18,9 +18,8 @@ Dependency CVE scanning is left to GitHub's native Dependabot security alerts (e
   checks pinned to the leg's Python: pytest (excluding the `notebooks`
   marker), ruff formatting and linting, mypy type checking, and bandit security
   analysis. Locally, plain `tox` runs the default `py311` env.
-- **`notebooks`** runs `tox -e notebooks`, with `base_python` overridden to the
-  leg's Python, which executes the demo marimo
-  notebooks end-to-end (`pytest -m notebooks`). That env additionally installs
+- **`notebooks`** runs `tox -e notebooks` with `base_python` set to the leg's
+  Python. It executes the demo marimo notebooks end-to-end (`pytest -m notebooks`). That env additionally installs
   the `demo` extra, which pulls in marimo. End-to-end execution is slow, so it
   is kept out of the default `tox` run to keep local iteration and the main
   matrix fast, but it is its own CI job, so the notebook suite still gates
