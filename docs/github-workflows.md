@@ -14,7 +14,7 @@ Dependency CVE scanning is left to GitHub's native Dependabot security alerts (e
 
 **Jobs:** Two, each across the same Python matrix (3.11, 3.12, 3.13, 3.14).
 
-- **`test`** runs `tox -e py<version>` (e.g. `py3.12`), the default env's
+- **`test`** runs `tox -e py<version>` (e.g. `py312`), the default env's
   checks pinned to the leg's Python: pytest (excluding the `notebooks`
   marker), ruff formatting and linting, mypy type checking, and bandit security
   analysis. Locally, plain `tox` runs the default `py311` env.

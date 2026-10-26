@@ -35,9 +35,11 @@ jobs:
           python -m pip install "uv>=0.13.4,<0.14"
           uv tool install tox --with tox-uv
 
-      # A py<version> env pins tox's interpreter to the matrix Python.
+      # A pyXY env (3.11 -> py311) pins tox's interpreter to the matrix Python.
       - name: Run tox
-        run: tox -e py${{ matrix.python-version }}
+        env:
+          PY_VERSION: ${{ matrix.python-version }}
+        run: tox -e "py${PY_VERSION/./}"
         timeout-minutes: 3
 
   notebooks:
