@@ -63,7 +63,7 @@ When helping with FeatureGroups, ComputeFrameworks, or Extenders, leverage these
 
 `tox` is the gate. It runs `pytest`, then `ruff format --check`, `ruff check`, `mypy --strict --ignore-missing-imports`, and `bandit`. All of these must pass before a PR is mergeable. CVE scanning lives in a separate `tox -e security` environment that runs `pip-audit`; it is not part of the PR merge gate. Scheduled CVE scanning is left to GitHub's native Dependabot security alerts, with `tox -e security` available for on-demand local scans.
 
-- **Python**: supported range is `>=3.11` (mloda 0.18 requires it). The default tox env is `python311`.
+- **Python**: supported range is `>=3.11` (mloda 0.18 requires it). The default tox env is `py311`, which pins Python 3.11; CI runs `tox -e py<version>` per matrix leg.
 - **Type hints**: use modern forms (`list[str]`, `dict[str, int]`, `X | None`).
 - **Formatting**: ruff format with line length 120.
 - **Linting**: `[tool.ruff.lint] select` is pinned to ruff's pre-0.16 default rule set (`E4`, `E7`, `E9`, `F`); ruff 0.16 broadened its defaults from 59 to 413 rules, and adopting that larger set is a separate, deliberate decision, not something a routine dependency bump should silently pull in.

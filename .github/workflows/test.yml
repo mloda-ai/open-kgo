@@ -35,8 +35,9 @@ jobs:
           python -m pip install "uv>=0.13.4,<0.14"
           uv tool install tox --with tox-uv
 
+      # A py<version> env pins tox's interpreter to the matrix Python.
       - name: Run tox
-        run: tox
+        run: tox -e py${{ matrix.python-version }}
         timeout-minutes: 3
 
   notebooks:
@@ -64,5 +65,5 @@ jobs:
           uv tool install tox --with tox-uv
 
       - name: Run notebook tests
-        run: tox -e notebooks
+        run: tox -e notebooks -x testenv:notebooks.base_python=python${{ matrix.python-version }}
         timeout-minutes: 5
