@@ -88,6 +88,7 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
         import sys
         from pathlib import Path
 
+        from mloda.provider import get_all_subclasses
         from mloda.steward import resolve_feature
         from mloda.user import Credential, DataAccessCollection, Feature, Options, PluginLoader, mloda
 
@@ -118,6 +119,29 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
                 owners = [fg.__name__ for fg in chained.candidates]
                 if not owners or any(issubclass(fg, KgConnectorFeatureGroupBase) for fg in chained.candidates):
                     failures.append((case.connector_id, "__sum_aggr candidates", owners))
+                # Pointed or searched, chained, empty and foreign names never resolve to the KG group.
+                group = next(
+                    fg for fg in get_all_subclasses(KgConnectorFeatureGroupBase)
+                    if getattr(getattr(fg, "READER_CLASS", None), "CONNECTOR_ID", None) == case.connector_id
+                )
+                pointer = Options(context={{**case.feature.options.context, group.__name__: slot}})
+                searched = DataAccessCollection(credentials=Credential({{case.connector_id: slot}}))
+                names = (
+                    f"{{case.feature.name}}__sum_aggr",
+                    f"{{case.connector_id}}___sum_aggr",
+                    f"{{case.connector_id}}__",
+                    case.connector_id,
+                    f"{{CASES[(index + 1) % len(CASES)].connector_id}}__knows",
+                    "unrelated_consumer",
+                )
+                for mode, options, dac in ("pointed", pointer, None), ("searched", case.feature.options, searched):
+                    for name in names:
+                        found = resolve_feature(name, options=options, data_access_collection=dac).candidates
+                        if group in found:
+                            failures.append((case.connector_id, mode, name, [fg.__name__ for fg in found]))
+                summed = resolve_feature(f"{{case.feature.name}}__sum_aggr", options=pointer)
+                if not summed.candidates:
+                    failures.append((case.connector_id, "pointed __sum_aggr unresolved", str(summed.error)[:200]))
                 # max_aggr rejects whole-row cells, so this passes only on a projected scalar column.
                 scalar = (str, int, float)
                 key = sorted(k for k in rows[0] if all(isinstance(row.get(k), scalar) for row in rows))[0]
