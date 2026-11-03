@@ -66,6 +66,18 @@ class TestLoadFile:
         ns = OntologyRegistry.load_file(str(minimal))
         assert ns == "empty_domain"
 
+    def test_list_valued_entities_section_raises(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad_entities.yaml"
+        bad.write_text("namespace: movie\nentities:\n  - Movie\nrelationships: {}\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="'entities' section must be a mapping"):
+            OntologyRegistry.load_file(str(bad))
+
+    def test_list_valued_relationships_section_raises(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad_relationships.yaml"
+        bad.write_text("namespace: movie\nentities: {}\nrelationships:\n  - directed_by\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="'relationships' section must be a mapping"):
+            OntologyRegistry.load_file(str(bad))
+
 
 class TestIsValidEdge:
     def test_valid_edge_returns_true(self) -> None:
