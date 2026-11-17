@@ -5,7 +5,6 @@ The class-definition-time guards live in the sibling ``kg.class_guards`` module.
 
 from __future__ import annotations
 
-import os
 from collections.abc import Mapping
 from dataclasses import replace
 from typing import Any, ClassVar
@@ -14,7 +13,6 @@ from mloda.provider import PropertySpec, PropertyValidationError, validate_prope
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
-    MissingEnvVarError,
     MissingRequiredKeysError,
 )
 from open_kgo.feature_groups.kg.validation import parse_bounded_int
@@ -206,46 +204,3 @@ class CredentialRules:
                 unsatisfied.append(group)
         if unsatisfied:
             raise MissingRequiredKeysError(cls.CONNECTOR_ID, tuple(unsatisfied))
-
-    @classmethod
-    def _resolve_env(cls, creds: dict[str, Any], key: str) -> str | None:
-        """Read an env-var NAME from creds[key], return the stripped env-var value.
-
-        Opt-in helper for concretes that consume credentials from an env var
-        (a bearer token, a username/password pair, etc.). The universal base
-        does NOT call this hook: no shipped concrete authenticated against a
-        network, so a universally-required
-        env-var surface would be a contract the framework could not enforce.
-        Concretes that introduce a real auth surface declare the matching
-        ``auth_*_env`` keys themselves (on a family base or the concrete) and
-        call ``_resolve_env`` from their own ``_connect_from_slot``.
-
-        Returns None if creds[key] itself is unset (caller is opting out, e.g.
-        an absent ``auth_token_env`` for a method that does not need one).
-        Raises MissingEnvVarError if creds[key] names an env var that is not
-        set in the environment, or if it is set to a value whose ``strip()``
-        is empty (i.e. any value with no non-whitespace character: ``""``,
-        ``"   "``, ``"\\t"``, ``"\\n"``, or any mix). Downstream auth would
-        otherwise fail opaquely with no diagnostic on such values.
-
-        The contract is "value must contain at least one
-        non-whitespace character." The returned value is ``value.strip()`` so
-        stray surrounding whitespace (a common ``.env``/copy-paste artifact)
-        does not leak through to downstream auth either: if the rejection
-        rationale is "whitespace breaks downstream tokens," partial-whitespace
-        tokens deserve the same treatment as fully-whitespace ones.
-        """
-        env_name = creds.get(key)
-        if env_name is None:
-            return None
-        if not isinstance(env_name, str):
-            raise InvalidCredentialShape(
-                f"{cls.CONNECTOR_ID}.{key} must be a str env-var name, got {type(env_name).__name__}"
-            )
-        value = os.environ.get(env_name)
-        if value is None:
-            raise MissingEnvVarError(env_name, key)
-        stripped = value.strip()
-        if not stripped:
-            raise MissingEnvVarError(env_name, key)
-        return stripped

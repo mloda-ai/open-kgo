@@ -1,9 +1,9 @@
-"""Credential-slot contract tests: matching, shape validation, required keys, env vars.
+"""Credential-slot contract tests: matching, shape validation, required keys, no env var names.
 
 One of the four concern mixins aggregated by ``KgConnectorContractBase``
 (see ``kg_contract.py``). Everything here exercises the credential layer:
 ``is_valid_credentials`` matcher behavior, ``_validate_shape`` loud-failure
-behavior, ``REQUIRED_KEYS`` enforcement, and ``_resolve_env``.
+behavior, ``REQUIRED_KEYS`` enforcement, and slots that hold values, not env var names.
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ from mloda.user import Credential, DataAccessCollection
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
-    MissingEnvVarError,
     MissingRequiredKeysError,
 )
 from open_kgo.feature_groups.kg.tests._discovery import iter_strict_specs
@@ -288,25 +287,15 @@ class CredentialContract(KgContractAdapterBase):
             f"raised by a misbehaving Mapping and return False (matcher-safety)."
         )
 
-    def test_env_var_resolution_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """_resolve_env returns the env var value when set."""
-        monkeypatch.setenv("KG_CONTRACT_TEST_TOKEN", "abc123")
+    def test_no_slot_or_param_key_names_an_env_var(self) -> None:
+        """A slot holds values, never env var names: the caller reads os.environ into the Credential."""
         cls = self.connector_reader_class()
-        creds: dict[str, Any] = {"auth_token_env": "KG_CONTRACT_TEST_TOKEN"}
-        assert cls._resolve_env(creds, "auth_token_env") == "abc123"
-
-    def test_env_var_resolution_typed_error_on_missing(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """_resolve_env raises MissingEnvVarError when the env var name is set but the env var is unset."""
-        monkeypatch.delenv("KG_CONTRACT_TEST_MISSING", raising=False)
-        cls = self.connector_reader_class()
-        creds: dict[str, Any] = {"auth_token_env": "KG_CONTRACT_TEST_MISSING"}
-        with pytest.raises(MissingEnvVarError):
-            cls._resolve_env(creds, "auth_token_env")
-
-    def test_env_var_resolution_returns_none_when_unset(self) -> None:
-        """_resolve_env returns None when the credential key itself is absent."""
-        cls = self.connector_reader_class()
-        assert cls._resolve_env({}, "auth_token_env") is None
+        keys = [*cls.PROPERTY_MAPPING, *getattr(cls, "PARAMS_MAPPING", {})]
+        offenders = sorted(k for k in keys if "env" in k.lower().split("_"))
+        assert not offenders, (
+            f"{cls.__name__} declares env-var-name keys {offenders}; take the value in the slot instead, "
+            f"e.g. Credential({cls.CONNECTOR_ID}={{'<key>': os.environ['<VAR>']}})."
+        )
 
     def test_required_keys_enforced(self) -> None:
         """If REQUIRED_KEYS is non-empty, dropping every OR-group's keys must reject.

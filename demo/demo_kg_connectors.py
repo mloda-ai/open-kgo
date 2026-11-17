@@ -630,74 +630,17 @@ def citation_rest_demo(fixture_for, mo, run_query):
 
 
 @app.cell
-def auth_demo_header(mo):
+def credentials_note(mo):
     mo.md("""
     ---
 
-    ## Opt-in env-var resolution: `_resolve_env`
+    ## Credential slots hold values
 
-    The universal base used to declare an `auth_method` + `auth_*_env`
-    surface and strict-validate it at the matcher gate. Because none of the
-    shipped concretes open a network socket, the surface was decorative —
-    the framework loudly validated a credential surface no concrete read
-    (issue #32 item 2). The auth keys were therefore removed from
-    `_UNIVERSAL_PROPERTY_MAPPING`. The `_resolve_env` helper itself stayed:
-    it is opt-in infrastructure that a future networked concrete (Wikidata
-    SPARQL, GraphDB, OpenFGA, real Neo4j over Bolt) calls from its own
-    `_connect_from_slot` after the family base / concrete re-introduces the
-    matching `auth_*_env` companion keys.
-
-    The cell below exercises `_resolve_env` standalone against a synthetic
-    creds dict — no `is_valid_credentials` round-trip, since the universal
-    base no longer declares an auth slot key.
+    A slot carries the value itself, never the name of an environment
+    variable. The caller reads the environment, as in
+    `Credential(rdflib_sparql={"locator": os.environ["KG_TTL_PATH"]})`,
+    so the value gets the `Credential`'s redaction in errors and logs.
     """)
-    return
-
-
-@app.cell
-def auth_demo(mo):
-    import os as _os
-
-    from open_kgo.feature_groups.kg.base import KgConnectorReaderBase as _Base
-    from open_kgo.feature_groups.kg.errors import (
-        MissingEnvVarError as _MissingEnvVarError,
-    )
-
-    _ENV_TOKEN = "KG_DEMO_BEARER_TOKEN"
-    _os.environ[_ENV_TOKEN] = "demo-bearer-abc123"
-    try:
-        _resolved = _Base._resolve_env({"auth_token_env": _ENV_TOKEN}, "auth_token_env")
-
-        try:
-            _Base._resolve_env({"auth_token_env": "KG_DEMO_UNSET_VAR"}, "auth_token_env")
-            _missing_msg = "(no error — should have raised)"
-        except _MissingEnvVarError as _e:
-            _missing_msg = f"`MissingEnvVarError`: {_e}"
-
-        _absent_returns_none = _Base._resolve_env({}, "auth_token_env") is None
-    finally:
-        _os.environ.pop(_ENV_TOKEN, None)
-
-    mo.output.replace(
-        mo.md(
-            f"""
-    **Helper:** `KgConnectorReaderBase._resolve_env(slot, key)` (opt-in)
-
-    | Scenario | Result |
-    |---|---|
-    | Env var set: `_resolve_env({{"auth_token_env": "{_ENV_TOKEN}"}}, "auth_token_env")` | `{_resolved!r}` |
-    | Env var unset (env-var name supplied, env value missing) | {_missing_msg} |
-    | Credential key absent — caller opted out — returns `None` | `{_absent_returns_none}` |
-
-    *Today no concrete plugin actually wires the resolved token into an
-    HTTP client — every reader runs against in-memory libraries or file
-    fixtures. A real Wikidata or GraphDB adapter would re-declare the
-    `auth_*_env` companion keys on its own family base / concrete, call
-    `_resolve_env` inside `_connect_from_slot`, and pass the value to
-    `requests.get(..., headers={{"Authorization": f"Bearer {{token}}"}})`.*
-    """
-        )
-    )
     return
 
 

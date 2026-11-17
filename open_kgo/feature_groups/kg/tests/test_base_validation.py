@@ -1,12 +1,6 @@
-"""Direct unit tests for ``KgConnectorReaderBase`` validation helpers.
+"""Direct unit tests for ``KgConnectorReaderBase`` validation helpers the contract suite does not reach.
 
-These tests target behaviours that the per-family contract suite does not
-exercise on its own: empty-string env-var values on the opt-in
-``_resolve_env`` helper and malformed credential slots
-(non-dict values). The earlier ``auth_method``/env-name
-conditional-required-keys checks were dropped when the
-decorative auth surface was removed from the universal base, so this module
-no longer exercises them.
+Covers malformed (non-dict) credential slots among others.
 """
 
 from __future__ import annotations
@@ -24,7 +18,6 @@ from open_kgo.feature_groups.kg.spec import property_spec
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
-    MissingEnvVarError,
     MissingRequiredKeysError,
 )
 
@@ -34,69 +27,6 @@ class _FakeReader(KgConnectorReaderBase):
 
     CONNECTOR_ID: ClassVar[str] = "fake_connector_for_tests"
     REQUIRED_KEYS: ClassVar[tuple[tuple[str, ...], ...]] = ()
-
-
-# --- Item 5: _resolve_env empty-string handling ----------------------------
-
-
-def test_resolve_env_returns_none_when_credential_key_absent() -> None:
-    assert _FakeReader._resolve_env({}, "auth_token_env") is None
-
-
-def test_resolve_env_returns_value_when_set(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("KG_TEST_BASE_VALIDATION_TOKEN", "abc")
-    creds: dict[str, Any] = {"auth_token_env": "KG_TEST_BASE_VALIDATION_TOKEN"}
-    assert _FakeReader._resolve_env(creds, "auth_token_env") == "abc"
-
-
-@pytest.mark.parametrize(
-    ("raw", "expected"),
-    [
-        ("  abc", "abc"),
-        ("abc  ", "abc"),
-        ("\tabc\n", "abc"),
-        (" \tabc def\n", "abc def"),
-    ],
-)
-def test_resolve_env_strips_surrounding_whitespace(raw: str, expected: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    """Surrounding whitespace is stripped before the value is returned.
-
-    The rejection rule for whitespace-only values exists because downstream
-    auth chokes on whitespace tokens. By the same rationale, a value with
-    stray surrounding whitespace (a common ``.env``/copy-paste artifact)
-    must not leak through unchanged either.
-    """
-    monkeypatch.setenv("KG_TEST_BASE_VALIDATION_STRIP", raw)
-    creds: dict[str, Any] = {"auth_token_env": "KG_TEST_BASE_VALIDATION_STRIP"}
-    assert _FakeReader._resolve_env(creds, "auth_token_env") == expected
-
-
-def test_resolve_env_raises_when_env_unset(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("KG_TEST_BASE_VALIDATION_UNSET", raising=False)
-    creds: dict[str, Any] = {"auth_token_env": "KG_TEST_BASE_VALIDATION_UNSET"}
-    with pytest.raises(MissingEnvVarError):
-        _FakeReader._resolve_env(creds, "auth_token_env")
-
-
-@pytest.mark.parametrize("blank_value", ["", "   ", "\t", "\n", " \t\n "])
-def test_resolve_env_raises_when_env_is_blank(blank_value: str, monkeypatch: pytest.MonkeyPatch) -> None:
-    """An env var set to an empty or whitespace-only value is treated as missing.
-
-    The contract extends the original empty-string case to whitespace-only
-    values (``"   "``, ``"\\t"``, ``"\\n"``). Downstream auth chokes on
-    whitespace tokens with opaque errors, so ``_resolve_env`` raises
-    ``MissingEnvVarError`` for any value that does not contain a non-blank
-    character.
-    """
-    monkeypatch.setenv("KG_TEST_BASE_VALIDATION_BLANK", blank_value)
-    creds: dict[str, Any] = {"auth_token_env": "KG_TEST_BASE_VALIDATION_BLANK"}
-    with pytest.raises(MissingEnvVarError):
-        _FakeReader._resolve_env(creds, "auth_token_env")
-
-
-def test_resolve_env_rejects_non_string_env_name() -> None:
-    with pytest.raises(InvalidCredentialShape):
-        _FakeReader._resolve_env({"auth_token_env": 42}, "auth_token_env")
 
 
 # --- Item 6: _extract_slot raises on non-dict slot -------------------------

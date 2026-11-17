@@ -29,12 +29,12 @@ issue #16); the **New surface** column records which.
 kg/
 ├── base.py        KgConnectorReaderBase / QueryReader / ParamReader / KgConnectorFeatureGroupBase
 ├── mixins.py      EntityFilterPropertyMixin / EntityFilterParamMixin / PaginationMixin / TraversalMixin / InferenceMixin
-├── errors.py      InvalidCredentialShape / MissingRequiredKeysError / PropertyMappingCollision / MissingEnvVarError
+├── errors.py      InvalidCredentialShape / MissingRequiredKeysError / PropertyMappingCollision
 ├── fixtures.py    Shared resource-cache loaders (load_json_fixture / load_rdf_graph / load_oxigraph_store / load_kuzu_database)
 ├── conftest.py    Autouse fixture clearing the resource caches between tests
 ├── ontology/      Ontology registry for typed traversal (registry.py + tests/)
 ├── tests/
-│   ├── kg_contract.py             Universal abstract test base (5 adapter methods + 26 contract tests)
+│   ├── kg_contract.py             Universal abstract test base (5 adapter methods + the inherited contract tests)
 │   ├── _helpers.py                Shared run_query / make_valid_credentials helpers
 │   ├── _discovery.py              Reader discovery (import_all_kg_readers / walk_subclasses / ...)
 │   ├── _family_cases.py           Shared all-family usage registry (CASES) + discovery helpers
