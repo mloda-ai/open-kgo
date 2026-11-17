@@ -9,7 +9,7 @@ The contract body is split by concern into four sibling modules, each a
 mixin over the shared adapter ABC (``contract_adapters.py``):
 
 - ``contract_credentials.py`` — credential-slot matching, shape validation,
-  ``REQUIRED_KEYS``, env-var resolution.
+  ``REQUIRED_KEYS``, no slot key naming an env var.
 - ``contract_params.py`` — per-call ``PARAMS_MAPPING`` validation, stripped
   params, ``REQUIRED_PARAMS`` (ParamReader concretes only).
 - ``contract_surface.py`` — the "Honest credential surface" rule: every
@@ -33,7 +33,6 @@ from mloda.user import DataAccessCollection, Feature
 
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
-    MissingEnvVarError,
     MissingRequiredKeysError,
     MissingRequiredParamsError,
 )
@@ -59,7 +58,6 @@ __all__ = [
     "DataAccessCollection",
     "Feature",
     "InvalidCredentialShape",
-    "MissingEnvVarError",
     "MissingRequiredKeysError",
     "MissingRequiredParamsError",
 ]

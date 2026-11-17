@@ -85,30 +85,6 @@ class NonDictSpecError(InvalidCredentialShape):
         self.context = context
 
 
-class MissingEnvVarError(RuntimeError):
-    """Raised when a credential references an env var that is unset or empty.
-
-    Concrete plugins that consume credentials from the environment carry env
-    var *names* on the slot (e.g. an ``auth_token_env="MY_TOKEN"`` companion
-    declared by a networked family base or by the concrete itself); the
-    actual token is read from ``os.environ`` at connect time via
-    ``KgConnectorReaderBase._resolve_env``. If the env var is unset
-    (``os.environ.get`` returns ``None``) or set to a whitespace-only value,
-    ``_resolve_env`` raises this error so the failure is loud rather than
-    degrading into a silent downstream auth error. The universal base does not
-    currently declare any auth surface; this error type exists as opt-in
-    infrastructure for future networked concretes.
-    """
-
-    def __init__(self, env_var_name: str, credential_key: str) -> None:
-        super().__init__(
-            f"Credential key {credential_key!r} pointed to env var {env_var_name!r}, "
-            f"but {env_var_name!r} is unset or empty in the environment."
-        )
-        self.env_var_name = env_var_name
-        self.credential_key = credential_key
-
-
 class UnknownTenantError(ValueError):
     """Raised by saas_authz connectors when ``tenant`` is not in the configured store.
 

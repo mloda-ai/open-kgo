@@ -90,7 +90,7 @@ Whole rows load only on `PythonDictFramework`; a projection loads on any compute
 
 A family whose extra is not installed is skipped with a warning and listed by `PluginLoader.skipped_plugins()`. Importing a connector module (`import open_kgo.feature_groups.kg.rdf.rdflib_sparql`) registers just that connector.
 
-Each connector is an mloda source FeatureGroup. To pass credentials on one feature instead of the `DataAccessCollection`, key them by the FeatureGroup's class name: `options={"RdfLibSparqlFeatureGroup": Credential(rdflib_sparql={...})}`. With two credentials for one connector in the collection, pick one with the `data_access_handle` option.
+Each connector is an mloda source FeatureGroup. To pass credentials on one feature instead of the `DataAccessCollection`, key them by the FeatureGroup's class name: `options={"RdfLibSparqlFeatureGroup": Credential(rdflib_sparql={...})}`. With two credentials for one connector in the collection, pick one with the `data_access_handle` option. A slot holds values, never an environment variable name: read the environment yourself, as in `Credential(rdflib_sparql={"locator": os.environ["KG_TTL_PATH"]})`.
 
 Lineage and tracing extenders, and plan steps, see the connector's source path (credentials stripped) as `data_access_identity`. Connectors whose rows depend on the credentials alone (`CycloneDxSbomReader`, `FileFixtureRestReader`, `FileFixturePagedRestReader`) answer `session.count_rows(step)` before a run; the others return `None`.
 
