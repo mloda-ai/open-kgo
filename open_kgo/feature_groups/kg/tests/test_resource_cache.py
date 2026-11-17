@@ -247,7 +247,7 @@ def test_file_fixture_citation_reader_does_not_leak_cached_row_to_caller(tmp_pat
         ),
         encoding="utf-8",
     )
-    creds = {"file_fixture_citation": {"locator": str(catalog_path), "auth_method": "none"}}
+    creds = {"file_fixture_citation": {"locator": str(catalog_path)}}
     feat = Feature(
         "file_fixture_citation__probe",
         options=Options(context={"stable_id": "X-1", "hierarchy_depth": 0}),
@@ -287,7 +287,7 @@ def test_citation_shallow_copy_is_shell_only_not_deep(tmp_path: Path) -> None:
         json.dumps({"X-1": {"stable_id": "X-1", "name": "X1", "ancestors": ["Y-1"]}}),
         encoding="utf-8",
     )
-    slot = {"locator": str(catalog_path), "auth_method": "none"}
+    slot = {"locator": str(catalog_path)}
     row = FileFixtureCitationReader._connect_from_slot(slot)["X-1"]
     # The cache row's ancestors list is the same object the shallow shell
     # copy would share with the caller. Mutating through that nested ref
@@ -330,7 +330,7 @@ def test_file_fixture_rest_reader_caches_each_page(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    creds = {"file_fixture_rest": {"locator": str(pages_dir), "auth_method": "none", "pagination_style": "cursor"}}
+    creds = {"file_fixture_rest": {"locator": str(pages_dir), "pagination_style": "cursor"}}
     feat = Feature("file_fixture_rest__probe", options=Options(context={}))
     fs = FeatureSet()
     fs.add(feat)
