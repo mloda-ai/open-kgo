@@ -110,7 +110,7 @@ framework derives the rejection contract.
 A concrete plugin's test class subclasses the per-family `*ContractTestBase`
 (which itself subclasses `KgConnectorContractBase`) and implements 5 adapter
 methods (`connector_reader_class`, `valid_credentials`, `invalid_credentials`,
-`feature_under_test`, `expected_row_shape`). It inherits 26 universal contract
+`feature_under_test`, `expected_row_shape`). It inherits the universal contract
 tests + per-family assertions for free. ~20-30 lines per concrete plugin.
 
 ## No-Docker testing policy

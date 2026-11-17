@@ -1,7 +1,4 @@
-"""Direct unit tests for ``KgConnectorReaderBase`` validation helpers the contract suite does not reach.
-
-Covers malformed (non-dict) credential slots among others.
-"""
+"""Direct unit tests for ``KgConnectorReaderBase`` validation helpers the contract suite does not reach."""
 
 from __future__ import annotations
 

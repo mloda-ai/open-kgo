@@ -8,6 +8,7 @@ behavior, ``REQUIRED_KEYS`` enforcement, and slots that hold values, not env var
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import pytest
@@ -22,6 +23,9 @@ from open_kgo.feature_groups.kg.errors import (
 from open_kgo.feature_groups.kg.tests._discovery import iter_strict_specs
 from open_kgo.feature_groups.kg.tests._helpers import bogus_value_for_strict_spec
 from open_kgo.feature_groups.kg.tests.contract_adapters import KgContractAdapterBase
+
+
+_ENV_NAME_KEY = re.compile(r"(^|[_-])env(var|iron)?([_-]|$)")
 
 
 class CredentialContract(KgContractAdapterBase):
@@ -288,10 +292,10 @@ class CredentialContract(KgContractAdapterBase):
         )
 
     def test_no_slot_or_param_key_names_an_env_var(self) -> None:
-        """A slot holds values, never env var names: the caller reads os.environ into the Credential."""
+        """Key-name check: a slot holds values, never env var names; the caller reads os.environ."""
         cls = self.connector_reader_class()
         keys = [*cls.PROPERTY_MAPPING, *getattr(cls, "PARAMS_MAPPING", {})]
-        offenders = sorted(k for k in keys if "env" in k.lower().split("_"))
+        offenders = sorted(k for k in keys if _ENV_NAME_KEY.search(k.lower()))
         assert not offenders, (
             f"{cls.__name__} declares env-var-name keys {offenders}; take the value in the slot instead, "
             f"e.g. Credential({cls.CONNECTOR_ID}={{'<key>': os.environ['<VAR>']}})."
