@@ -79,8 +79,9 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
 
     ``<case feature>__sum_aggr`` must resolve to the stock aggregation groups, never to the KG group, and
     ``<case feature>~<row_key>__max_aggr`` runs end to end with the case's context propagated to the input, as
-    does ``__sum_aggr`` over an rdflib and an oxigraph ``xsd:integer`` projection; the max_aggr run also holds a SQLite credential. Runs in a subprocess so ``PluginLoader.all()``
-    never changes matching for the rest of this pytest process.
+    does ``__sum_aggr`` over an rdflib and an oxigraph ``xsd:integer`` projection; the max_aggr run also holds a
+    SQLite credential. Runs in a subprocess so ``PluginLoader.all()`` never changes matching for the rest of this
+    pytest process.
     """
     code = textwrap.dedent(
         f"""
@@ -179,11 +180,8 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
             )
             dac = DataAccessCollection(credentials=Credential({{rdf_id: rdf_case.make_slot(Path({str(tmp_path)!r}))}}))
             try:
-                totals = {{
-                    value
-                    for partition in mloda.run_all([summed], data_access_collection=dac, output_framework="PyArrowTable")
-                    for value in partition[summed.name].to_pylist()
-                }}
+                partitions = mloda.run_all([summed], data_access_collection=dac, output_framework="PyArrowTable")
+                totals = {{value for partition in partitions for value in partition[summed.name].to_pylist()}}
                 if totals != {{3}}:
                     failures.append((rdf_id, "sum_aggr", sorted(totals)))
             except Exception as exc:
