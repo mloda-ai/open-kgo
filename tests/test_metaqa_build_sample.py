@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import networkx as nx
+import pytest
 
 from demo.data import build_sample
 
@@ -64,9 +66,11 @@ def test_infer_types_assigns_movie_to_subjects() -> None:
     assert types["Comedy"] == "Genre"
 
 
-def test_build_sample_includes_only_qa_anchored_subgraph(tmp_path: Path) -> None:
+@pytest.mark.parametrize("to_path", [Path, str], ids=["path", "str"])
+def test_build_sample_includes_only_qa_anchored_subgraph(tmp_path: Path, to_path: Callable[[Path], str | Path]) -> None:
     out = tmp_path / "sample.gml"
-    build_sample.build_sample(TINY_KB, [TINY_QA], out)
+    result = build_sample.build_sample(to_path(TINY_KB), [to_path(TINY_QA)], to_path(out))
+    assert result == out and isinstance(result, Path)
     g = nx.read_gml(str(out))
     labels = set(g.nodes())
     # Movie1, Movie2 seeds plus their 1-hop neighbors.
