@@ -51,9 +51,7 @@ def parse_ontology(data: Any) -> NamespaceOntology:
     entity_valid_outgoing: dict[str, frozenset[str]] = {}
     entities = data.get("entities") or {}
     if not isinstance(entities, dict):
-        raise ValueError(
-            f"ontology 'entities' section must be a mapping, got {type(entities).__name__}."
-        )
+        raise ValueError(f"ontology 'entities' section must be a mapping, got {type(entities).__name__}.")
     for name, spec in entities.items():
         valid_outgoing = spec.get("valid_outgoing") if isinstance(spec, dict) else None
         if valid_outgoing is not None and not isinstance(valid_outgoing, list):
@@ -65,9 +63,7 @@ def parse_ontology(data: Any) -> NamespaceOntology:
     relationships: dict[str, RelationshipRule] = {}
     relationship_data = data.get("relationships") or {}
     if not isinstance(relationship_data, dict):
-        raise ValueError(
-            f"ontology 'relationships' section must be a mapping, got {type(relationship_data).__name__}."
-        )
+        raise ValueError(f"ontology 'relationships' section must be a mapping, got {type(relationship_data).__name__}.")
     for name, spec in relationship_data.items():
         if not isinstance(spec, dict) or "domain" not in spec or "range" not in spec:
             raise ValueError(f"ontology relationship {name!r} must be a mapping declaring both 'domain' and 'range'.")
