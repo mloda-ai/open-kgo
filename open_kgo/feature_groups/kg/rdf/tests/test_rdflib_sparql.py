@@ -93,7 +93,7 @@ class TestRdfLibSparqlReader(RdfContractTestBase):
         assert len(rows) == 2
 
     def test_whole_rows_keep_rdflib_terms(self) -> None:
-        """Whole rows keep rdflib terms; only ``~<row_key>`` cells convert (family test)."""
+        """Whole rows keep rdflib terms; only ``~<row_key>`` cells convert."""
         from open_kgo.feature_groups.kg.tests._helpers import run_query
 
         query = (

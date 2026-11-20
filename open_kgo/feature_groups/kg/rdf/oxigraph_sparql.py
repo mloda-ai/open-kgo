@@ -125,15 +125,11 @@ class OxigraphSparqlReader(RdfSparqlReader):
         if isinstance(result, pyoxigraph.QuerySolutions):
             variables = result.variables
             for solution in result:
-                # Backend divergence (deliberate): SELECT bindings are emitted
-                # as their lexical ``.value`` strings, whereas the rdflib
-                # sibling yields rdflib term objects (URIRef / Literal) via
-                # ``row.asdict()``. A typed literal's string keeps its datatype
-                # (``_TypedLexical``), so ``~<row_key>`` projections convert
-                # exactly as on rdflib; language tags are dropped. The same
-                # flattening applies to the CONSTRUCT/DESCRIBE triple branch
-                # below: blank nodes emit their bare id (no ``_:`` prefix), and
-                # IRIs vs literals are plain strings in the emitted s/p/o rows.
+                # Backend divergence (deliberate): bindings are lexical ``.value``
+                # strings, not rdflib terms. A typed literal keeps its datatype
+                # (``_TypedLexical``) so ``~<row_key>`` projections convert as on
+                # rdflib; language tags are dropped, blank nodes emit their bare
+                # id, and IRIs vs literals are plain strings in CONSTRUCT rows.
                 # Unbound bindings (e.g. an OPTIONAL variable
                 # with no match) are OMITTED from the row, matching the rdflib
                 # sibling's ``asdict()`` which only carries bound variables, so
