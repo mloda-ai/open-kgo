@@ -7,20 +7,24 @@ RDF family base generalises across implementations.
 
 from __future__ import annotations
 
+import pickle
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Callable
 
+import pyoxigraph
 import pytest
 
 from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.errors import FixtureLoadError
-from open_kgo.feature_groups.kg.rdf.oxigraph_sparql import OxigraphSparqlReader
+from open_kgo.feature_groups.kg.rdf.oxigraph_sparql import OxigraphSparqlReader, _lexical
 from open_kgo.feature_groups.kg.rdf.tests.kg_rdf_contract import RdfContractTestBase
-from open_kgo.feature_groups.kg.tests._helpers import make_valid_credentials
+from open_kgo.feature_groups.kg.tests._helpers import make_valid_credentials, run_query
 
 
 _FIXTURE_TTL = Path(__file__).parent / "fixtures" / "sample.ttl"
+_XSD = "http://www.w3.org/2001/XMLSchema#"
 
 
 class TestOxigraphSparqlReader(RdfContractTestBase):
@@ -234,6 +238,36 @@ class TestOxigraphSparqlReader(RdfContractTestBase):
             assert set(row) == {"s", "p", "o"}
             assert all(isinstance(value, str) for value in row.values())
             assert row["p"] == "http://xmlns.com/foaf/0.1/knows"
+
+    @pytest.mark.parametrize(
+        ("term", "expected"),
+        [
+            (pyoxigraph.Literal("3", datatype=pyoxigraph.NamedNode(f"{_XSD}integer")), 3),
+            (pyoxigraph.Literal("1.5", datatype=pyoxigraph.NamedNode(f"{_XSD}decimal")), Decimal("1.5")),
+            (pyoxigraph.Literal("true", datatype=pyoxigraph.NamedNode(f"{_XSD}boolean")), True),
+            (pyoxigraph.Literal("abc", datatype=pyoxigraph.NamedNode(f"{_XSD}integer")), "abc"),
+            (pyoxigraph.Literal(str(2**70), datatype=pyoxigraph.NamedNode(f"{_XSD}integer")), str(2**70)),
+            (pyoxigraph.Literal("x", language="en"), "x"),
+            (pyoxigraph.Literal("plain"), "plain"),
+            (pyoxigraph.NamedNode("http://example.org/a"), "http://example.org/a"),
+        ],
+    )
+    def test_project_value_converts_typed_literals(self, term: Any, expected: Any) -> None:
+        """A row cell keeps its lexical string (also after pickling) and projects like on the rdflib reader."""
+        cell = pickle.loads(pickle.dumps(_lexical(term)))
+        projected = OxigraphSparqlReader._project_value(cell)
+        assert cell == term.value and isinstance(cell, str)
+        assert projected == expected and type(projected) is type(expected)
+
+    def test_construct_object_projection_is_typed(self) -> None:
+        """A CONSTRUCT row's ``~o`` cell converts a typed literal object too."""
+        query = (
+            "PREFIX foaf: <http://xmlns.com/foaf/0.1/> PREFIX ex: <http://example.org/> "
+            "CONSTRUCT { ?s ex:n ?n } WHERE { SELECT ?s (COUNT(?o) AS ?n) WHERE { ?s foaf:knows ?o } GROUP BY ?s }"
+        )
+        feat = Feature("oxigraph_sparql__construct_counts~o", options=Options(context={"query_text": query}))
+        cells = run_query("oxigraph_sparql", self.valid_credentials()["oxigraph_sparql"], feat)
+        assert sorted(cells) == [1, 1, 1] and all(type(cell) is int for cell in cells)
 
     def test_result_limit_truncates_construct_branch(self) -> None:
         """``result_limit`` short-circuits the CONSTRUCT/DESCRIBE triple branch too.

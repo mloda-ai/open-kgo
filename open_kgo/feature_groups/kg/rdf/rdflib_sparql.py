@@ -30,6 +30,16 @@ from open_kgo.feature_groups.kg.rdf.base import RdfSparqlFeatureGroup, RdfSparql
 _SCALARS = (bool, int, float, Decimal, str, bytes, date, datetime, time, timedelta)
 
 
+def rdf_term_to_python(value: Any) -> Any:
+    """Literals become Python scalars; IRIs, blank nodes and any other term become ``str``; non-terms pass through."""
+    if not isinstance(value, Identifier):
+        return value
+    converted = value.toPython() if isinstance(value, (IdentifiedNode, Literal)) else value
+    if isinstance(converted, int) and not isinstance(converted, bool) and not -(2**63) <= converted < 2**63:
+        return str(value)
+    return converted if isinstance(converted, _SCALARS) and not isinstance(converted, Identifier) else str(value)
+
+
 class RdfLibSparqlReader(RdfSparqlReader):
     """rdflib in-memory SPARQL reader.
 
@@ -106,13 +116,7 @@ class RdfLibSparqlReader(RdfSparqlReader):
 
     @classmethod
     def _project_value(cls, value: Any) -> Any:
-        """Literals become Python scalars; IRIs, blank nodes and any other term become ``str``."""
-        if not isinstance(value, Identifier):
-            return value
-        converted = value.toPython() if isinstance(value, (IdentifiedNode, Literal)) else value
-        if isinstance(converted, int) and not isinstance(converted, bool) and not -(2**63) <= converted < 2**63:
-            return str(value)
-        return converted if isinstance(converted, _SCALARS) and not isinstance(converted, Identifier) else str(value)
+        return rdf_term_to_python(value)
 
 
 class RdfLibSparqlFeatureGroup(RdfSparqlFeatureGroup):

@@ -33,12 +33,34 @@ from __future__ import annotations
 from typing import Any, ClassVar, Mapping
 
 import pyoxigraph
+from rdflib import Literal, URIRef
 
 from mloda.provider import FeatureSet
 
 from open_kgo.feature_groups.kg.base import LoadContext
 from open_kgo.feature_groups.kg.fixtures import _rejected_scheme, load_oxigraph_store
 from open_kgo.feature_groups.kg.rdf.base import RdfSparqlFeatureGroup, RdfSparqlReader
+from open_kgo.feature_groups.kg.rdf.rdflib_sparql import rdf_term_to_python
+
+_XSD_STRING = "http://www.w3.org/2001/XMLSchema#string"
+
+
+class _TypedLexical(str):
+    """A literal's lexical form that keeps its datatype IRI, so a projection can convert it."""
+
+    datatype: str
+
+    def __new__(cls, value: str, datatype: str = "") -> _TypedLexical:
+        self = super().__new__(cls, value)
+        self.datatype = datatype
+        return self
+
+
+def _lexical(term: Any) -> str:
+    """A term's lexical ``.value``; a typed, non-string literal also keeps its datatype."""
+    if isinstance(term, pyoxigraph.Literal) and term.language is None and term.datatype.value != _XSD_STRING:
+        return _TypedLexical(term.value, term.datatype.value)
+    return str(term.value)
 
 
 class OxigraphSparqlReader(RdfSparqlReader):
@@ -104,14 +126,14 @@ class OxigraphSparqlReader(RdfSparqlReader):
             variables = result.variables
             for solution in result:
                 # Backend divergence (deliberate): SELECT bindings are emitted
-                # as their lexical ``.value`` (a plain ``str``), whereas the
-                # rdflib sibling yields rdflib term objects (URIRef / Literal)
-                # via ``row.asdict()``. oxigraph's ``.value`` drops datatype and
-                # language tags, so a consumer that needs typed terms must use
-                # the rdflib reader. The same ``.value`` flattening applies to
-                # the CONSTRUCT/DESCRIBE triple branch below: blank nodes emit
-                # their bare id (no ``_:`` prefix), and IRIs vs literals are
-                # indistinguishable plain strings in the emitted s/p/o rows.
+                # as their lexical ``.value`` strings, whereas the rdflib
+                # sibling yields rdflib term objects (URIRef / Literal) via
+                # ``row.asdict()``. A typed literal's string keeps its datatype
+                # (``_TypedLexical``), so ``~<row_key>`` projections convert
+                # exactly as on rdflib; language tags are dropped. The same
+                # flattening applies to the CONSTRUCT/DESCRIBE triple branch
+                # below: blank nodes emit their bare id (no ``_:`` prefix), and
+                # IRIs vs literals are plain strings in the emitted s/p/o rows.
                 # Unbound bindings (e.g. an OPTIONAL variable
                 # with no match) are OMITTED from the row, matching the rdflib
                 # sibling's ``asdict()`` which only carries bound variables, so
@@ -120,7 +142,7 @@ class OxigraphSparqlReader(RdfSparqlReader):
                 for var in variables:
                     term = solution[var]
                     if term is not None:
-                        row[var.value] = term.value
+                        row[var.value] = _lexical(term)
                 rows.append(row)
                 if len(rows) >= ctx.result_limit:
                     break
@@ -131,10 +153,17 @@ class OxigraphSparqlReader(RdfSparqlReader):
 
         # CONSTRUCT / DESCRIBE -> iterator of pyoxigraph.Triple.
         for triple in result:
-            rows.append({"s": triple.subject.value, "p": triple.predicate.value, "o": triple.object.value})
+            rows.append({"s": triple.subject.value, "p": triple.predicate.value, "o": _lexical(triple.object)})
             if len(rows) >= ctx.result_limit:
                 break
         return rows
+
+    @classmethod
+    def _project_value(cls, value: Any) -> Any:
+        """A typed literal converts like on the rdflib reader; any other cell passes through."""
+        if isinstance(value, _TypedLexical) and value.datatype:
+            return rdf_term_to_python(Literal(str(value), datatype=URIRef(value.datatype)))
+        return value
 
 
 class OxigraphSparqlFeatureGroup(RdfSparqlFeatureGroup):
