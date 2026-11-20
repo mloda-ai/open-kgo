@@ -20,7 +20,7 @@ from mloda.user import Feature, Options
 from open_kgo.feature_groups.kg.errors import FixtureLoadError
 from open_kgo.feature_groups.kg.rdf.oxigraph_sparql import OxigraphSparqlReader, _lexical
 from open_kgo.feature_groups.kg.rdf.tests.kg_rdf_contract import RdfContractTestBase
-from open_kgo.feature_groups.kg.tests._helpers import make_valid_credentials, run_query
+from open_kgo.feature_groups.kg.tests._helpers import make_valid_credentials
 
 
 _FIXTURE_TTL = Path(__file__).parent / "fixtures" / "sample.ttl"
@@ -261,6 +261,8 @@ class TestOxigraphSparqlReader(RdfContractTestBase):
 
     def test_construct_object_projection_is_typed(self) -> None:
         """A CONSTRUCT row's ``~o`` cell converts a typed literal object too."""
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
+
         query = (
             "PREFIX foaf: <http://xmlns.com/foaf/0.1/> PREFIX ex: <http://example.org/> "
             "CONSTRUCT { ?s ex:n ?n } WHERE { SELECT ?s (COUNT(?o) AS ?n) WHERE { ?s foaf:knows ?o } GROUP BY ?s }"

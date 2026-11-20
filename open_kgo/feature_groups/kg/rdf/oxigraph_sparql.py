@@ -129,7 +129,7 @@ class OxigraphSparqlReader(RdfSparqlReader):
                 # strings, not rdflib terms. A typed literal keeps its datatype
                 # (``_TypedLexical``) so ``~<row_key>`` projections convert as on
                 # rdflib; language tags are dropped, blank nodes emit their bare
-                # id, and IRIs vs literals are plain strings in CONSTRUCT rows.
+                # id, and IRIs and untyped literals are indistinguishable strings.
                 # Unbound bindings (e.g. an OPTIONAL variable
                 # with no match) are OMITTED from the row, matching the rdflib
                 # sibling's ``asdict()`` which only carries bound variables, so
