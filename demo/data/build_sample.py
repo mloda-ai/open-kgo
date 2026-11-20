@@ -70,12 +70,14 @@ def infer_types(g: nx.MultiDiGraph) -> dict[str, str]:
 
 def build_sample(
     kb_path: str | Path = KB_FILE,
-    qa_files: Iterable[str | Path] = DEFAULT_QA_FILES,
+    qa_files: str | Path | Iterable[str | Path] = DEFAULT_QA_FILES,
     out_path: str | Path = SAMPLE_FILE,
 ) -> Path:
-    """Build sample.gml from kb_path and qa_files. Deterministic per input."""
+    """Build sample.gml from kb_path and qa_files (one path or several). Deterministic per input."""
     kb_path = Path(kb_path)
     out_path = Path(out_path)
+    if isinstance(qa_files, (str, Path)):
+        qa_files = [qa_files]
     g = load_kb(kb_path)
     topics = read_topic_entities([Path(p) for p in qa_files])
     seeds = topics & set(g.nodes())

@@ -66,11 +66,15 @@ def test_infer_types_assigns_movie_to_subjects() -> None:
     assert types["Comedy"] == "Genre"
 
 
-@pytest.mark.parametrize("to_path", [Path, str], ids=["path", "str"])
-def test_build_sample_includes_only_qa_anchored_subgraph(tmp_path: Path, to_path: Callable[[Path], str | Path]) -> None:
+@pytest.mark.parametrize(
+    ("to_path", "single_qa"), [(Path, False), (str, False), (str, True)], ids=["path", "str", "single-str-qa"]
+)
+def test_build_sample_includes_only_qa_anchored_subgraph(
+    tmp_path: Path, to_path: Callable[[Path], str | Path], single_qa: bool
+) -> None:
     out = tmp_path / "sample.gml"
-    result = build_sample.build_sample(to_path(TINY_KB), [to_path(TINY_QA)], to_path(out))
-    assert result == out and isinstance(result, Path)
+    qa = to_path(TINY_QA)
+    assert build_sample.build_sample(to_path(TINY_KB), qa if single_qa else [qa], to_path(out)) == out
     g = nx.read_gml(str(out))
     labels = set(g.nodes())
     # Movie1, Movie2 seeds plus their 1-hop neighbors.
