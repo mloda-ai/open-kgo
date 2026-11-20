@@ -72,7 +72,6 @@ from mloda.core.abstract_plugins.components.credential_scrub import (
     strip_uri_userinfo,
 )
 from mloda.provider import (
-    CHAIN_SEPARATOR,
     COLUMN_SEPARATOR,
     INPUT_DATA_STAGE,
     ComputeFramework,
@@ -412,16 +411,6 @@ class KgConnectorReaderBase(CredentialRules):
         except Exception:
             return False
         return True
-
-    @classmethod
-    def claims_feature_name(cls, feature_name: str) -> bool:
-        """Claim only ``<CONNECTOR_ID>__<name>``: chained (``...__sum_aggr``) and unrelated names go to other groups."""
-        prefix = f"{cls.CONNECTOR_ID}{CHAIN_SEPARATOR}"
-        if not cls.CONNECTOR_ID or not feature_name.startswith(prefix):
-            return False
-        name = feature_name[len(prefix) :]
-        # A leading "_" would let "<id>___op" read as a chain on "<id>_".
-        return bool(name) and not name.startswith("_") and CHAIN_SEPARATOR not in name
 
     @classmethod
     def data_access_identity(cls, data_access: Any) -> str:
