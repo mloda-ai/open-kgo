@@ -29,7 +29,7 @@ from typing import Any, ClassVar, Mapping
 
 import igraph
 
-from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+from mloda.provider import FeatureSet
 
 from open_kgo.feature_groups.kg.base import LoadContext
 from open_kgo.feature_groups.kg.embedded.base import (

@@ -15,7 +15,7 @@ from __future__ import annotations
 import warnings
 from typing import Any, ClassVar, Mapping
 
-from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+from mloda.provider import FeatureSet
 
 from open_kgo.feature_groups.kg.errors import InvalidCredentialShape, MissingRequiredParamsError
 from open_kgo.feature_groups.kg.reader_base import KgConnectorReaderBase, _collect_kg_known_keys

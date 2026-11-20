@@ -29,7 +29,7 @@ class RdfContractTestBase(KgConnectorContractBase):
         """build_query must raise ValueError when feature.options.context lacks query_text."""
         import pytest
 
-        from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+        from mloda.provider import FeatureSet
 
         from open_kgo.feature_groups.kg.base import QueryReader
 

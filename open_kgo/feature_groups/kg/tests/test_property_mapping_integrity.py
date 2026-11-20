@@ -591,7 +591,7 @@ def test_stripped_params_rejection_engages_for_inherited_strips() -> None:
     the class-time computation, so a future refactor that recomputes the
     field correctly but breaks the rejection hook still trips this test.
     """
-    from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+    from mloda.provider import FeatureSet
     from mloda.user import Feature, Options
 
     _, _, bottom = _build_three_level_chain(
