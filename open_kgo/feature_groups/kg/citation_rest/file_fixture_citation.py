@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar, Mapping
 
-from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+from mloda.provider import FeatureSet
 
 from open_kgo.feature_groups.kg.base import LoadContext, narrow_property_mapping
 from open_kgo.feature_groups.kg.citation_rest.base import (

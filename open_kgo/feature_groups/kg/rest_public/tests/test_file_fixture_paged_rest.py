@@ -192,7 +192,7 @@ class TestFileFixturePagedRestReader(RestPublicContractTestBase):
         ``page_size`` is ``strict_validation=False`` (no enum), so the guard
         lives at the runtime read in ``load_data``, not in ``_validate_shape``.
         """
-        from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+        from mloda.provider import FeatureSet
 
         slot = dict(self.valid_credentials()["file_fixture_paged_rest"])
         slot["page_size"] = bad

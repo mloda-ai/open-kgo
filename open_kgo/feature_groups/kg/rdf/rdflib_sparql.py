@@ -19,7 +19,7 @@ from typing import Any, ClassVar, Mapping
 import rdflib
 from rdflib.term import IdentifiedNode, Identifier, Literal
 
-from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+from mloda.provider import FeatureSet
 
 from open_kgo.feature_groups.kg.base import LoadContext
 from open_kgo.feature_groups.kg.fixtures import _rejected_scheme, load_rdf_graph

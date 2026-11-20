@@ -231,7 +231,7 @@ def test_file_fixture_citation_reader_does_not_leak_cached_row_to_caller(tmp_pat
     row would poison subsequent loads. The shallow-copy at the row
     boundary keeps the cache read-only at the surface level.
     """
-    from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+    from mloda.provider import FeatureSet
     from mloda.user import Feature, Options
 
     from open_kgo.feature_groups.kg.citation_rest.file_fixture_citation import (
@@ -315,7 +315,7 @@ def test_file_fixture_rest_reader_caches_each_page(tmp_path: Path) -> None:
     to gate, and the assertion is local to the JSON cache instead of
     touching the global ``json`` module.
     """
-    from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+    from mloda.provider import FeatureSet
     from mloda.user import Feature, Options
 
     from open_kgo.feature_groups.kg.fixtures import _read_json_cached

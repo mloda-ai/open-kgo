@@ -16,7 +16,7 @@ from typing import Any, Iterator
 
 import pytest
 
-from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+from mloda.provider import FeatureSet
 from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.errors import InvalidCredentialShape

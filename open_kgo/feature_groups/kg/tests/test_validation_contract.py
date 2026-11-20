@@ -12,10 +12,8 @@ from typing import Any
 
 import pytest
 
-from mloda.core.abstract_plugins.components.feature import Feature
-from mloda.core.abstract_plugins.components.feature_set import FeatureSet
-from mloda.core.abstract_plugins.components.options import Options
-from mloda.provider import property_spec as _core_property_spec
+from mloda.provider import FeatureSet, property_spec as _core_property_spec
+from mloda.user import Feature, Options
 
 from open_kgo.feature_groups.kg.base import (
     KgConnectorReaderBase,

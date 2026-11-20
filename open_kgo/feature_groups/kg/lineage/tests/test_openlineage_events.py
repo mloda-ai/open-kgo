@@ -370,7 +370,7 @@ def test_non_list_events_value_raises_typed_fixture_error(tmp_path: Path) -> Non
     assertion is on the reader's own raise, independent of how the mloda
     engine surfaces worker exceptions.
     """
-    from mloda.core.abstract_plugins.components.feature_set import FeatureSet
+    from mloda.provider import FeatureSet
 
     locator = _write_events_fixture(tmp_path, {"events": 42})
     feat = _lineage_feature("openlineage_events__bad_events", "a", "BOTH", 1, 0)
