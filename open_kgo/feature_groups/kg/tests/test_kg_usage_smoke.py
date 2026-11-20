@@ -124,13 +124,18 @@ def test_every_case_resolves_after_plugin_loader_all(tmp_path: Path) -> None:
                     fg for fg in get_all_subclasses(KgConnectorFeatureGroupBase)
                     if getattr(getattr(fg, "READER_CLASS", None), "CONNECTOR_ID", None) == case.connector_id
                 )
-                pointer = Options(context={{**case.feature.options.context, group.__name__: slot}})
+                pointer = Options(context={{**case.feature.options.context, group.__name__: {{case.connector_id: slot}}}})
                 searched = DataAccessCollection(credentials=Credential({{case.connector_id: slot}}))
+                for mode, options, dac in ("pointed", pointer, None), ("searched", case.feature.options, searched):
+                    if group not in resolve_feature(case.feature.name, options=options, data_access_collection=dac).candidates:
+                        failures.append((case.connector_id, mode, "own name unresolved"))
                 names = (
                     f"{{case.feature.name}}__sum_aggr",
                     f"{{case.connector_id}}___sum_aggr",
                     f"{{case.connector_id}}__",
                     case.connector_id,
+                    group.__name__,
+                    f"{{group.__name__}}_knows",
                     f"{{CASES[(index + 1) % len(CASES)].connector_id}}__knows",
                     "unrelated_consumer",
                 )

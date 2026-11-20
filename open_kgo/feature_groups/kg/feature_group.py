@@ -70,21 +70,14 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
     def declared_name_prefixes(cls) -> tuple[str, ...]:
         return (f"{cls.READER_CLASS.CONNECTOR_ID}{CHAIN_SEPARATOR}",)
 
+    # Core's declared-name check also accepts the class name and ``<ClassName>_*``; KG groups serve only the prefix.
     @classmethod
-    def match_feature_group_criteria(
-        cls,
-        feature_name: FeatureName | str,
-        options: Options,
-        data_access_collection: DataAccessCollection | None = None,
-    ) -> bool:
-        """Gate on the KG name shape first, so a foreign name never probes this reader's credentials."""
-        name, group, reader = str(feature_name), cls.get_class_name(), cls.READER_CLASS
-        if issubclass(reader, KgConnectorReaderBase) and not reader.claims_feature_name(name):
-            if cls.is_pointed(name, options, data_access_collection):
-                reason = f"{group} claims only '{reader.CONNECTOR_ID}__<name>' names, not '{name}'"
-                record_match_rejection(group, reason, stage=INPUT_DATA_STAGE)
-            return False
-        return super().match_feature_group_criteria(feature_name, options, data_access_collection)
+    def feature_name_equal_to_class_name(cls, feature_name: str) -> bool:
+        return False
+
+    @classmethod
+    def feature_name_contains_class_name_as_prefix(cls, feature_name: str) -> bool:
+        return False
 
     @classmethod
     def find_sources(

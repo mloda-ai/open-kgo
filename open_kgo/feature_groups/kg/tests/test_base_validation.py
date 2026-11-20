@@ -112,26 +112,6 @@ def test_matcher_safe_iteration_with_one_malformed_and_one_valid_slot() -> None:
     assert _OtherFakeReader.is_valid_credentials(creds) is True
 
 
-_OWN = _FakeReader.CONNECTOR_ID
-
-
-@pytest.mark.parametrize(
-    ("feature_name", "claimed"),
-    [
-        (f"{_OWN}__knows", True),
-        (f"{_OWN}__knows~s", True),
-        (f"{_OWN}__knows__sum_aggr", False),
-        (f"{_OWN}__", False),
-        (f"{_OWN}___sum_aggr", False),
-        (_OWN, False),
-        ("unrelated_consumer", False),
-        (f"{_OtherFakeReader.CONNECTOR_ID}__knows", False),
-    ],
-)
-def test_claims_feature_name_claims_only_own_single_level_names(feature_name: str, claimed: bool) -> None:
-    assert _FakeReader.claims_feature_name(feature_name) is claimed
-
-
 def test_is_valid_credentials_swallows_runtime_error_from_misbehaving_mapping() -> None:
     """``is_valid_credentials`` must catch non-``InvalidCredentialShape``
     exceptions raised while probing the credentials object.
