@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Any
 
@@ -40,6 +41,19 @@ class NamespaceOntology:
         return self.entity_valid_outgoing.get(entity_type, frozenset())
 
 
+def _parse_weight(name: Any, spec: dict[str, Any]) -> float:
+    """Return the relationship's conductance: 1.0 when absent, else a finite non-negative int or float."""
+    if "weight" not in spec:
+        return 1.0
+    value = spec["weight"]
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+        raise ValueError(
+            f"ontology relationship {name!r} must declare 'weight' as a non-negative number, "
+            f"got {type(value).__name__} {value!r}."
+        )
+    return float(value)
+
+
 def parse_ontology(data: Any) -> NamespaceOntology:
     """Parse a loaded YAML mapping into a ``NamespaceOntology``; raises ``ValueError`` on a malformed file."""
     if not isinstance(data, dict):
@@ -64,7 +78,7 @@ def parse_ontology(data: Any) -> NamespaceOntology:
         relationships[str(name)] = RelationshipRule(
             domain=str(spec["domain"]),
             range_type=str(spec["range"]),
-            weight=float(spec.get("weight", 1.0)),
+            weight=_parse_weight(name, spec),
         )
 
     return NamespaceOntology(

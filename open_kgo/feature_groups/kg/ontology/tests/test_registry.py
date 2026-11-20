@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
@@ -50,6 +51,43 @@ class TestLoadFile:
         )
         with pytest.raises(ValueError, match="must be a mapping declaring both 'domain' and 'range'"):
             OntologyRegistry.load_file(str(bad))
+
+    @pytest.mark.parametrize(
+        ("weight", "got"),
+        [
+            ("null", "NoneType None"),
+            ("heavy", "str 'heavy'"),
+            ("-1", "int -1"),
+            (".nan", "float nan"),
+            (".inf", "float inf"),
+            ("true", "bool True"),
+            ("[1, 2]", "list [1, 2]"),
+            # PyYAML reads exponent-only scientific notation as a string; write 1.0e-3 instead.
+            ("1e-3", "str '1e-3'"),
+        ],
+    )
+    def test_invalid_relationship_weight_raises(self, tmp_path: Path, weight: str, got: str) -> None:
+        bad = tmp_path / "bad_weight.yaml"
+        bad.write_text(
+            "namespace: movie\nentities: {}\nrelationships:\n"
+            f"  directed_by:\n    domain: Movie\n    range: Person\n    weight: {weight}\n",
+            encoding="utf-8",
+        )
+        expected = f"ontology relationship 'directed_by' must declare 'weight' as a non-negative number, got {got}."
+        with pytest.raises(ValueError, match=f"^{re.escape(expected)}$"):
+            OntologyRegistry.load_file(str(bad))
+
+    def test_zero_weight_loads(self, tmp_path: Path) -> None:
+        zero = tmp_path / "zero_weight.yaml"
+        zero.write_text(
+            "namespace: movie\nentities: {}\nrelationships:\n"
+            "  directed_by:\n    domain: Movie\n    range: Person\n    weight: 0\n",
+            encoding="utf-8",
+        )
+        OntologyRegistry.load_file(str(zero))
+        ontology = OntologyRegistry.get("movie")
+        assert ontology is not None
+        assert ontology.relationships["directed_by"].weight == 0.0
 
     def test_scalar_valid_outgoing_raises(self, tmp_path: Path) -> None:
         bad = tmp_path / "bad_outgoing.yaml"
