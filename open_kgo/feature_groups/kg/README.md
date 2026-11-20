@@ -27,14 +27,35 @@ issue #16); the **New surface** column records which.
 
 ```
 kg/
-├── base.py        KgConnectorReaderBase / QueryReader / ParamReader / KgConnectorFeatureGroupBase
-├── mixins.py      EntityFilterPropertyMixin / EntityFilterParamMixin / PaginationMixin / TraversalMixin / InferenceMixin
-├── errors.py      InvalidCredentialShape / MissingRequiredKeysError / PropertyMappingCollision
-├── fixtures.py    Shared resource-cache loaders (load_json_fixture / load_rdf_graph / load_oxigraph_store / load_kuzu_database)
-├── conftest.py    Autouse fixture clearing the resource caches between tests
-├── ontology/      Ontology registry for typed traversal (registry.py + tests/)
+├── base.py            Facade re-exporting the base layer below
+├── reader_base.py     LoadContext / KgConnectorReaderBase (universal reader base; conceptual rules in its docstring)
+├── readers.py         QueryReader / ParamReader (per-call input flavors)
+├── feature_group.py   KgConnectorFeatureGroupBase (source FeatureGroup delegating to a reader)
+├── credentials.py     CredentialRules: credential slot extraction and shape validation
+├── validation.py      Shared runtime validation helpers
+├── class_guards.py    Class-definition-time guards for reader subclasses
+├── composition.py     Family-surface composition helpers
+├── spec.py            property_spec wrapper for PROPERTY_MAPPING
+├── mixins.py          EntityFilterPropertyMixin / EntityFilterParamMixin / PaginationMixin / TraversalMixin / InferenceMixin
+├── traversal.py       Shared bounded BFS helpers
+├── errors.py          Typed errors (InvalidCredentialShape and its subclasses, UnknownTenantError, UnknownMemoryScopeError)
+├── fixtures.py        Shared resource-cache loaders (load_json_fixture / load_rdf_graph / load_oxigraph_store / load_kuzu_database)
+├── optional_deps.py   Optional import roots per family entry point (stdlib only)
+├── conftest.py        Autouse fixture clearing the resource caches between tests
+├── ontology/          Ontology layer for typed traversal
+│   ├── registry.py        OntologyRegistry
+│   ├── models.py          Ontology data model and YAML parsing
+│   ├── semantic_field.py  DC circuit semantic field for query scoring
+│   ├── discovery.py       DC circuit beam search
+│   ├── dc_solver.py       Shared DC circuit primitives
+│   └── tests/
 ├── tests/
-│   ├── kg_contract.py             Universal abstract test base (5 adapter methods + the inherited contract tests)
+│   ├── kg_contract.py             Universal abstract test base (KgConnectorContractBase, aggregating the concern mixins below)
+│   ├── contract_adapters.py       Adapter ABC shared by the concern mixins (the 5 adapter methods)
+│   ├── contract_credentials.py    Credential-slot contract tests
+│   ├── contract_params.py         Per-call PARAMS_MAPPING contract tests
+│   ├── contract_surface.py        Advertised-surface honesty contract tests
+│   ├── contract_load.py           Load-path contract tests
 │   ├── _helpers.py                Shared run_query / make_valid_credentials helpers
 │   ├── _discovery.py              Reader discovery (import_all_kg_readers / walk_subclasses / ...)
 │   ├── _family_cases.py           Shared all-family usage registry (CASES) + discovery helpers
@@ -46,6 +67,8 @@ kg/
 └── <family>/
     ├── base.py             <Family>Reader + <Family>FeatureGroup (per-family PROPERTY_MAPPING)
     ├── <concrete>.py       Concrete plugin (CONNECTOR_ID + connect/build_query/load_data)
+    ├── manifest.py         mloda entry-point manifest (PluginLoader.all() discovery)
+    ├── shared.py           Helpers shared by the family's concretes (where applicable)
     └── tests/
         ├── kg_<family>_contract.py    Per-family contract base
         ├── test_<concrete>.py         Concrete adapter test class
