@@ -344,7 +344,21 @@ class LoadBehaviorContract(KgContractAdapterBase):
 
         if cls.SOURCE_SLOT:
             slot[cls.SOURCE_SLOT] = f"file://user:{_SECRET}@host/graph.ttl?token={_SECRET}#{_SECRET}"
-            assert _SECRET not in cls.data_access_identity(creds)
+            assert cls.data_access_identity(creds) == "file://host/graph.ttl"
+            for leaky in (
+                f"jdbc:x://user:{_SECRET}@host/graph",
+                f"simplecache::s3://user:{_SECRET}@bucket/graph.ttl",
+                f"https://host/graph.ttl%3Ftoken={_SECRET}",
+                f"https://host/graph;token={_SECRET}/data.ttl",
+                f"https://host/graph%253Btoken={_SECRET}/data.ttl",
+                f"graph.ttl?token={_SECRET}",
+                f"host:7687/db;password={_SECRET}",
+                f"/data/token={_SECRET}/graph.ttl",
+            ):
+                slot[cls.SOURCE_SLOT] = leaky
+                assert _SECRET not in cls.data_access_identity(creds), leaky
+            slot[cls.SOURCE_SLOT] = f"https://host/graph;token={_SECRET}/data.ttl"
+            assert cls.data_access_identity(creds) == "https://host/graph;***/data.ttl"
         assert isinstance(cls.data_access_identity({cls.CONNECTOR_ID: "not-a-slot"}), str)
 
     def test_count_rows_matches_the_load(self) -> None:

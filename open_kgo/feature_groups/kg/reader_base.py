@@ -66,6 +66,11 @@ from pathlib import PurePath
 from types import MappingProxyType
 from typing import Any, ClassVar, Mapping
 
+from mloda.core.abstract_plugins.components.credential_scrub import (
+    _cut_path_parameter_regions,
+    mask_identity_credentials,
+    strip_uri_userinfo,
+)
 from mloda.provider import (
     CHAIN_SEPARATOR,
     COLUMN_SEPARATOR,
@@ -73,7 +78,6 @@ from mloda.provider import (
     ComputeFramework,
     FeatureSet,
     record_match_rejection,
-    scrub_credentials,
 )
 
 from open_kgo.feature_groups.kg import class_guards, composition
@@ -84,6 +88,14 @@ from open_kgo.feature_groups.kg.composition import (  # noqa: F401 -- back-compa
 from open_kgo.feature_groups.kg.credentials import CredentialRules
 from open_kgo.feature_groups.kg.errors import InvalidCredentialShape
 from open_kgo.feature_groups.kg.spec import property_spec
+
+
+def _source_label(source: str) -> str:
+    """``source`` by core's URI identity recipe: no userinfo, query or fragment; secrets and path params as ``***``."""
+    # Not scrub_credentials: it also masks every registered credential leaf, so a collection slot's own
+    # locator would publish as ``***``. The private core import is held stable by the <0.21 mloda pin.
+    stripped = mask_identity_credentials(strip_uri_userinfo(source))
+    return _cut_path_parameter_regions(stripped.partition("?")[0].partition("#")[0])
 
 
 @dataclass(frozen=True)
@@ -413,7 +425,7 @@ class KgConnectorReaderBase(CredentialRules):
 
     @classmethod
     def data_access_identity(cls, data_access: Any) -> str:
-        """The source slot value without userinfo, query or fragment, else ``{CONNECTOR_ID}``. Never raises."""
+        """The source slot value without URI credentials, query or fragment, else ``{CONNECTOR_ID}``. Never raises."""
         try:
             slot = cls._extract_slot(data_access)
         except Exception:  # A malformed slot fails the load elsewhere; identity stays best-effort.
@@ -421,7 +433,7 @@ class KgConnectorReaderBase(CredentialRules):
         for key in cls._source_keys():
             source = slot.get(key) if slot is not None else None
             if isinstance(source, (str, PurePath)) and str(source):
-                return scrub_credentials(str(source))
+                return _source_label(str(source))
         return f"{{{cls.CONNECTOR_ID}}}"
 
     @classmethod
