@@ -77,18 +77,6 @@ class TestLoadFile:
         with pytest.raises(ValueError, match=f"^{re.escape(expected)}$"):
             OntologyRegistry.load_file(str(bad))
 
-    def test_zero_weight_loads(self, tmp_path: Path) -> None:
-        zero = tmp_path / "zero_weight.yaml"
-        zero.write_text(
-            "namespace: movie\nentities: {}\nrelationships:\n"
-            "  directed_by:\n    domain: Movie\n    range: Person\n    weight: 0\n",
-            encoding="utf-8",
-        )
-        OntologyRegistry.load_file(str(zero))
-        ontology = OntologyRegistry.get("movie")
-        assert ontology is not None
-        assert ontology.relationships["directed_by"].weight == 0.0
-
     def test_scalar_valid_outgoing_raises(self, tmp_path: Path) -> None:
         bad = tmp_path / "bad_outgoing.yaml"
         bad.write_text(

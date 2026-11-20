@@ -174,7 +174,12 @@ class TestRelationshipWeight:
         assert ontology.relationships["directed_by"].weight == pytest.approx(0.9)
         assert ontology.relationships["has_tags"].weight == pytest.approx(0.2)
 
-    def test_missing_weight_defaults_to_one(self) -> None:
+    @pytest.mark.parametrize(
+        ("weight_line", "expected"),
+        [("", 1.0), ("    weight: 0\n", 0.0)],
+        ids=["missing_defaults_to_one", "zero_is_accepted"],
+    )
+    def test_weight_absent_or_zero(self, weight_line: str, expected: float) -> None:
         yaml_content = (
             "namespace: test_ns\n"
             "entities:\n"
@@ -184,6 +189,7 @@ class TestRelationshipWeight:
             "  rel:\n"
             "    domain: A\n"
             "    range: B\n"
+            f"{weight_line}"
         )
         with tempfile.NamedTemporaryFile(suffix=".yaml", mode="w", delete=False, encoding="utf-8") as f:
             f.write(yaml_content)
@@ -192,4 +198,4 @@ class TestRelationshipWeight:
         OntologyRegistry.load_file(tmp)
         ontology = OntologyRegistry.get("test_ns")
         assert ontology is not None
-        assert ontology.relationships["rel"].weight == pytest.approx(1.0)
+        assert ontology.relationships["rel"].weight == pytest.approx(expected)
