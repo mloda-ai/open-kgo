@@ -46,12 +46,18 @@ def _parse_weight(name: Any, spec: dict[str, Any]) -> float:
     if "weight" not in spec:
         return 1.0
     value = spec["weight"]
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
+    weight = math.nan
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        try:
+            weight = float(value)
+        except OverflowError:  # an int beyond float range
+            pass
+    if not math.isfinite(weight) or weight < 0:
         raise ValueError(
             f"ontology relationship {name!r} must declare 'weight' as a non-negative number, "
             f"got {type(value).__name__} {value!r}."
         )
-    return float(value)
+    return weight
 
 
 def parse_ontology(data: Any) -> NamespaceOntology:

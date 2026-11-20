@@ -62,6 +62,7 @@ class TestLoadFile:
             (".inf", "float inf"),
             ("true", "bool True"),
             ("[1, 2]", "list [1, 2]"),
+            (str(10**400), f"int {10**400}"),
             # PyYAML reads exponent-only scientific notation as a string; write 1.0e-3 instead.
             ("1e-3", "str '1e-3'"),
         ],
