@@ -12,9 +12,8 @@ from typing import Any, Callable
 import pytest
 from rdflib import RDF, XSD, BNode, Literal, URIRef
 
-from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
+from mloda.user import Feature, Options
 
-from open_kgo.feature_groups.kg.base import PythonDictFramework
 from open_kgo.feature_groups.kg.errors import FixtureLoadError
 from open_kgo.feature_groups.kg.rdf.rdflib_sparql import RdfLibSparqlReader
 from open_kgo.feature_groups.kg.rdf.tests.kg_rdf_contract import RdfContractTestBase
@@ -93,23 +92,17 @@ class TestRdfLibSparqlReader(RdfContractTestBase):
         rows = run_query("rdflib_sparql", slot, feat)
         assert len(rows) == 2
 
-    def test_projection_converts_rdf_terms_to_python_values(self) -> None:
-        """``~<row_key>`` cells are Python values (an ``xsd:integer`` COUNT is ``int``); whole rows keep rdflib terms."""
+    def test_whole_rows_keep_rdflib_terms(self) -> None:
+        """Whole rows keep rdflib terms; only ``~<row_key>`` cells convert (family test)."""
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
+
         query = (
             "PREFIX foaf: <http://xmlns.com/foaf/0.1/> "
             "SELECT ?s (COUNT(?o) AS ?n) WHERE { ?s foaf:knows ?o } GROUP BY ?s"
         )
-        names = ["rdflib_sparql__counts", "rdflib_sparql__counts~n", "rdflib_sparql__counts~s"]
-        dac = DataAccessCollection(credentials=Credential(self.valid_credentials()))
-        partitions = mloda.run_all(
-            [Feature(name, options=Options(context={"query_text": query})) for name in names],
-            compute_frameworks=[PythonDictFramework],
-            data_access_collection=dac,
-        )
-        rows, counts, subjects = ([v for p in partitions for v in p.get(name, [])] for name in names)
+        feat = Feature("rdflib_sparql__counts", options=Options(context={"query_text": query}))
+        rows = run_query("rdflib_sparql", self.valid_credentials()["rdflib_sparql"], feat)
         assert rows and all(isinstance(row["n"], Literal) and isinstance(row["s"], URIRef) for row in rows)
-        assert sorted(counts) == [1, 1, 1] and all(type(count) is int for count in counts)
-        assert sorted(subjects) == sorted(str(row["s"]) for row in rows) and all(type(s) is str for s in subjects)
 
     @pytest.mark.parametrize(
         ("term", "expected"),

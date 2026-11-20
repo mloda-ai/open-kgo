@@ -84,7 +84,7 @@ Feature(
 )
 ```
 
-Projected cells keep the connector's native value types, except that rdflib literals become Python values (an `xsd:integer` projects as `int`, so numeric chains such as `~n__sum_aggr` work) while IRIs, blank nodes and unconvertible literals project as `str`. A binding mixing IRIs and literals, or different numeric datatypes, yields a mixed column: wrap it in `STR(...)` or cast it (e.g. `xsd:double(?x)`) in the query. oxigraph returns lexical strings, so its projections stay strings. `~` in a KG feature name always means a projection, and a row key containing `__` cannot be projected, since the name would read as a chain.
+Projected cells keep the connector's native value types, except that RDF literals (rdflib and oxigraph) become Python values (an `xsd:integer` projects as `int`, so numeric chains such as `~n__sum_aggr` work) while IRIs, blank nodes and unconvertible literals project as `str`. A binding mixing IRIs and literals, or different numeric datatypes, yields a mixed column: wrap it in `STR(...)` or cast it (e.g. `xsd:double(?x)`) in the query. `~` in a KG feature name always means a projection, and a row key containing `__` cannot be projected, since the name would read as a chain.
 
 Whole rows load only on `PythonDictFramework`; a projection loads on any compute framework, so `compute_frameworks=[PyArrowTable]` returns it as a `pyarrow.Table`. With several frameworks enabled mloda picks the first listed; with no `compute_frameworks` KG features load on `PythonDictFramework`, since readers return a columnar dict. On another framework, including the one a chained operation moves the projection to, a mixed column (IRIs and literals) or nested cells fail the conversion: cast in the query.
 
