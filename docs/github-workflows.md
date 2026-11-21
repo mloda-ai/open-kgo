@@ -38,7 +38,7 @@ Dependency CVE scanning is left to GitHub's native Dependabot security alerts (e
 1. Analyzes commits using [semantic-release](https://semantic-release.gitbook.io/) to determine the next version
 2. Creates a GitHub release with changelog
 3. Updates version in `pyproject.toml`
-4. Builds the package once from the release tag and publishes it to TestPyPI
+4. Builds the package once from the release tag, fails if the wheel holds a `conftest.py` or a `tests/` path, and publishes it to TestPyPI
 5. Installs the wheel TestPyPI serves and imports it (smoke test)
 6. Attaches the smoke-tested files to the GitHub release
 
