@@ -87,6 +87,20 @@ class TestLoadFile:
         with pytest.raises(ValueError, match="entity 'Movie' must declare 'valid_outgoing' as a list"):
             OntologyRegistry.load_file(str(bad))
 
+    def test_list_entities_raises(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad_entities.yaml"
+        bad.write_text("namespace: movie\nentities:\n  - Movie\nrelationships: {}\n", encoding="utf-8")
+        expected = "ontology 'entities' must be a mapping, got list."
+        with pytest.raises(ValueError, match=f"^{re.escape(expected)}$"):
+            OntologyRegistry.load_file(str(bad))
+
+    def test_list_relationships_raises(self, tmp_path: Path) -> None:
+        bad = tmp_path / "bad_relationships.yaml"
+        bad.write_text("namespace: movie\nentities: {}\nrelationships:\n  - directed_by\n", encoding="utf-8")
+        expected = "ontology 'relationships' must be a mapping, got list."
+        with pytest.raises(ValueError, match=f"^{re.escape(expected)}$"):
+            OntologyRegistry.load_file(str(bad))
+
     def test_empty_entities_and_relationships_loads_cleanly(self, tmp_path: Path) -> None:
         minimal = tmp_path / "minimal.yaml"
         minimal.write_text("namespace: empty_domain\nentities: {}\nrelationships: {}\n", encoding="utf-8")
