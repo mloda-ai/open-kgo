@@ -422,7 +422,11 @@ def test_copy_cached_row_passes_non_dict_through_unchanged() -> None:
 
 
 # The next two tests are a pair and rely on file order: the first seeds every cache, the second sees them cleared.
+_SEEDED: list[bool] = []
+
+
 def test_seed_every_resource_cache_and_the_ontology_registry(tmp_path: Path) -> None:
+    """Fill all four caches and the registry for the next test to find cleared."""
     import kuzu
 
     (tmp_path / "x.json").write_text('{"k": "v"}', encoding="utf-8")
@@ -435,9 +439,11 @@ def test_seed_every_resource_cache_and_the_ontology_registry(tmp_path: Path) -> 
     OntologyRegistry.load_file(str(_METAQA_YAML))
     assert all(cache.cache_info().currsize == 1 for cache in _CACHES)
     assert OntologyRegistry._by_namespace
+    _SEEDED.append(True)
 
 
 def test_a_kg_test_starts_with_every_cache_and_the_registry_cleared() -> None:
     """The root conftest's autouse fixture reaches KG tests: nothing the previous test seeded survives."""
+    assert _SEEDED, "the seeding test must run first (file order), or this check proves nothing"
     assert [cache.cache_info().currsize for cache in _CACHES] == [0, 0, 0, 0]
     assert not OntologyRegistry._by_namespace and not OntologyRegistry._by_path

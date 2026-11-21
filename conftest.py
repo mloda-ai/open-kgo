@@ -34,7 +34,7 @@ def _clear() -> None:
 @pytest.fixture(autouse=True)
 def _clear_kg_resource_caches(request: pytest.FixtureRequest) -> Iterator[None]:
     """Clear every resource cache before and after each test under ``open_kgo/feature_groups/kg/``."""
-    kg_test = Path(request.node.path).resolve().is_relative_to(_KG_DIR)
+    kg_test = request.node.path.resolve().is_relative_to(_KG_DIR)
     if kg_test:
         _clear()
     yield

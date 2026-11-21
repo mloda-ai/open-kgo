@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 import ast
+import tomllib
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PACKAGE = REPO_ROOT / "open_kgo"
+
+
+def test_the_package_find_rules_are_the_ones_the_scan_mirrors() -> None:
+    """``_shipped_modules`` mirrors these rules; a change here must change the scan too."""
+    pyproject = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    find = pyproject["tool"]["setuptools"]["packages"]["find"]
+    assert find == {"where": ["."], "include": ["open_kgo*"], "exclude": ["*.tests", "*.tests.*"]}
 
 
 def _shipped_modules() -> list[Path]:
