@@ -116,6 +116,11 @@ class KgConnectorFeatureGroupBase(SourceFeatureGroup):
         ]
 
     @classmethod
+    def match_credentials(cls, match: SourceMatch) -> Any | None:
+        """The collection entry itself, never a copy, so the plan names its handle; a pointer records ``<pointer>``."""
+        return match.access
+
+    @classmethod
     def load_neutral(cls, match: SourceMatch, features: FeatureSet) -> Any:
         return cls.READER_CLASS.load(match.access, features)
 

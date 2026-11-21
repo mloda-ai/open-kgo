@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import Any
 
 from mloda.provider import PropertySpec, get_all_subclasses
-from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
+from mloda.user import Credential, DataAccessCollection, Feature, Options, PlanStep, mloda
 
 from open_kgo.feature_groups.kg.base import KgConnectorFeatureGroupBase, KgConnectorReaderBase, PythonDictFramework
 
@@ -55,6 +55,13 @@ def run_query(connector_id: str, slot_creds: dict[str, Any], feature: Feature) -
 def feature_group_of(reader: type[KgConnectorReaderBase]) -> type[KgConnectorFeatureGroupBase]:
     """The concrete KG FeatureGroup that pins ``reader``."""
     return next(fg for fg in get_all_subclasses(KgConnectorFeatureGroupBase) if fg.READER_CLASS is reader)
+
+
+def planned_steps(reader: type[KgConnectorReaderBase], features: list[Feature | str], **kwargs: Any) -> list[PlanStep]:
+    """The ``mloda.explain`` steps served by ``reader``'s FeatureGroup, on ``PythonDictFramework``."""
+    group = feature_group_of(reader)
+    plan = mloda.explain(features, compute_frameworks=[PythonDictFramework], **kwargs)
+    return [step for step in plan if step.feature_group is group]
 
 
 def scoped_feature(reader: type[KgConnectorReaderBase], slot_creds: dict[str, Any], feature: Feature) -> Feature:
