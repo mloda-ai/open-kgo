@@ -36,11 +36,7 @@ _CACHES = (_read_json_cached, _read_rdf_graph_cached, _read_oxigraph_store_cache
 _METAQA_YAML = Path(__file__).parents[1] / "ontology" / "tests" / "fixtures" / "metaqa_ontology.yaml"
 
 
-# Resource-cache clearing is provided by the root ``conftest.py``'s autouse
-# fixture: it applies to every KG test (this module included), so the
-# duplicate fixture that previously lived here was removed when the
-# clearing was hoisted up so existing per-family contract tests benefit
-# from the same isolation.
+# Resource caches are cleared per KG test by the root ``conftest.py`` autouse fixture.
 
 
 def test_load_json_fixture_returns_identical_object_across_calls(tmp_path: Path) -> None:
