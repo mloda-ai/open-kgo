@@ -358,7 +358,7 @@ def connector_demo(GML_FILE, ONTOLOGY_YAML, mo):
         "networkx_embedded__neighbors",
         options=Options(context={"operation": "neighbors", "start_node": "Christopher Nolan"}),
     )
-    _dac = DataAccessCollection(credentials=Credential(networkx_embedded=_creds))
+    _dac = DataAccessCollection(credentials={"kg": Credential(networkx_embedded=_creds)})
     _partitions = mloda.run_all(
         [_feat],
         compute_frameworks=[PythonDictFramework],
@@ -444,7 +444,7 @@ def backend_swap(ONTOLOGY_YAML, OntologyRegistry, mo):
             }
         ),
     )
-    _dac = _DAC(credentials=_Credential(kuzu_cypher=_kuzu_creds))
+    _dac = _DAC(credentials={"kg": _Credential(kuzu_cypher=_kuzu_creds)})
     _partitions = _mloda.run_all(
         [_feat],
         compute_frameworks=[_PdFW],
