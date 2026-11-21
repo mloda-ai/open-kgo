@@ -28,6 +28,7 @@ _XSD = "http://www.w3.org/2001/XMLSchema#"
 # A triple term's SPARQL syntax equals its N-Triples form, so each serves as both query input and expected cell.
 _TRIPLE_TERM = "<<( <http://a> <http://b> <http://c> )>>"
 _NESTED_TRIPLE_TERM = f'<<( <http://a> <http://b> <<( <http://x> <http://d> "1"^^<{_XSD}integer> )>> )>>'
+_LANG_TRIPLE_TERM = '<<( <http://a> <http://b> "say \\"hi\\""@de )>>'
 
 
 class TestOxigraphSparqlReader(RdfContractTestBase):
@@ -279,12 +280,13 @@ class TestOxigraphSparqlReader(RdfContractTestBase):
         [
             (f"SELECT ?t WHERE {{ BIND({_TRIPLE_TERM} AS ?t) }}", [{"t": _TRIPLE_TERM}]),
             (f"SELECT ?t WHERE {{ BIND({_NESTED_TRIPLE_TERM} AS ?t) }}", [{"t": _NESTED_TRIPLE_TERM}]),
+            (f"SELECT ?t WHERE {{ BIND({_LANG_TRIPLE_TERM} AS ?t) }}", [{"t": _LANG_TRIPLE_TERM}]),
             (
                 f"CONSTRUCT {{ <http://s> <http://p> ?t }} WHERE {{ BIND({_TRIPLE_TERM} AS ?t) }}",
                 [{"s": "http://s", "p": "http://p", "o": _TRIPLE_TERM}],
             ),
         ],
-        ids=["select", "select_nested", "construct"],
+        ids=["select", "select_nested", "select_lang_escaped", "construct"],
     )
     def test_triple_term_binding_emits_ntriples_form(self, query: str, expected: list[dict[str, str]]) -> None:
         """An RDF 1.2 triple term (no ``.value``) emits its N-Triples form instead of raising."""
