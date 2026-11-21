@@ -25,6 +25,9 @@ from open_kgo.feature_groups.kg.tests._helpers import make_valid_credentials
 
 _FIXTURE_TTL = Path(__file__).parent / "fixtures" / "sample.ttl"
 _XSD = "http://www.w3.org/2001/XMLSchema#"
+# A triple term's SPARQL syntax equals its N-Triples form, so each serves as both query input and expected cell.
+_TRIPLE_TERM = "<<( <http://a> <http://b> <http://c> )>>"
+_NESTED_TRIPLE_TERM = f'<<( <http://a> <http://b> <<( <http://x> <http://d> "1"^^<{_XSD}integer> )>> )>>'
 
 
 class TestOxigraphSparqlReader(RdfContractTestBase):
@@ -270,6 +273,26 @@ class TestOxigraphSparqlReader(RdfContractTestBase):
         feat = Feature("oxigraph_sparql__construct_counts~o", options=Options(context={"query_text": query}))
         cells = run_query("oxigraph_sparql", self.valid_credentials()["oxigraph_sparql"], feat)
         assert sorted(cells) == [1, 1, 1] and all(type(cell) is int for cell in cells)
+
+    @pytest.mark.parametrize(
+        ("query", "expected"),
+        [
+            (f"SELECT ?t WHERE {{ BIND({_TRIPLE_TERM} AS ?t) }}", [{"t": _TRIPLE_TERM}]),
+            (f"SELECT ?t WHERE {{ BIND({_NESTED_TRIPLE_TERM} AS ?t) }}", [{"t": _NESTED_TRIPLE_TERM}]),
+            (
+                f"CONSTRUCT {{ <http://s> <http://p> ?t }} WHERE {{ BIND({_TRIPLE_TERM} AS ?t) }}",
+                [{"s": "http://s", "p": "http://p", "o": _TRIPLE_TERM}],
+            ),
+        ],
+        ids=["select", "select_nested", "construct"],
+    )
+    def test_triple_term_binding_emits_ntriples_form(self, query: str, expected: list[dict[str, str]]) -> None:
+        """An RDF 1.2 triple term (no ``.value``) emits its N-Triples form instead of raising."""
+        from open_kgo.feature_groups.kg.tests._helpers import run_query
+
+        feat = Feature("oxigraph_sparql__triple_term", options=Options(context={"query_text": query}))
+        rows = run_query("oxigraph_sparql", self.valid_credentials()["oxigraph_sparql"], feat)
+        assert rows == expected
 
     def test_result_limit_truncates_construct_branch(self) -> None:
         """``result_limit`` short-circuits the CONSTRUCT/DESCRIBE triple branch too.

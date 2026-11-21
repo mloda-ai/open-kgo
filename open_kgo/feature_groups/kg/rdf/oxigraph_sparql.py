@@ -57,7 +57,9 @@ class _TypedLexical(str):
 
 
 def _lexical(term: Any) -> str:
-    """A term's lexical ``.value``; a typed, non-string literal also keeps its datatype."""
+    """A term's lexical ``.value``; a typed literal keeps its datatype, a triple term is ``<<( s p o )>>``."""
+    if isinstance(term, pyoxigraph.Triple):
+        return f"<<( {term} )>>"
     if isinstance(term, pyoxigraph.Literal) and term.language is None and term.datatype.value != _XSD_STRING:
         return _TypedLexical(term.value, term.datatype.value)
     return str(term.value)
@@ -130,6 +132,8 @@ class OxigraphSparqlReader(RdfSparqlReader):
                 # (``_TypedLexical``) so ``~<row_key>`` projections convert as on
                 # rdflib; language tags are dropped, blank nodes emit their bare
                 # id, and IRIs and untyped literals are indistinguishable strings.
+                # An RDF 1.2 triple term emits its full N-Triples form, so terms
+                # nested inside it keep their datatype and language tag.
                 # Unbound bindings (e.g. an OPTIONAL variable
                 # with no match) are OMITTED from the row, matching the rdflib
                 # sibling's ``asdict()`` which only carries bound variables, so
