@@ -640,9 +640,8 @@ def credentials_note(mo):
     variable. The caller reads the environment, as in
     `credentials={"kg": Credential(rdflib_sparql={"locator": os.environ["KG_TTL_PATH"]})}`,
     so the value gets the `Credential`'s redaction in errors and logs.
-    Register each credential under a name like `kg`: plans and extender
-    hooks then name the handle a step reads, where an unnamed one shows
-    `<unnamed>`.
+    Register each credential under a name like `kg` so plans and extender
+    hooks show which handle a step reads; an unnamed one shows `<unnamed>`.
     """)
     return
 
