@@ -18,7 +18,7 @@ Series-circuit AND (``compute_and``):
   - Dark Knight: connected to Nolan (high) via directed_by, to Action (dead
     end) via has_genre.  Floats to V=1.0.  Zero current.  Score = 0.0.
 
-Layer-1 (OntologyRegistry) is reset before every test by the conftest
+Layer-1 (OntologyRegistry) is reset before every test by the root conftest
 autouse fixture.
 """
 

@@ -41,7 +41,6 @@ kg/
 ├── errors.py          Typed errors (InvalidCredentialShape and its subclasses, UnknownTenantError, UnknownMemoryScopeError)
 ├── fixtures.py        Shared resource-cache loaders (load_json_fixture / load_rdf_graph / load_oxigraph_store / load_kuzu_database)
 ├── optional_deps.py   Optional import roots per family entry point (stdlib only)
-├── conftest.py        Autouse fixture clearing the resource caches between tests
 ├── ontology/          Ontology layer for typed traversal
 │   ├── registry.py        OntologyRegistry
 │   ├── models.py          Ontology data model and YAML parsing
