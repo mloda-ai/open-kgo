@@ -275,7 +275,7 @@ class CredentialContract(KgContractAdapterBase):
         return resolve_feature(name or feature.name, options=feature.options, data_access_collection=dac).error or ""
 
     def test_plan_names_the_bound_credential_handle(self) -> None:
-        """The step binds the slot it reads: its name, the one ``data_access_handle`` picks, ``<unnamed>``, ``<pointer>``."""
+        """The plan names the bound handle: the slot name, the ``data_access_handle`` pick, ``<unnamed>`` or ``<pointer>``."""
         cls = self.connector_reader_class()
         slot = self.valid_credentials()[cls.CONNECTOR_ID]
         other = {**slot, "result_limit": slot.get("result_limit", 1000) + 1}
