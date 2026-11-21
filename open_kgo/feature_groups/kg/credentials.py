@@ -53,7 +53,7 @@ class CredentialRules:
         raise InvalidCredentialShape(
             f"{cls.CONNECTOR_ID}: credential slot must be a plain dict mapping property names to values, "
             f"got {type(slot).__name__}. Register it as "
-            f"DataAccessCollection(credentials=Credential({{{cls.CONNECTOR_ID!r}: {{...}}}}))."
+            f"DataAccessCollection(credentials={{'kg': Credential({{{cls.CONNECTOR_ID!r}: {{...}}}})}})."
         )
 
     @classmethod

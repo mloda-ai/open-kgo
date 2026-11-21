@@ -1,9 +1,10 @@
-"""Credential-slot contract tests: matching, shape validation, required keys, no env var names.
+"""Credential-slot contract tests: matching, shape validation, required keys, no env var names, the bound handle.
 
 One of the four concern mixins aggregated by ``KgConnectorContractBase``
 (see ``kg_contract.py``). Everything here exercises the credential layer:
 ``is_valid_credentials`` matcher behavior, ``_validate_shape`` loud-failure
-behavior, ``REQUIRED_KEYS`` enforcement, and slots that hold values, not env var names.
+behavior, ``REQUIRED_KEYS`` enforcement, slots that hold values, not env var names,
+and the handle the plan records as the step's bound credential.
 """
 
 from __future__ import annotations
@@ -13,15 +14,17 @@ from typing import Any
 
 import pytest
 
+from mloda.provider import HANDLE_OPTION
 from mloda.steward import resolve_feature
-from mloda.user import Credential, DataAccessCollection
+from mloda.user import Credential, DataAccessCollection, Feature, Options, mloda
 
+from open_kgo.feature_groups.kg.base import PythonDictFramework
 from open_kgo.feature_groups.kg.errors import (
     InvalidCredentialShape,
     MissingRequiredKeysError,
 )
 from open_kgo.feature_groups.kg.tests._discovery import iter_strict_specs
-from open_kgo.feature_groups.kg.tests._helpers import bogus_value_for_strict_spec
+from open_kgo.feature_groups.kg.tests._helpers import bogus_value_for_strict_spec, planned_steps, scoped_feature
 from open_kgo.feature_groups.kg.tests.contract_adapters import KgContractAdapterBase
 
 
@@ -270,6 +273,43 @@ class CredentialContract(KgContractAdapterBase):
         feature = self.feature_under_test()
         dac = DataAccessCollection(credentials=Credential(credentials))
         return resolve_feature(name or feature.name, options=feature.options, data_access_collection=dac).error or ""
+
+    def test_plan_names_the_bound_credential_handle(self) -> None:
+        """The plan names the bound handle: slot name, ``data_access_handle`` pick, ``<unnamed>``, ``<pointer>``."""
+        cls = self.connector_reader_class()
+        slot = self.valid_credentials()[cls.CONNECTOR_ID]
+        other = {**slot, "result_limit": slot.get("result_limit", 1000) + 1}
+        feat = self.feature_under_test()
+        picked = Feature(
+            feat.name,
+            options=Options(group=dict(feat.options.group), context={**feat.options.context, HANDLE_OPTION: "b"}),
+        )
+        cases: list[tuple[str, list[Feature | str], DataAccessCollection | None]] = [
+            ("kg", [feat], DataAccessCollection(credentials={"kg": Credential({cls.CONNECTOR_ID: slot})})),
+            (
+                "b",
+                [picked],
+                DataAccessCollection(
+                    credentials={"a": Credential({cls.CONNECTOR_ID: slot}), "b": Credential({cls.CONNECTOR_ID: other})}
+                ),
+            ),
+            ("<unnamed>", [feat], DataAccessCollection(credentials=Credential({cls.CONNECTOR_ID: slot}))),
+            ("<pointer>", [scoped_feature(cls, slot, feat)], None),
+        ]
+        for handle, features, dac in cases:
+            steps = planned_steps(cls, features, data_access_collection=dac)
+            bound = [(step.bound_credential_handle, step.credential_handles) for step in steps]
+            assert bound == [(handle, (handle,))], f"{cls.__name__}: expected {handle!r}, got {bound}"
+
+    def test_a_bound_handle_refuses_a_per_run_value(self) -> None:
+        """The slot is fixed at prepare: a per-run value for the bound handle is refused, not silently ignored."""
+        session = mloda.prepare(
+            [self.feature_under_test()],
+            compute_frameworks=[PythonDictFramework],
+            data_access_collection=DataAccessCollection(credentials={"kg": Credential(self.valid_credentials())}),
+        )
+        with pytest.raises(ValueError, match="'kg' is bound by a source step"):
+            session.run(credentials={"kg": Credential(self.valid_credentials())})
 
     def test_is_valid_credentials_is_matcher_safe_against_misbehaving_mapping(self) -> None:
         """``is_valid_credentials`` must not propagate non-``InvalidCredentialShape`` exceptions.

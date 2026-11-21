@@ -23,6 +23,7 @@ from open_kgo.feature_groups.kg.base import ParamReader, PythonDictFramework, Qu
 from open_kgo.feature_groups.kg.tests._helpers import (
     canonical_row_key,
     feature_group_of,
+    planned_steps,
     run_query,
     run_scoped_query,
     scoped_feature,
@@ -235,9 +236,7 @@ class LoadBehaviorContract(KgContractAdapterBase):
 
     def _planned_identities(self, features: list[Feature | str], **kwargs: Any) -> list[str | None]:
         """The plan's ``data_access_identity`` for each step served by this connector's FeatureGroup."""
-        group = feature_group_of(self.connector_reader_class())
-        plan = mloda.explain(features, compute_frameworks=[PythonDictFramework], **kwargs)
-        return [step.data_access_identity for step in plan if step.feature_group is group]
+        return [step.data_access_identity for step in planned_steps(self.connector_reader_class(), features, **kwargs)]
 
     def test_feature_scoped_data_access_matches_the_global_path(self) -> None:
         """A pointer under the FeatureGroup's name selects only this group: same rows, same plan identity.
