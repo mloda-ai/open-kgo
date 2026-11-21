@@ -68,8 +68,11 @@ def parse_ontology(data: Any) -> NamespaceOntology:
         raise ValueError("ontology file is missing the required 'namespace' key.")
     namespace = str(data["namespace"])
 
+    raw_entities = data.get("entities") or {}
+    if not isinstance(raw_entities, dict):
+        raise ValueError(f"ontology 'entities' must be a mapping, got {type(raw_entities).__name__}.")
     entity_valid_outgoing: dict[str, frozenset[str]] = {}
-    for name, spec in (data.get("entities") or {}).items():
+    for name, spec in raw_entities.items():
         valid_outgoing = spec.get("valid_outgoing") if isinstance(spec, dict) else None
         if valid_outgoing is not None and not isinstance(valid_outgoing, list):
             raise ValueError(
@@ -77,8 +80,11 @@ def parse_ontology(data: Any) -> NamespaceOntology:
             )
         entity_valid_outgoing[str(name)] = frozenset(valid_outgoing or [])
 
+    raw_relationships = data.get("relationships") or {}
+    if not isinstance(raw_relationships, dict):
+        raise ValueError(f"ontology 'relationships' must be a mapping, got {type(raw_relationships).__name__}.")
     relationships: dict[str, RelationshipRule] = {}
-    for name, spec in (data.get("relationships") or {}).items():
+    for name, spec in raw_relationships.items():
         if not isinstance(spec, dict) or "domain" not in spec or "range" not in spec:
             raise ValueError(f"ontology relationship {name!r} must be a mapping declaring both 'domain' and 'range'.")
         relationships[str(name)] = RelationshipRule(
