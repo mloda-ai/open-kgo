@@ -79,7 +79,7 @@ def helpers():
         rows into a `{feature_name: [row, ...]}` column, and we flat-concat
         that column across partitions for the per-cell rendering.
         """
-        dac = _DataAccessCollection(credentials=_Credential({connector_id: slot_creds}))
+        dac = _DataAccessCollection(credentials={"kg": _Credential({connector_id: slot_creds})})
         partitions = _mloda.run_all(
             [feature],
             compute_frameworks=[_PythonDictFramework],
@@ -638,8 +638,11 @@ def credentials_note(mo):
 
     A slot carries the value itself, never the name of an environment
     variable. The caller reads the environment, as in
-    `Credential(rdflib_sparql={"locator": os.environ["KG_TTL_PATH"]})`,
+    `credentials={"kg": Credential(rdflib_sparql={"locator": os.environ["KG_TTL_PATH"]})}`,
     so the value gets the `Credential`'s redaction in errors and logs.
+    Register each credential under a name like `kg`: plans and extender
+    hooks then name the handle a step reads, where an unnamed one shows
+    `<unnamed>`.
     """)
     return
 
