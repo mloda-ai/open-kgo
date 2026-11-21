@@ -97,6 +97,14 @@ jobs:
       - name: Build wheel and sdist
         run: uv build
 
+      - name: Check the wheel ships no test-only modules
+        run: |
+          unzip -Z1 dist/*.whl > wheel-files.txt
+          if grep -E '(^|/)(conftest\.py$|tests/)' wheel-files.txt; then
+            echo "::error ::The wheel holds test-only modules (listed above)"
+            exit 1
+          fi
+
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
