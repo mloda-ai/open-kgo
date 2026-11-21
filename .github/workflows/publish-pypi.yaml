@@ -1,0 +1,86 @@
+name: Publish to PyPI
+
+# Manual only, after the Release workflow put the version on TestPyPI and its smoke test passed.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Released version to publish, e.g. 0.4.0"
+        required: true
+        type: string
+      skip_testpypi_check:
+        description: "Skip the TestPyPI comparison (only when TestPyPI is down)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: publish-pypi
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    name: Fetch the smoke-tested files
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Check the version
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error ::version must look like 0.4.0, got '$VERSION'"
+            exit 1
+          fi
+
+      # The Release workflow attaches the files only after the TestPyPI smoke test passed.
+      - name: Download the files attached to the GitHub release
+        run: |
+          if ! gh release download "$VERSION" --repo "$GITHUB_REPOSITORY" --dir dist --pattern '*.whl' --pattern '*.tar.gz'; then
+            echo "::error ::release $VERSION has no wheel or sdist attached: its TestPyPI smoke test did not pass"
+            exit 1
+          fi
+
+      - name: Note a publish without the TestPyPI check
+        if: inputs.skip_testpypi_check
+        run: echo "::warning ::skip_testpypi_check was set, so $VERSION was not compared with TestPyPI"
+
+      - name: Check that TestPyPI serves the same files
+        if: ${{ !inputs.skip_testpypi_check }}
+        run: |
+          (cd dist && sha256sum -- *) | sort -k 2 > built.sha256
+          curl -fsS "https://test.pypi.org/pypi/open-kgo/$VERSION/json" \
+            | jq -r '.urls[] | "\(.digests.sha256)  \(.filename)"' | sort -k 2 > served.sha256
+          if ! diff built.sha256 served.sha256; then
+            echo "::error ::the release files of $VERSION differ from the ones on TestPyPI"
+            exit 1
+          fi
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  # Trusted Publishing, as in release.yaml: a short-lived token bound to this repository, workflow and environment.
+  publish_pypi:
+    name: Publish to PyPI
+    needs: fetch
+    runs-on: ubuntu-24.04
+    environment:
+      name: pypi
+      url: https://pypi.org/project/open-kgo/${{ inputs.version }}/
+    permissions:
+      id-token: write
+    steps:
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
