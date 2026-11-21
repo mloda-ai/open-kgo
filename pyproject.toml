@@ -88,6 +88,9 @@ where = ["."]
 include = ["open_kgo*"]
 # The in-repo test contract harness stays out of the wheel: its fixtures are
 # not packaged, so shipping the test modules alone would be a broken artifact.
+# The KG autouse cache-clearing fixture lives in the repo-root conftest.py,
+# outside every package: `exclude` below only filters packages, not module
+# files, so a conftest.py inside open_kgo/ would be copied into the wheel.
 exclude = ["*.tests", "*.tests.*"]
 
 # PEP 561 marker so the `Typing :: Typed` classifier is honoured (downstream

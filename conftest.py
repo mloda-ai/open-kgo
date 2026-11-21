@@ -16,9 +16,13 @@ distinct kinds of cross-test contamination:
   path that an earlier test cleaned up" — relying on that as an
   implicit invariant is what the autouse clear here removes.
 
-Applies to every test under ``open_kgo/feature_groups/kg/``
-(pytest discovers ``conftest.py`` recursively) so existing per-family
-contract tests benefit, not only ``tests/test_resource_cache.py``.
+Lives at the repository root, outside every importable package, so no built
+distribution ships a pytest-only module: ``conftest.py`` sitting inside
+``open_kgo/`` was picked up by ``build_py`` as a package module and landed in
+the wheel, breaking ``import`` for users without pytest installed. pytest
+still loads this file from the rootdir for every test below it, including the
+in-package KG contract tests under ``open_kgo/feature_groups/kg/**/tests``, so
+per-family tests keep the cache isolation without the packaging leak.
 """
 
 from __future__ import annotations

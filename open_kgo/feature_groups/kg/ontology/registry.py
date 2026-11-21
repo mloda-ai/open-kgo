@@ -41,8 +41,9 @@ class OntologyRegistry:
     rather than silently overwriting, so duplicate registrations surface
     immediately.
 
-    Call ``_clear()`` in tests to reset global state between runs. The KG
-    ``conftest.py`` autouse fixture does this automatically for every KG test.
+    Call ``_clear()`` in tests to reset global state between runs. The
+    repo-root ``conftest.py`` autouse fixture does this automatically for
+    every KG test.
     """
 
     _by_path: ClassVar[dict[str, NamespaceOntology]] = {}

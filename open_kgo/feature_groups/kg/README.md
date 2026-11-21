@@ -41,7 +41,6 @@ kg/
 ├── errors.py          Typed errors (InvalidCredentialShape and its subclasses, UnknownTenantError, UnknownMemoryScopeError)
 ├── fixtures.py        Shared resource-cache loaders (load_json_fixture / load_rdf_graph / load_oxigraph_store / load_kuzu_database)
 ├── optional_deps.py   Optional import roots per family entry point (stdlib only)
-├── conftest.py        Autouse fixture clearing the resource caches between tests
 ├── ontology/          Ontology layer for typed traversal
 │   ├── registry.py        OntologyRegistry
 │   ├── models.py          Ontology data model and YAML parsing
@@ -135,6 +134,12 @@ A concrete plugin's test class subclasses the per-family `*ContractTestBase`
 methods (`connector_reader_class`, `valid_credentials`, `invalid_credentials`,
 `feature_under_test`, `expected_row_shape`). It inherits the universal contract
 tests + per-family assertions for free. ~20-30 lines per concrete plugin.
+
+Every test below the repository root also picks up the root-level
+`conftest.py`, whose autouse fixture clears the shared resource caches
+(`fixtures.py`) before and after each test. It lives outside `open_kgo/` on
+purpose: setuptools copies package module files into the wheel, and a
+pytest-only fixture must not ship to users (issue #192).
 
 ## No-Docker testing policy
 

@@ -28,8 +28,8 @@ from open_kgo.feature_groups.kg.fixtures import (
 )
 
 
-# Resource-cache clearing is provided by ``kg/conftest.py``'s autouse
-# fixture: it applies to every KG test (this module included), so the
+# Resource-cache clearing is provided by the repo-root ``conftest.py``'s
+# autouse fixture: it applies to every KG test (this module included), so the
 # duplicate fixture that previously lived here was removed when the
 # clearing was hoisted up so existing per-family contract tests benefit
 # from the same isolation.

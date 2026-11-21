@@ -20,7 +20,7 @@ follow-up. Two parts:
 2. Fresh temp path per test (not a shared, seed-once database): a shared
    seed-once database is technically viable. The reader caches ``kuzu.Database``
    process-wide keyed by absolute path (see ``kg.fixtures.load_kuzu_database``),
-   and ``kg/conftest.py`` clears that cache around every test, so cache staleness
+   and the repo-root ``conftest.py`` clears that cache around every test, so cache staleness
    across a reused path is already neutralised: under CPython the ``cache_clear``
    drops the only reference and the native handle (with its directory lock) is
    finalised before the next open. We keep the per-test rebuild simply because it
