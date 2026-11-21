@@ -132,12 +132,13 @@ class OxigraphSparqlReader(RdfSparqlReader):
                 # (``_TypedLexical``) so ``~<row_key>`` projections convert as on
                 # rdflib; language tags are dropped, blank nodes emit their bare
                 # id, and IRIs and untyped literals are indistinguishable strings.
-                # An RDF 1.2 triple term emits its full N-Triples form, so terms
-                # nested inside it keep their datatype and language tag.
                 # Unbound bindings (e.g. an OPTIONAL variable
                 # with no match) are OMITTED from the row, matching the rdflib
                 # sibling's ``asdict()`` which only carries bound variables, so
                 # the two backends agree on the SELECT row schema.
+                # An RDF 1.2 triple term emits its full N-Triples form, so terms
+                # nested inside it keep their datatype, language tag and blank-node
+                # ``_:`` prefix.
                 row: dict[str, Any] = {}
                 for var in variables:
                     term = solution[var]
