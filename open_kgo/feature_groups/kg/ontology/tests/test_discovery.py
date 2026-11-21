@@ -4,7 +4,7 @@ The beam search heuristic is the edge current G(i,j) × |V(i) - V(j)|.
 Paths are scored by bottleneck current (minimum edge current along the path).
 Dead-end branches carry zero current and are naturally excluded.
 
-Layer-1 (OntologyRegistry) is reset before every test by the conftest
+Layer-1 (OntologyRegistry) is reset before every test by the root conftest
 autouse fixture.
 """
 

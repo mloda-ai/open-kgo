@@ -20,19 +20,23 @@ import rdflib
 
 from open_kgo.feature_groups.kg.errors import FixtureLoadError
 from open_kgo.feature_groups.kg.fixtures import (
+    _open_kuzu_database_cached,
+    _read_json_cached,
+    _read_oxigraph_store_cached,
+    _read_rdf_graph_cached,
     copy_cached_row,
     load_json_fixture,
     load_kuzu_database,
     load_oxigraph_store,
     load_rdf_graph,
 )
+from open_kgo.feature_groups.kg.ontology.registry import OntologyRegistry
+
+_CACHES = (_read_json_cached, _read_rdf_graph_cached, _read_oxigraph_store_cached, _open_kuzu_database_cached)
+_METAQA_YAML = Path(__file__).parents[1] / "ontology" / "tests" / "fixtures" / "metaqa_ontology.yaml"
 
 
-# Resource-cache clearing is provided by ``kg/conftest.py``'s autouse
-# fixture: it applies to every KG test (this module included), so the
-# duplicate fixture that previously lived here was removed when the
-# clearing was hoisted up so existing per-family contract tests benefit
-# from the same isolation.
+# Resource caches are cleared per KG test by the root ``conftest.py`` autouse fixture.
 
 
 def test_load_json_fixture_returns_identical_object_across_calls(tmp_path: Path) -> None:
@@ -415,3 +419,31 @@ def test_copy_cached_row_passes_non_dict_through_unchanged() -> None:
     """Non-dict values have nothing to alias-protect and are returned as-is."""
     for value in ("a string", 42, ["a", "list"], None):
         assert copy_cached_row(value) is value
+
+
+# The next two tests are a pair and rely on file order: the first seeds every cache, the second sees them cleared.
+_SEEDED: list[bool] = []
+
+
+def test_seed_every_resource_cache_and_the_ontology_registry(tmp_path: Path) -> None:
+    """Fill all four caches and the registry for the next test to find cleared."""
+    import kuzu
+
+    (tmp_path / "x.json").write_text('{"k": "v"}', encoding="utf-8")
+    load_json_fixture("test", tmp_path / "x.json")
+    (tmp_path / "x.ttl").write_text("@prefix ex: <http://example.org/> .\nex:a ex:b ex:c .\n", encoding="utf-8")
+    load_rdf_graph("test", tmp_path / "x.ttl")
+    load_oxigraph_store("test", tmp_path / "x.ttl")
+    kuzu.Database(str(tmp_path / "graph.kuzu"))
+    load_kuzu_database("test", tmp_path / "graph.kuzu")
+    OntologyRegistry.load_file(str(_METAQA_YAML))
+    assert all(cache.cache_info().currsize == 1 for cache in _CACHES)
+    assert OntologyRegistry._by_namespace
+    _SEEDED.append(True)
+
+
+def test_a_kg_test_starts_with_every_cache_and_the_registry_cleared() -> None:
+    """The root conftest's autouse fixture reaches KG tests: nothing the previous test seeded survives."""
+    assert _SEEDED, "the seeding test must run first (file order), or this check proves nothing"
+    assert [cache.cache_info().currsize for cache in _CACHES] == [0, 0, 0, 0]
+    assert not OntologyRegistry._by_namespace and not OntologyRegistry._by_path

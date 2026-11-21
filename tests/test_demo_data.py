@@ -64,6 +64,8 @@ def test_every_edge_is_ontology_valid(graph: nx.MultiDiGraph, _ontology: None) -
 
     If this fails, demo_kg_ontology and eval_qa_accuracy will throw at runtime.
     """
+    # Without a registered ontology every edge passes through, so the check below would prove nothing.
+    assert OntologyRegistry.get(NAMESPACE) is not None, f"{NAMESPACE} ontology is not registered"
     violations: list[str] = []
     for src, dst, data in graph.edges(data=True):
         rel = data.get("relation", "")
