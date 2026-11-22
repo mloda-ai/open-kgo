@@ -97,6 +97,19 @@ jobs:
       - name: Build wheel and sdist
         run: uv build
 
+      - name: Check the wheel ships no test-only modules
+        run: |
+          unzip -Z1 dist/*.whl > wheel-files.txt
+          if ! grep -qx 'open_kgo/__init__.py' wheel-files.txt; then
+            echo "::error ::The wheel listing has no open_kgo/__init__.py"
+            exit 1
+          fi
+          if grep -E '(^|/)(conftest\.py$|tests/)' wheel-files.txt; then
+            echo "::error ::The wheel holds test-only modules (listed above)"
+            exit 1
+          fi
+          echo "Checked $(wc -l < wheel-files.txt) wheel entries, none test-only"
+
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
