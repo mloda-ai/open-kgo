@@ -13,14 +13,14 @@ jobs:
       new_release_version: ${{ steps.semantic.outputs.new_release_version }}
       new_release_published: ${{ steps.semantic.outputs.new_release_published }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
           ref: main
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "lts/*"
 
@@ -84,7 +84,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout the release tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
           ref: refs/tags/${{ needs.github_release.outputs.new_release_version }}
@@ -111,7 +111,7 @@ jobs:
           echo "Checked $(wc -l < wheel-files.txt) wheel entries, none test-only"
 
       - name: Upload dist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -130,7 +130,7 @@ jobs:
       id-token: write
     steps:
       - name: Download dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
@@ -152,7 +152,7 @@ jobs:
       VERSION: ${{ needs.github_release.outputs.new_release_version }}
     steps:
       - name: Download dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
@@ -203,7 +203,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Download dist
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist/
